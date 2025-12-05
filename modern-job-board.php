@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Modern Job Board
- * Plugin URI: https://github.com/INSERT_USERNAME_HERE/modern-job-board
+ * Plugin URI: https://github.com/MartinOrton/modern-job-board
  * Description: A lightweight job board plugin for WordPress.
  * Version: 1.0.0
  * Author: Martin Orton
