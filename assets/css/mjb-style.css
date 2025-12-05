@@ -1,0 +1,83 @@
+/* Modern Job Board Styles */
+
+.mjb-job-list {
+    margin-top: 20px;
+}
+
+.mjb-job-item {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    background: #fff;
+    transition: box-shadow 0.3s ease;
+}
+
+.mjb-job-item:hover {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.mjb-job-item h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.mjb-job-item h3 a {
+    text-decoration: none;
+    color: #333;
+}
+
+.mjb-job-meta {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.mjb-job-meta span {
+    margin-right: 15px;
+}
+
+.mjb-job-form {
+    max-width: 600px;
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #eee;
+    background: #f9f9f9;
+}
+
+.mjb-job-form p {
+    margin-bottom: 15px;
+}
+
+.mjb-job-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.mjb-job-form input[type="text"],
+.mjb-job-form textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.mjb-job-form input[type="submit"] {
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.mjb-job-form input[type="submit"]:hover {
+    background: #005177;
+}
+
+.mjb-success {
+    color: green;
+    background: #eaffea;
+    padding: 10px;
+    border: 1px solid #ccffcc;
+}
