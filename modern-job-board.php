@@ -23,6 +23,7 @@ require_once MJB_PATH . 'includes/class-mjb-cpt.php';
 require_once MJB_PATH . 'includes/class-mjb-shortcodes.php';
 require_once MJB_PATH . 'includes/class-mjb-admin.php';
 require_once MJB_PATH . 'includes/class-mjb-template-loader.php';
+require_once MJB_PATH . 'includes/class-mjb-applications.php';
 
 /**
  * Main Plugin Class
@@ -80,6 +81,10 @@ class Modern_Job_Board
         // Initialize Template Loader
         $template_loader = new MJB_Template_Loader();
         $template_loader->init();
+
+        // Initialize Applications
+        $applications = new MJB_Applications();
+        $applications->init();
 
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
