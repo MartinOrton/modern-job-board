@@ -11,6 +11,53 @@ get_header(); ?>
     </header>
 
     <div class="mjb-content-area">
+        <aside class="mjb-sidebar">
+            <form action="<?php echo get_post_type_archive_link('job_listing'); ?>" method="GET"
+                class="mjb-search-form">
+                <h3><?php _e('Filter Jobs', 'modern-job-board'); ?></h3>
+
+                <p>
+                    <label for="search_keywords"><?php _e('Keywords', 'modern-job-board'); ?></label>
+                    <input type="text" name="search_keywords" id="search_keywords"
+                        value="<?php echo isset($_GET['search_keywords']) ? esc_attr($_GET['search_keywords']) : ''; ?>">
+                </p>
+
+                <p>
+                    <label for="search_location"><?php _e('Location', 'modern-job-board'); ?></label>
+                    <select name="search_location" id="search_location">
+                        <option value=""><?php _e('All Locations', 'modern-job-board'); ?></option>
+                        <?php
+                        $locations = get_terms(array('taxonomy' => 'job_location', 'hide_empty' => false));
+                        foreach ($locations as $location) {
+                            $selected = isset($_GET['search_location']) && $_GET['search_location'] == $location->slug ? 'selected' : '';
+                            echo '<option value="' . esc_attr($location->slug) . '" ' . $selected . '>' . esc_html($location->name) . '</option>';
+                        }
+                        ?>
+                    </select>
+                </p>
+
+                <p>
+                    <label for="search_category"><?php _e('Category', 'modern-job-board'); ?></label>
+                    <select name="search_category" id="search_category">
+                        <option value=""><?php _e('All Categories', 'modern-job-board'); ?></option>
+                        <?php
+                        $categories = get_terms(array('taxonomy' => 'job_category', 'hide_empty' => false));
+                        foreach ($categories as $category) {
+                            $selected = isset($_GET['search_category']) && $_GET['search_category'] == $category->slug ? 'selected' : '';
+                            echo '<option value="' . esc_attr($category->slug) . '" ' . $selected . '>' . esc_html($category->name) . '</option>';
+                        }
+                        ?>
+                    </select>
+                </p>
+
+                <p>
+                    <input type="submit" value="<?php _e('Search', 'modern-job-board'); ?>">
+                    <a href="<?php echo get_post_type_archive_link('job_listing'); ?>"
+                        class="mjb-reset-button"><?php _e('Reset', 'modern-job-board'); ?></a>
+                </p>
+            </form>
+        </aside>
+
         <main class="site-main">
             <?php if (have_posts()): ?>
                 <div class="mjb-job-list">

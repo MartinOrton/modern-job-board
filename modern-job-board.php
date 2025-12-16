@@ -24,6 +24,7 @@ require_once MJB_PATH . 'includes/class-mjb-shortcodes.php';
 require_once MJB_PATH . 'includes/class-mjb-admin.php';
 require_once MJB_PATH . 'includes/class-mjb-template-loader.php';
 require_once MJB_PATH . 'includes/class-mjb-applications.php';
+require_once MJB_PATH . 'includes/class-mjb-search.php';
 
 /**
  * Main Plugin Class
@@ -85,6 +86,10 @@ class Modern_Job_Board
         // Initialize Applications
         $applications = new MJB_Applications();
         $applications->init();
+
+        // Initialize Search
+        $search = new MJB_Search();
+        $search->init();
 
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));

@@ -32,6 +32,40 @@ class MJB_Shortcodes
             'post_status' => 'publish',
             'posts_per_page' => 10,
         );
+
+        // Apply Search Filters
+        $search = new MJB_Search();
+        // Create a temporary WP_Query to use methods or manually apply args (MJB_Search uses pre_get_posts which targets the main query, for shortcodes we need to manually build args or use a custom method).
+        // Refactoring MJB_Search slightly to allow arg modification would be cleaner, but for now we can duplicate logic or instantiate a query.
+
+        // Actually, MJB_Search::apply_search_criteria expects a WP_Query object.
+        $jobs = new WP_Query();
+
+        // Let's modify args directly for the Custom Query
+        if (!empty($_GET['search_keywords'])) {
+            $args['s'] = sanitize_text_field($_GET['search_keywords']);
+        }
+
+        $tax_query = array();
+        if (!empty($_GET['search_location'])) {
+            $tax_query[] = array(
+                'taxonomy' => 'job_location',
+                'field' => 'slug',
+                'terms' => sanitize_text_field($_GET['search_location']),
+            );
+        }
+        if (!empty($_GET['search_category'])) {
+            $tax_query[] = array(
+                'taxonomy' => 'job_category',
+                'field' => 'slug',
+                'terms' => sanitize_text_field($_GET['search_category']),
+            );
+        }
+        if (!empty($tax_query)) {
+            $tax_query['relation'] = 'AND';
+            $args['tax_query'] = $tax_query;
+        }
+
         $jobs = new WP_Query($args);
 
         if ($jobs->have_posts()) {
