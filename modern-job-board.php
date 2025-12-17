@@ -25,6 +25,7 @@ require_once MJB_PATH . 'includes/class-mjb-admin.php';
 require_once MJB_PATH . 'includes/class-mjb-template-loader.php';
 require_once MJB_PATH . 'includes/class-mjb-applications.php';
 require_once MJB_PATH . 'includes/class-mjb-search.php';
+require_once MJB_PATH . 'includes/class-mjb-dashboard.php';
 
 /**
  * Main Plugin Class
@@ -90,6 +91,10 @@ class Modern_Job_Board
         // Initialize Search
         $search = new MJB_Search();
         $search->init();
+
+        // Initialize Dashboard
+        $dashboard = new MJB_Dashboard();
+        $dashboard->init();
 
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));

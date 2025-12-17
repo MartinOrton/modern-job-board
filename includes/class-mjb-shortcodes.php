@@ -17,7 +17,9 @@ class MJB_Shortcodes
     {
         add_shortcode('mjb_jobs', array($this, 'output_jobs'));
         add_shortcode('mjb_job_form', array($this, 'output_job_form'));
-        add_shortcode('mjb_dashboard', array($this, 'output_dashboard'));
+        add_shortcode('mjb_jobs', array($this, 'output_jobs'));
+        add_shortcode('mjb_job_form', array($this, 'output_job_form'));
+        // Dashboard shortcode moved to MJB_Dashboard class
     }
 
     /**
@@ -93,30 +95,68 @@ class MJB_Shortcodes
     /**
      * Output Job Submission Form.
      */
+    /**
+     * Output Job Submission Form.
+     */
     public function output_job_form($atts)
     {
-        // Basic form implementation
         ob_start();
+
+        // Check for Edit Actions
+        $job_id = 0;
+        $job_title = '';
+        $job_description = '';
+        $company_name = '';
+
+        if (isset($_GET['action']) && $_GET['action'] == 'edit' && isset($_GET['job_id'])) {
+            if (!is_user_logged_in()) {
+                echo '<p>' . __('You must be logged in to edit a job.', 'modern-job-board') . '</p>';
+                return ob_get_clean();
+            }
+
+            $job_id = intval($_GET['job_id']);
+            $job = get_post($job_id);
+
+            // Verify ownership
+            if (!$job || $job->post_type !== 'job_listing' || intval($job->post_author) !== get_current_user_id()) {
+                echo '<p>' . __('Invalid job or permission denied.', 'modern-job-board') . '</p>';
+                return ob_get_clean();
+            }
+
+            $job_title = $job->post_title;
+            $job_description = $job->post_content;
+            $company_name = get_post_meta($job_id, '_company_name', true);
+        }
+
+
         if (isset($_POST['mjb_submit_job']) && isset($_POST['mjb_job_nonce']) && wp_verify_nonce($_POST['mjb_job_nonce'], 'mjb_submit_job')) {
-            $this->handle_job_submission();
+            $this->handle_job_submission($job_id);
+            // If submitted, get updated values? Or redirect? For simplicity, we handle submission logic below.
         }
         ?>
         <form method="post" class="mjb-job-form" enctype="multipart/form-data">
             <?php wp_nonce_field('mjb_submit_job', 'mjb_job_nonce'); ?>
+            <?php if ($job_id): ?>
+                <input type="hidden" name="job_id" value="<?php echo esc_attr($job_id); ?>">
+            <?php endif; ?>
+
             <p>
                 <label for="job_title"><?php _e('Job Title', 'modern-job-board'); ?></label>
-                <input type="text" name="job_title" id="job_title" required>
+                <input type="text" name="job_title" id="job_title" value="<?php echo esc_attr($job_title); ?>" required>
             </p>
             <p>
                 <label for="job_description"><?php _e('Description', 'modern-job-board'); ?></label>
-                <textarea name="job_description" id="job_description" required></textarea>
+                <textarea name="job_description" id="job_description"
+                    required><?php echo esc_textarea($job_description); ?></textarea>
             </p>
             <p>
                 <label for="company_name"><?php _e('Company Name', 'modern-job-board'); ?></label>
-                <input type="text" name="company_name" id="company_name" required>
+                <input type="text" name="company_name" id="company_name" value="<?php echo esc_attr($company_name); ?>"
+                    required>
             </p>
             <p>
-                <input type="submit" name="mjb_submit_job" value="<?php _e('Submit Job', 'modern-job-board'); ?>">
+                <input type="submit" name="mjb_submit_job"
+                    value="<?php echo $job_id ? __('Update Job', 'modern-job-board') : __('Submit Job', 'modern-job-board'); ?>">
             </p>
         </form>
         <?php
@@ -126,36 +166,58 @@ class MJB_Shortcodes
     /**
      * Handle Job Submission.
      */
-    private function handle_job_submission()
+    private function handle_job_submission($existing_job_id = 0)
     {
         $title = sanitize_text_field($_POST['job_title']);
         $description = wp_kses_post($_POST['job_description']);
         $company = sanitize_text_field($_POST['company_name']);
 
+        // Check if updating via HIDDEN input (overrides argument if present)
+        if (isset($_POST['job_id']) && intval($_POST['job_id']) > 0) {
+            $existing_job_id = intval($_POST['job_id']);
+            // Re-verify ownership for security (double check)
+            $job = get_post($existing_job_id);
+            if (!$job || intval($job->post_author) !== get_current_user_id()) {
+                return;
+            }
+        }
+
         $post_data = array(
             'post_title' => $title,
             'post_content' => $description,
             'post_type' => 'job_listing',
-            'post_status' => 'pending', // Pending review
+            'post_status' => 'pending', // Always reset to pending on edit? Or keep status? Let's keep status if edit.
         );
 
-        $post_id = wp_insert_post($post_data);
+        if ($existing_job_id) {
+            $post_data['ID'] = $existing_job_id;
+            // Don't change status if editing, unless we want to re-review. Let's keep current status for now for simplicity, or pending if logic requires.
+            // Actually, usually edits require re-approval. Let's set to pending.
+            $post_data['post_status'] = 'pending';
+            $post_id = wp_update_post($post_data);
+            $message = __('Job updated successfully! It is pending review.', 'modern-job-board');
+        } else {
+            $post_data['post_status'] = 'pending';
+            $post_id = wp_insert_post($post_data);
+            $message = __('Job submitted successfully! It is pending review.', 'modern-job-board');
+        }
 
         if ($post_id) {
             update_post_meta($post_id, '_company_name', $company);
-            echo '<p class="mjb-success">' . __('Job submitted successfully! It is pending review.', 'modern-job-board') . '</p>';
+            echo '<p class="mjb-success">' . $message . '</p>';
         }
     }
 
     /**
      * Output Employer Dashboard.
      */
-    public function output_dashboard($atts)
-    {
-        if (!is_user_logged_in()) {
-            return '<p>' . __('You must be logged in to view the dashboard.', 'modern-job-board') . '</p>';
-        }
-        // Placeholder for dashboard
-        return '<div class="mjb-dashboard"><h3>' . __('Employer Dashboard', 'modern-job-board') . '</h3><p>' . __('Manage your jobs here.', 'modern-job-board') . '</p></div>';
-    }
+    /**
+     * Output Employer Dashboard.
+     * Note: This is now handled by MJB_Dashboard class, so this method is deprecated/removed or delegates.
+     * But since we registered the shortcode in MJB_Shortcodes initially, we should remove it from here if we want MJB_Dashboard to handle it.
+     * OR we update this method to delegate.
+     * 
+     * To avoid conflict, I will remove the registration from init() above and remove this method.
+     */
+    // Removing method logic as it is superseded.
 }
