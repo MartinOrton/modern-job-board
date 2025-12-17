@@ -42,6 +42,14 @@ class MJB_Template_Loader
             } else {
                 return MJB_PATH . 'templates/single-job.php';
             }
+        } elseif (is_singular('company')) {
+            $theme_files = array('single-company.php');
+            $exists_in_theme = locate_template($theme_files, false);
+            if ($exists_in_theme != '') {
+                return $exists_in_theme;
+            } else {
+                return MJB_PATH . 'templates/single-company.php';
+            }
         }
 
         return $template;

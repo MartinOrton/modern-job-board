@@ -125,8 +125,15 @@ class MJB_Shortcodes
 
             $job_title = $job->post_title;
             $job_description = $job->post_content;
+            $selected_company_id = get_post_meta($job_id, '_company_id', true);
+            // Fallback to text name if no ID
             $company_name = get_post_meta($job_id, '_company_name', true);
         }
+        
+        $user_companies = $this->get_user_companies(get_current_user_id());
+        $selected_company_id = isset($selected_company_id) ? $selected_company_id : '';
+        // If editing and we only have text name (legacy), we might not match a company ID. That's fine.
+
 
 
         if (isset($_POST['mjb_submit_job']) && isset($_POST['mjb_job_nonce']) && wp_verify_nonce($_POST['mjb_job_nonce'], 'mjb_submit_job')) {
@@ -150,10 +157,36 @@ class MJB_Shortcodes
                     required><?php echo esc_textarea($job_description); ?></textarea>
             </p>
             <p>
-                <label for="company_name"><?php _e('Company Name', 'modern-job-board'); ?></label>
-                <input type="text" name="company_name" id="company_name" value="<?php echo esc_attr($company_name); ?>"
-                    required>
+                <label for="company_selection"><?php _e('Company', 'modern-job-board'); ?></label>
+                <select name="company_selection" id="company_selection" required onchange="toggleCompanyInput()">
+                    <option value="new"><?php _e('Create New Company', 'modern-job-board'); ?></option>
+                    <?php foreach ($user_companies as $company) : ?>
+                        <option value="<?php echo esc_attr($company->ID); ?>" <?php selected($selected_company_id, $company->ID); ?>>
+                            <?php echo esc_html($company->post_title); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </p>
+            <p id="new-company-field" style="<?php echo $selected_company_id ? 'display:none;' : ''; ?>">
+                <label for="new_company_name"><?php _e('New Company Name', 'modern-job-board'); ?></label>
+                <input type="text" name="new_company_name" id="new_company_name" value="<?php echo empty($selected_company_id) ? esc_attr($company_name) : ''; ?>">
+            </p>
+            
+            <script>
+                function toggleCompanyInput() {
+                    var select = document.getElementById('company_selection');
+                    var input = document.getElementById('new-company-field');
+                    if (select.value === 'new') {
+                        input.style.display = 'block';
+                        document.getElementById('new_company_name').required = true;
+                    } else {
+                        input.style.display = 'none';
+                        document.getElementById('new_company_name').required = false;
+                    }
+                }
+                // Run on load
+                window.onload = function() { toggleCompanyInput(); };
+            </script>
             <p>
                 <input type="submit" name="mjb_submit_job"
                     value="<?php echo $job_id ? __('Update Job', 'modern-job-board') : __('Submit Job', 'modern-job-board'); ?>">
@@ -170,7 +203,37 @@ class MJB_Shortcodes
     {
         $title = sanitize_text_field($_POST['job_title']);
         $description = wp_kses_post($_POST['job_description']);
-        $company = sanitize_text_field($_POST['company_name']);
+        
+        // Handle Company Logic
+        $company_selection = sanitize_text_field($_POST['company_selection']);
+        $company_id = 0;
+        $company_name_text = '';
+
+        if ($company_selection === 'new') {
+            $company_name_text = sanitize_text_field($_POST['new_company_name']);
+            if (empty($company_name_text)) {
+                // Error handling should be better, but for now:
+                return; 
+            }
+            
+            // Create new Company
+            $company_post = array(
+                'post_title' => $company_name_text,
+                'post_type' => 'company',
+                'post_status' => 'publish',
+                'post_author' => get_current_user_id(),
+            );
+            $company_id = wp_insert_post($company_post);
+        } else {
+            $company_id = intval($company_selection);
+            // Verify ownership
+            $company_post = get_post($company_id);
+            if (!$company_post || $company_post->post_type !== 'company' || intval($company_post->post_author) !== get_current_user_id()) {
+                // Invalid company selected
+                 return;
+            }
+            $company_name_text = $company_post->post_title;
+        }
 
         // Check if updating via HIDDEN input (overrides argument if present)
         if (isset($_POST['job_id']) && intval($_POST['job_id']) > 0) {
@@ -203,9 +266,27 @@ class MJB_Shortcodes
         }
 
         if ($post_id) {
-            update_post_meta($post_id, '_company_name', $company);
+            update_post_meta($post_id, '_company_name', $company_name_text); // Legacy/Fallback
+            if ($company_id) {
+                update_post_meta($post_id, '_company_id', $company_id);
+            }
             echo '<p class="mjb-success">' . $message . '</p>';
         }
+    }
+
+    /**
+     * Get User Companies.
+     */
+    private function get_user_companies($user_id)
+    {
+        $args = array(
+            'post_type' => 'company',
+            'post_status' => 'publish', // Companies should be published to be selected? Or pending allowed? let's say publish.
+            'posts_per_page' => -1,
+            'author' => $user_id,
+        );
+        $user_companies = get_posts($args);
+        return $user_companies;
     }
 
     /**

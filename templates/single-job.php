@@ -16,7 +16,20 @@ get_header(); ?>
                         <div class="mjb-job-meta">
                             <span><?php echo get_the_term_list(get_the_ID(), 'job_type', '', ', '); ?></span>
                             <span><?php echo get_the_term_list(get_the_ID(), 'job_location', '', ', '); ?></span>
-                            <span><?php echo get_post_meta(get_the_ID(), '_company_name', true); ?></span>
+                            <?php
+                            $company_name = get_post_meta(get_the_ID(), '_company_name', true);
+                            $company_id = get_post_meta(get_the_ID(), '_company_id', true);
+
+                            if ($company_id && get_post($company_id)) {
+                                echo '<p class="company-name"><strong>' . __('Company:', 'modern-job-board') . '</strong> <a href="' . get_permalink($company_id) . '">' . esc_html(get_the_title($company_id)) . '</a></p>';
+                            } elseif ($company_name) {
+                                echo '<p class="company-name"><strong>' . __('Company:', 'modern-job-board') . '</strong> ' . esc_html($company_name) . '</p>';
+                            }
+                            ?>
+                            <p class="posted-date"><strong><?php _e('Posted:', 'modern-job-board'); ?></strong>
+                                <?php echo get_the_date(); ?></p>
+                            <p class="job-category"><strong><?php _e('Category:', 'modern-job-board'); ?></strong>
+                                <?php echo get_the_term_list(get_the_ID(), 'job_category', '', ', '); ?></p>
                         </div>
                     </header>
 
