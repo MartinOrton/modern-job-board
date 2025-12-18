@@ -237,6 +237,30 @@ class MJB_Shortcodes
                 <input type="text" name="new_company_name" id="new_company_name" value="<?php echo empty($selected_company_id) ? esc_attr($company_name) : ''; ?>">
             </p>
             
+            <!-- Application Method -->
+            <p>
+                <label><?php _e('Application Method', 'modern-job-board'); ?></label><br>
+                <label>
+                    <input type="radio" name="application_method" value="internal" checked onclick="toggleApplicationMethod()"> 
+                    <?php _e('Email (Internal Form)', 'modern-job-board'); ?>
+                </label>
+                <br>
+                <label>
+                    <input type="radio" name="application_method" value="external" onclick="toggleApplicationMethod()"> 
+                    <?php _e('External URL', 'modern-job-board'); ?>
+                </label>
+            </p>
+
+            <p id="app-email-field">
+                <label for="application_email"><?php _e('Notification Email', 'modern-job-board'); ?></label>
+                <input type="email" name="application_email" id="application_email" value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>">
+            </p>
+
+            <p id="app-url-field" style="display:none;">
+                <label for="application_url"><?php _e('External Application URL', 'modern-job-board'); ?></label>
+                <input type="url" name="application_url" id="application_url" placeholder="https://...">
+            </p>
+
             <script>
                 function toggleCompanyInput() {
                     var select = document.getElementById('company_selection');
@@ -249,8 +273,30 @@ class MJB_Shortcodes
                         document.getElementById('new_company_name').required = false;
                     }
                 }
+
+                function toggleApplicationMethod() {
+                    var method = document.querySelector('input[name="application_method"]:checked').value;
+                    var emailField = document.getElementById('app-email-field');
+                    var urlField = document.getElementById('app-url-field');
+                    
+                    if (method === 'internal') {
+                        emailField.style.display = 'block';
+                        urlField.style.display = 'none';
+                        document.getElementById('application_email').required = true;
+                        document.getElementById('application_url').required = false;
+                    } else {
+                        emailField.style.display = 'none';
+                        urlField.style.display = 'block';
+                        document.getElementById('application_email').required = false;
+                        document.getElementById('application_url').required = true;
+                    }
+                }
+
                 // Run on load
-                window.onload = function() { toggleCompanyInput(); };
+                window.onload = function() { 
+                    toggleCompanyInput(); 
+                    toggleApplicationMethod();
+                };
             </script>
             <p>
                 <input type="submit" name="mjb_submit_job"
@@ -339,6 +385,17 @@ class MJB_Shortcodes
             update_post_meta($post_id, '_company_name', $company_name_text); // Legacy/Fallback
             if ($company_id) {
                 update_post_meta($post_id, '_company_id', $company_id);
+            }
+            
+            // Save Application Method
+            if (isset($_POST['application_method'])) {
+                update_post_meta($post_id, '_application_method', sanitize_text_field($_POST['application_method']));
+            }
+            if (isset($_POST['application_email'])) {
+                update_post_meta($post_id, '_application_email', sanitize_email($_POST['application_email']));
+            }
+            if (isset($_POST['application_url'])) {
+                update_post_meta($post_id, '_application_url', esc_url_raw($_POST['application_url']));
             }
             
             // Send Notification

@@ -275,6 +275,32 @@ class MJB_Admin
             </label>
         </p>
         <?php
+        $method = get_post_meta($post->ID, '_application_method', true);
+        $app_email = get_post_meta($post->ID, '_application_email', true);
+        $app_url = get_post_meta($post->ID, '_application_url', true);
+        ?>
+        <p><strong><?php _e('Application Method', 'modern-job-board'); ?></strong></p>
+        <p>
+            <label>
+                <input type="radio" name="mjb_application_method" value="internal" <?php checked($method, 'internal'); ?>         <?php checked($method, ''); ?>>
+                <?php _e('Internal (Email)', 'modern-job-board'); ?>
+            </label><br>
+            <label>
+                <input type="radio" name="mjb_application_method" value="external" <?php checked($method, 'external'); ?>>
+                <?php _e('External URL', 'modern-job-board'); ?>
+            </label>
+        </p>
+        <p>
+            <label for="mjb_application_email"><?php _e('Notification Email', 'modern-job-board'); ?></label><br>
+            <input type="email" name="mjb_application_email" id="mjb_application_email"
+                value="<?php echo esc_attr($app_email); ?>" class="widefat">
+        </p>
+        <p>
+            <label for="mjb_application_url"><?php _e('External URL', 'modern-job-board'); ?></label><br>
+            <input type="url" name="mjb_application_url" id="mjb_application_url" value="<?php echo esc_attr($app_url); ?>"
+                class="widefat">
+        </p>
+        <?php
     }
 
     /**
@@ -302,5 +328,16 @@ class MJB_Admin
         // Save Featured
         $featured = isset($_POST['mjb_featured']) ? 1 : 0;
         update_post_meta($post_id, '_featured', $featured);
+
+        // Save Application Method
+        if (isset($_POST['mjb_application_method'])) {
+            update_post_meta($post_id, '_application_method', sanitize_text_field($_POST['mjb_application_method']));
+        }
+        if (isset($_POST['mjb_application_email'])) {
+            update_post_meta($post_id, '_application_email', sanitize_email($_POST['mjb_application_email']));
+        }
+        if (isset($_POST['mjb_application_url'])) {
+            update_post_meta($post_id, '_application_url', esc_url_raw($_POST['mjb_application_url']));
+        }
     }
 }
