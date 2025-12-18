@@ -107,6 +107,16 @@ class Modern_Job_Board
         $cron = new MJB_Cron();
         $cron->init();
 
+        // Initialize Employer Registration
+        require_once MJB_PATH . 'includes/class-mjb-employer-registration.php';
+        $registration = new MJB_Employer_Registration();
+        $registration->init();
+
+        // Initialize Candidate Registration
+        require_once MJB_PATH . 'includes/class-mjb-candidate-registration.php';
+        $candidate_registration = new MJB_Candidate_Registration();
+        $candidate_registration->init();
+
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
     }
