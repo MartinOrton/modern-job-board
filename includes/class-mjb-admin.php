@@ -105,6 +105,13 @@ class MJB_Admin
             'mjb-settings',
             'mjb_listing_section'
         );
+
+        // Payment Settings
+        register_setting('mjb_settings_group', 'mjb_payment_required');
+        add_settings_field('mjb_payment_required', __('Require Payment', 'modern-job-board'), array($this, 'payment_required_callback'), 'mjb-settings', 'mjb_payment_section');
+
+        register_setting('mjb_settings_group', 'mjb_submission_product_id');
+        add_settings_field('mjb_submission_product_id', __('Submission Product ID', 'modern-job-board'), array($this, 'submission_product_id_callback'), 'mjb-settings', 'mjb_payment_section');
     }
 
     /**
@@ -152,8 +159,21 @@ class MJB_Admin
 
     public function google_maps_api_key_callback()
     {
-        $value = get_option('mjb_google_maps_api_key');
-        echo '<input type="text" name="mjb_google_maps_api_key" value="' . esc_attr($value) . '" class="regular-text">';
+        $api_key = get_option('mjb_google_maps_api_key');
+        echo '<input type="text" name="mjb_google_maps_api_key" value="' . esc_attr($api_key) . '" class="regular-text">';
+    }
+
+    public function payment_required_callback()
+    {
+        $required = get_option('mjb_payment_required');
+        echo '<input type="checkbox" name="mjb_payment_required" value="1" ' . checked(1, $required, false) . '> ' . __('Enable Pay-Per-Post', 'modern-job-board');
+    }
+
+    public function submission_product_id_callback()
+    {
+        $id = get_option('mjb_submission_product_id');
+        echo '<input type="number" name="mjb_submission_product_id" value="' . esc_attr($id) . '" class="small-text">';
+        echo '<p class="description">' . __('Enter the WooCommerce Product ID for the job listing fee.', 'modern-job-board') . '</p>';
     }
 
     /**

@@ -177,11 +177,21 @@ class MJB_CPT
         register_post_status('expired', array(
             'label' => _x('Expired', 'post status', 'modern-job-board'),
             'public' => true,
-            'protected' => true, // Protected so it doesn't show in frontend loop by default unless queried
+            'protected' => true,
             'exclude_from_search' => true,
             'show_in_admin_all_list' => true,
             'show_in_admin_status_list' => true,
             'label_count' => _n_noop('Expired <span class="count">(%s)</span>', 'Expired <span class="count">(%s)</span>', 'modern-job-board'),
+        ));
+
+        register_post_status('pending_payment', array(
+            'label' => _x('Pending Payment', 'post status', 'modern-job-board'),
+            'public' => false,
+            'protected' => true,
+            'exclude_from_search' => true,
+            'show_in_admin_all_list' => true,
+            'show_in_admin_status_list' => true,
+            'label_count' => _n_noop('Pending Payment <span class="count">(%s)</span>', 'Pending Payment <span class="count">(%s)</span>', 'modern-job-board'),
         ));
     }
 

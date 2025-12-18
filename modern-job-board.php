@@ -122,6 +122,13 @@ class Modern_Job_Board
         $candidate_dashboard = new MJB_Candidate_Dashboard();
         $candidate_dashboard->init();
 
+        // Initialize WooCommerce Integration
+        if (class_exists('WooCommerce')) {
+            require_once MJB_PATH . 'includes/class-mjb-woocommerce.php';
+            $mjb_woocommerce = new MJB_WooCommerce();
+            $mjb_woocommerce->init();
+        }
+
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
     }
