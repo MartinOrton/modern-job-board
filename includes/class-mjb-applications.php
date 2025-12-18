@@ -122,6 +122,12 @@ class MJB_Applications
                 update_post_meta($application_id, '_candidate_resume', $resume_url);
             }
 
+            // Send Notification
+            global $mjb_emails;
+            if (isset($mjb_emails)) {
+                $mjb_emails->send_new_application_notification($application_id);
+            }
+
             // Redirect to prevent resubmission
             wp_safe_redirect(add_query_arg('application_submitted', 'true', get_permalink($job_id)));
             exit;

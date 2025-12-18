@@ -17,6 +17,11 @@ class MJB_CPT
     {
         add_action('init', array($this, 'register_post_types'));
         add_action('init', array($this, 'register_taxonomies'));
+        add_action('init', array($this, 'register_post_statuses'));
+
+        // Frontend hooks
+        add_filter('the_content', array($this, 'append_job_map'));
+        add_action('wp_head', array($this, 'output_job_schema'));
     }
 
     /**
@@ -162,5 +167,118 @@ class MJB_CPT
             'show_tagcloud' => true,
         );
         register_taxonomy('job_location', array('job_listing'), $args_loc);
+    }
+
+    /**
+     * Register Custom Post Statuses.
+     */
+    public function register_post_statuses()
+    {
+        register_post_status('expired', array(
+            'label' => _x('Expired', 'post status', 'modern-job-board'),
+            'public' => true,
+            'protected' => true, // Protected so it doesn't show in frontend loop by default unless queried
+            'exclude_from_search' => true,
+            'show_in_admin_all_list' => true,
+            'show_in_admin_status_list' => true,
+            'label_count' => _n_noop('Expired <span class="count">(%s)</span>', 'Expired <span class="count">(%s)</span>', 'modern-job-board'),
+        ));
+    }
+
+    /**
+     * Append Google Map to Job Content.
+     */
+    public function append_job_map($content)
+    {
+        if (!is_singular('job_listing') || !in_the_loop() || !is_main_query()) {
+            return $content;
+        }
+
+        $api_key = get_option('mjb_google_maps_api_key');
+        if (empty($api_key)) {
+            return $content;
+        }
+
+        $terms = get_the_terms(get_the_ID(), 'job_location');
+        if (empty($terms) || is_wp_error($terms)) {
+            return $content;
+        }
+
+        $location = $terms[0]->name;
+        $map_url = 'https://www.google.com/maps/embed/v1/place?key=' . esc_attr($api_key) . '&q=' . urlencode($location);
+
+        $map_html = '<div class="mjb-map-container" style="margin-top: 30px;">';
+        $map_html .= '<h3>' . __('Job Location', 'modern-job-board') . '</h3>';
+        $map_html .= '<iframe width="100%" height="300" frameborder="0" style="border:0" src="' . esc_url($map_url) . '" allowfullscreen></iframe>';
+        $map_html .= '</div>';
+
+        return $content . $map_html;
+    }
+
+    /**
+     * Output Job Schema (JSON-LD).
+     */
+    public function output_job_schema()
+    {
+        if (!is_singular('job_listing')) {
+            return;
+        }
+
+        global $post;
+
+        $job_title = get_the_title();
+        $job_description = wp_strip_all_tags($post->post_content);
+        $date_posted = get_the_date('c');
+        $expires = get_post_meta($post->ID, '_job_expires', true);
+
+        // Company
+        $company_name = get_post_meta($post->ID, '_company_name', true);
+        if (!$company_name) {
+            $company_name = get_bloginfo('name');
+        }
+
+        // Location
+        $location_name = '';
+        $terms = get_the_terms($post->ID, 'job_location');
+        if ($terms && !is_wp_error($terms)) {
+            $location_name = $terms[0]->name;
+        }
+
+        // Job Type
+        $employment_type = '';
+        $type_terms = get_the_terms($post->ID, 'job_type');
+        if ($type_terms && !is_wp_error($type_terms)) {
+            // Map common types to Schema.org types if possible, else use name
+            $employment_type = $type_terms[0]->name;
+        }
+
+        $schema = array(
+            '@context' => 'https://schema.org/',
+            '@type' => 'JobPosting',
+            'title' => $job_title,
+            'description' => $job_description,
+            'datePosted' => $date_posted,
+            'hiringOrganization' => array(
+                '@type' => 'Organization',
+                'name' => $company_name,
+            ),
+            'jobLocation' => array(
+                '@type' => 'Place',
+                'address' => array(
+                    '@type' => 'PostalAddress',
+                    'addressLocality' => $location_name,
+                ),
+            ),
+        );
+
+        if ($expires) {
+            $schema['validThrough'] = date('c', strtotime($expires));
+        }
+
+        if ($employment_type) {
+            $schema['employmentType'] = $employment_type;
+        }
+
+        echo '<script type="application/ld+json">' . json_encode($schema) . '</script>';
     }
 }

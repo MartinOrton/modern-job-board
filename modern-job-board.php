@@ -26,6 +26,7 @@ require_once MJB_PATH . 'includes/class-mjb-template-loader.php';
 require_once MJB_PATH . 'includes/class-mjb-applications.php';
 require_once MJB_PATH . 'includes/class-mjb-search.php';
 require_once MJB_PATH . 'includes/class-mjb-dashboard.php';
+require_once MJB_PATH . 'includes/class-mjb-emails.php';
 
 /**
  * Main Plugin Class
@@ -96,6 +97,16 @@ class Modern_Job_Board
         $dashboard = new MJB_Dashboard();
         $dashboard->init();
 
+        // Initialize Emails
+        global $mjb_emails;
+        $mjb_emails = new MJB_Emails();
+        $mjb_emails->init();
+
+        // Initialize Cron
+        require_once MJB_PATH . 'includes/class-mjb-cron.php';
+        $cron = new MJB_Cron();
+        $cron->init();
+
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
     }
@@ -106,6 +117,12 @@ class Modern_Job_Board
     public function enqueue_scripts()
     {
         wp_enqueue_style('mjb-style', MJB_URL . 'assets/css/mjb-style.css', array(), MJB_VERSION);
+
+        wp_enqueue_script('mjb-ajax-search', MJB_URL . 'assets/js/mjb-ajax-search.js', array('jquery'), MJB_VERSION, true);
+        wp_localize_script('mjb-ajax-search', 'mjb_ajax', array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('mjb_search_nonce')
+        ));
     }
 }
 

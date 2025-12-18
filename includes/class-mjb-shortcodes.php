@@ -28,6 +28,38 @@ class MJB_Shortcodes
     public function output_jobs($atts)
     {
         ob_start();
+
+        // Search Form
+        ?>
+        <form id="mjb-job-filter" class="mjb-job-filter" method="GET" action="">
+            <div class="mjb-filter-row">
+                <input type="text" name="search_keywords" placeholder="<?php _e('Keywords...', 'modern-job-board'); ?>" value="<?php echo isset($_GET['search_keywords']) ? esc_attr($_GET['search_keywords']) : ''; ?>">
+                <input type="text" name="search_location" placeholder="<?php _e('Location...', 'modern-job-board'); ?>" value="<?php echo isset($_GET['search_location']) ? esc_attr($_GET['search_location']) : ''; ?>">
+                
+                <?php
+                wp_dropdown_categories(array(
+                    'taxonomy' => 'job_category',
+                    'name' => 'search_category',
+                    'show_option_all' => __('All Categories', 'modern-job-board'),
+                    'value_field' => 'slug',
+                    'selected' => isset($_GET['search_category']) ? $_GET['search_category'] : '',
+                    'hierarchical' => true,
+                ));
+
+                wp_dropdown_categories(array(
+                    'taxonomy' => 'job_type',
+                    'name' => 'search_type',
+                    'show_option_all' => __('All Job Types', 'modern-job-board'),
+                    'value_field' => 'slug',
+                    'selected' => isset($_GET['search_type']) ? $_GET['search_type'] : '',
+                ));
+                ?>
+                <input type="submit" value="<?php _e('Search', 'modern-job-board'); ?>">
+            </div>
+            <div class="mjb-loader" style="display:none;"><?php _e('Loading...', 'modern-job-board'); ?></div>
+        </form>
+        <?php
+
         // Query jobs
         $args = array(
             'post_type' => 'job_listing',
@@ -35,15 +67,8 @@ class MJB_Shortcodes
             'posts_per_page' => 10,
         );
 
-        // Apply Search Filters
-        $search = new MJB_Search();
-        // Create a temporary WP_Query to use methods or manually apply args (MJB_Search uses pre_get_posts which targets the main query, for shortcodes we need to manually build args or use a custom method).
-        // Refactoring MJB_Search slightly to allow arg modification would be cleaner, but for now we can duplicate logic or instantiate a query.
-
-        // Actually, MJB_Search::apply_search_criteria expects a WP_Query object.
-        $jobs = new WP_Query();
-
-        // Let's modify args directly for the Custom Query
+        // Apply Search Filters Manual (Shortcode context)
+        // Note: Ideally we'd use MJB_Search logic here, but for consistency with inline args:
         if (!empty($_GET['search_keywords'])) {
             $args['s'] = sanitize_text_field($_GET['search_keywords']);
         }
@@ -54,6 +79,10 @@ class MJB_Shortcodes
                 'taxonomy' => 'job_location',
                 'field' => 'slug',
                 'terms' => sanitize_text_field($_GET['search_location']),
+                'operator' => 'IN' // Location is usually strictly matched or 'LIKE' if text? WP Tax query is strict terms. 
+                // If using text input for location, user might type "New York" but slug is "new-york". 
+                // Real implementation needs smart matching. For now, we assume slug or strict match for simplicity or improve MJB_Search later.
+                // Let's rely on basic term match for now.
             );
         }
         if (!empty($_GET['search_category'])) {
@@ -63,6 +92,14 @@ class MJB_Shortcodes
                 'terms' => sanitize_text_field($_GET['search_category']),
             );
         }
+        if (!empty($_GET['search_type'])) {
+            $tax_query[] = array(
+                'taxonomy' => 'job_type',
+                'field' => 'slug',
+                'terms' => sanitize_text_field($_GET['search_type']),
+            );
+        }
+
         if (!empty($tax_query)) {
             $tax_query['relation'] = 'AND';
             $args['tax_query'] = $tax_query;
@@ -70,26 +107,54 @@ class MJB_Shortcodes
 
         $jobs = new WP_Query($args);
 
+        echo '<div id="mjb-jobs-list">';
+        self::render_job_loop($jobs);
+        echo '</div>';
+
+        wp_reset_postdata();
+
+        return ob_get_clean();
+    }
+
+    /**
+     * Render Job Loop HTML.
+     * Static helper for reuse in AJAX.
+     */
+    public static function render_job_loop($jobs)
+    {
         if ($jobs->have_posts()) {
             echo '<div class="mjb-job-list">';
             while ($jobs->have_posts()) {
                 $jobs->the_post();
-                // This is a simple list for now, ideally we'd load a template part
-                echo '<div class="mjb-job-item">';
+                
+                $featured = get_post_meta(get_the_ID(), '_featured', true);
+                $featured_class = $featured ? ' mjb-featured' : '';
+                
+                echo '<div class="mjb-job-item' . esc_attr($featured_class) . '">';
                 echo '<h3><a href="' . get_permalink() . '">' . get_the_title() . '</a></h3>';
                 echo '<div class="mjb-job-meta">';
                 echo '<span>' . get_the_term_list(get_the_ID(), 'job_type', '', ', ') . '</span>';
                 echo '<span>' . get_the_term_list(get_the_ID(), 'job_location', '', ', ') . '</span>';
+                
+                // Show Company if available
+                $company_name = get_post_meta(get_the_ID(), '_company_name', true);
+                if ($company_name) {
+                    echo '<span> | ' . esc_html($company_name) . '</span>';
+                }
+                
+                // Show Expiration Date? Optional.
+                $expires = get_post_meta(get_the_ID(), '_job_expires', true);
+                if ($expires) {
+                     echo '<span class="mjb-meta-right">' . sprintf(__('Exp: %s', 'modern-job-board'), date_i18n(get_option('date_format'), strtotime($expires))) . '</span>';
+                }
+
                 echo '</div>'; // .mjb-job-meta
                 echo '</div>'; // .mjb-job-item
             }
             echo '</div>'; // .mjb-job-list
-            wp_reset_postdata();
         } else {
             echo '<p>' . __('No jobs found.', 'modern-job-board') . '</p>';
         }
-
-        return ob_get_clean();
     }
 
     /**
@@ -263,6 +328,11 @@ class MJB_Shortcodes
             $post_data['post_status'] = 'pending';
             $post_id = wp_insert_post($post_data);
             $message = __('Job submitted successfully! It is pending review.', 'modern-job-board');
+
+            // Set Expiration Date
+            $duration = get_option('mjb_listing_duration', 30);
+            $expires = date('Y-m-d', strtotime("+$duration days"));
+            update_post_meta($post_id, '_job_expires', $expires);
         }
 
         if ($post_id) {
@@ -270,6 +340,13 @@ class MJB_Shortcodes
             if ($company_id) {
                 update_post_meta($post_id, '_company_id', $company_id);
             }
+            
+            // Send Notification
+            global $mjb_emails;
+            if (isset($mjb_emails)) {
+                $mjb_emails->send_new_job_notification($post_id);
+            }
+            
             echo '<p class="mjb-success">' . $message . '</p>';
         }
     }

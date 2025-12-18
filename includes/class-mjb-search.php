@@ -17,7 +17,65 @@ class MJB_Search
     {
         add_action('pre_get_posts', array($this, 'filter_jobs_query'));
         add_filter('query_vars', array($this, 'register_query_vars'));
-        add_action('template_redirect', array($this, 'redirect_to_clean_url'));
+        add_action('wp_ajax_mjb_filter_jobs', array($this, 'ajax_filter_jobs'));
+        add_action('wp_ajax_nopriv_mjb_filter_jobs', array($this, 'ajax_filter_jobs'));
+    }
+
+    /**
+     * AJAX Filter Jobs.
+     */
+    public function ajax_filter_jobs()
+    {
+        check_ajax_referer('mjb_search_nonce', 'security');
+
+        $args = array(
+            'post_type' => 'job_listing',
+            'post_status' => 'publish',
+            'posts_per_page' => 10,
+        );
+
+        if (!empty($_POST['search_keywords'])) {
+            $args['s'] = sanitize_text_field($_POST['search_keywords']);
+        }
+
+        $tax_query = array();
+        if (!empty($_POST['search_location'])) {
+            $tax_query[] = array(
+                'taxonomy' => 'job_location',
+                'field' => 'slug', // Assuming text input matches slug... better to use term ID or name search, but stick to slug/term match for now.
+                'terms' => sanitize_text_field($_POST['search_location']),
+            );
+        }
+        if (!empty($_POST['search_category'])) {
+            $tax_query[] = array(
+                'taxonomy' => 'job_category',
+                'field' => 'slug',
+                'terms' => sanitize_text_field($_POST['search_category']),
+            );
+        }
+        if (!empty($_POST['search_type'])) {
+            $tax_query[] = array(
+                'taxonomy' => 'job_type',
+                'field' => 'slug',
+                'terms' => sanitize_text_field($_POST['search_type']),
+            );
+        }
+
+        if (!empty($tax_query)) {
+            $tax_query['relation'] = 'AND';
+            $args['tax_query'] = $tax_query;
+        }
+
+        $query = new WP_Query($args);
+
+        // Include MJB_Shortcodes if not available (should be)
+        if (class_exists('MJB_Shortcodes')) {
+            MJB_Shortcodes::render_job_loop($query);
+        } else {
+            echo 'Error: Shortcodes class not found.';
+        }
+
+        wp_die();
     }
 
     /**
