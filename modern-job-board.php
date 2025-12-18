@@ -117,6 +117,11 @@ class Modern_Job_Board
         $candidate_registration = new MJB_Candidate_Registration();
         $candidate_registration->init();
 
+        // Initialize Candidate Dashboard
+        require_once MJB_PATH . 'includes/class-mjb-candidate-dashboard.php';
+        $candidate_dashboard = new MJB_Candidate_Dashboard();
+        $candidate_dashboard->init();
+
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
     }

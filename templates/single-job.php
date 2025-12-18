@@ -51,24 +51,62 @@ get_header(); ?>
                                 echo '<p class="mjb-success">' . __('Application submitted successfully!', 'modern-job-board') . '</p>';
                             } else {
                                 ?>
+                                <?php
+                                $current_user = wp_get_current_user();
+                                $candidate_name = $current_user->exists() ? $current_user->first_name . ' ' . $current_user->last_name : '';
+                                $candidate_email = $current_user->exists() ? $current_user->user_email : '';
+                                $resume_id = $current_user->exists() ? get_user_meta($current_user->ID, '_candidate_resume_id', true) : false;
+                                $resume_url = $resume_id ? wp_get_attachment_url($resume_id) : '';
+                                ?>
                                 <form method="post" action="" enctype="multipart/form-data" class="mjb-application-form">
                                     <?php wp_nonce_field('mjb_submit_application', 'mjb_application_nonce'); ?>
                                     <input type="hidden" name="job_id" value="<?php echo get_the_ID(); ?>">
 
                                     <p>
                                         <label for="candidate_name"><?php _e('Full Name', 'modern-job-board'); ?></label>
-                                        <input type="text" name="candidate_name" id="candidate_name" required>
+                                        <input type="text" name="candidate_name" id="candidate_name"
+                                            value="<?php echo esc_attr(trim($candidate_name)); ?>" required>
                                     </p>
 
                                     <p>
                                         <label for="candidate_email"><?php _e('Email Address', 'modern-job-board'); ?></label>
-                                        <input type="email" name="candidate_email" id="candidate_email" required>
+                                        <input type="email" name="candidate_email" id="candidate_email"
+                                            value="<?php echo esc_attr($candidate_email); ?>" required>
                                     </p>
 
                                     <p>
                                         <label for="candidate_resume"><?php _e('Resume (PDF/Doc)', 'modern-job-board'); ?></label>
+                                        <?php if ($resume_url): ?>
+                                        <div class="mjb-profile-resume-option" style="margin-bottom: 10px;">
+                                            <label>
+                                                <input type="checkbox" name="mjb_use_profile_resume" id="mjb_use_profile_resume"
+                                                    value="1">
+                                                <?php printf(__('Attach my profile resume: <strong>%s</strong>', 'modern-job-board'), basename($resume_url)); ?>
+                                            </label>
+                                        </div>
+                                        <div id="mjb-upload-resume-container">
+                                            <input type="file" name="candidate_resume" id="candidate_resume" accept=".pdf,.doc,.docx"
+                                                required>
+                                            <span class="description"
+                                                style="font-size: 0.9em; color: #666; display: block; margin-top: 5px;"><?php _e('Or upload a different one:', 'modern-job-board'); ?></span>
+                                        </div>
+                                        <script>
+                                            document.getElementById('mjb_use_profile_resume').addEventListener('change', function () {
+                                                var uploadInput = document.getElementById('candidate_resume');
+                                                var container = document.getElementById('mjb-upload-resume-container');
+                                                if (this.checked) {
+                                                    uploadInput.removeAttribute('required');
+                                                    container.style.display = 'none';
+                                                } else {
+                                                    uploadInput.setAttribute('required', 'required');
+                                                    container.style.display = 'block';
+                                                }
+                                            });
+                                        </script>
+                                    <?php else: ?>
                                         <input type="file" name="candidate_resume" id="candidate_resume" accept=".pdf,.doc,.docx"
                                             required>
+                                    <?php endif; ?>
                                     </p>
 
                                     <p>
@@ -82,7 +120,7 @@ get_header(); ?>
                                             value="<?php _e('Submit Application', 'modern-job-board'); ?>">
                                     </p>
                                 </form>
-                            <?php
+                                <?php
                             }
                         }
                         ?>

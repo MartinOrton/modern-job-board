@@ -93,14 +93,28 @@ class MJB_Applications
             return;
         }
 
-        // Handle File Upload
+        // Handle File Upload or Logic
         $resume_url = '';
-        if (isset($_FILES['candidate_resume']) && !empty($_FILES['candidate_resume']['name'])) {
+
+        // Check if using profile resume
+        if (isset($_POST['mjb_use_profile_resume']) && is_user_logged_in()) {
+            $user_id = get_current_user_id();
+            $resume_id = get_user_meta($user_id, '_candidate_resume_id', true);
+            if ($resume_id) {
+                $resume_url = wp_get_attachment_url($resume_id);
+            }
+        }
+
+        // Fallback to upload if not using profile resume or if it failed
+        if (empty($resume_url) && isset($_FILES['candidate_resume']) && !empty($_FILES['candidate_resume']['name'])) {
             $resume_url = $this->handle_file_upload($_FILES['candidate_resume']);
             if (is_wp_error($resume_url)) {
                 // Handle error
                 return;
             }
+        } elseif (empty($resume_url)) {
+            // No resume found (neither profile nor upload)
+            return;
         }
 
         $post_title = sprintf(__('Application for %s by %s', 'modern-job-board'), get_the_title($job_id), $candidate_name);
