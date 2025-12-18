@@ -408,31 +408,48 @@ class MJB_Shortcodes
             $payment_required = get_option('mjb_payment_required');
             $product_id = get_option('mjb_submission_product_id');
             
-            if ($payment_required && $product_id && function_exists('wc_get_cart_url')) {
-                // Set to pending payment if new or if logic requires
-                // If editing, maybe no payment? For simplicity, we assume payment for NEW jobs only or if status was pending_payment.
-                // Let's apply to all for now or check if already paid. 
-                // Simple logic: If status is 'pending' and payment required -> redirect (assuming we set it to pending above).
-                // Wait, we set it to 'pending' above. We should set it to 'pending_payment' if new.
+            if ($payment_required) {
+                $user_id = get_current_user_id();
+                $credits = get_user_meta($user_id, '_mjb_job_credits', true);
+                $credits = $credits ? intval($credits) : 0;
 
-                if ($post_data['post_status'] === 'pending') { // Only if we just set it to pending (new or edit-reset)
-                     // Update status to pending_payment
-                     $update = array('ID' => $post_id, 'post_status' => 'pending_payment');
-                     wp_update_post($update);
+                // Check for Credits
+                if ($credits > 0) {
+                     // Use Credit
+                     $new_credits = $credits - 1;
+                     update_user_meta($user_id, '_mjb_job_credits', $new_credits);
                      
-                     // Add to Cart
-                     // We need to pass job_id to add_to_cart_url or handle via query arg that MJB_WooCommerce catches
-                     // Standard WC add_to_cart doesn't natively accept custom data easily via URL without hook.
-                     // The MJB_WooCommerce::add_job_id_to_cart uses look for $_GET['mjb_job_id'].
+                     // Publish Job immediately (bypass pending_payment)
+                     // If previously set to pending, update to publish.
+                     wp_update_post(array(
+                         'ID' => $post_id,
+                         'post_status' => 'publish'
+                     ));
                      
-                     $cart_url = wc_get_cart_url();
-                     $redirect_url = add_query_arg(array(
-                         'add-to-cart' => $product_id,
-                         'mjb_job_id' => $post_id
-                     ), $cart_url);
+                     // Optional: Add note that credit was used
+                     update_post_meta($post_id, '_mjb_credit_used', true);
                      
-                     echo '<script>window.location.href="' . esc_url($redirect_url) . '";</script>';
-                     exit;
+                     $message = __('Job submitted successfully using a job credit!', 'modern-job-board');
+                     echo '<p class="mjb-success">' . $message . '</p>';
+                     return; // Skip payment redirect
+                }
+
+                // If no credits, proceed to Pay-Per-Post
+                if ($product_id && function_exists('wc_get_cart_url')) {
+                    if ($post_data['post_status'] === 'pending') { // Only if we just set it to pending
+                         // Update status to pending_payment
+                         $update = array('ID' => $post_id, 'post_status' => 'pending_payment');
+                         wp_update_post($update);
+                         
+                         $cart_url = wc_get_cart_url();
+                         $redirect_url = add_query_arg(array(
+                             'add-to-cart' => $product_id,
+                             'mjb_job_id' => $post_id
+                         ), $cart_url);
+                         
+                         echo '<script>window.location.href="' . esc_url($redirect_url) . '";</script>';
+                         exit;
+                    }
                 }
             }
 
