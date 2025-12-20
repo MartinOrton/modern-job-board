@@ -37,6 +37,9 @@ class MJB_WooCommerce
         if (isset($_GET['mjb_job_id'])) {
             $cart_item_data['mjb_job_id'] = intval($_GET['mjb_job_id']);
         }
+        if (isset($_GET['mjb_unlock_application_id'])) {
+            $cart_item_data['mjb_unlock_application_id'] = intval($_GET['mjb_unlock_application_id']);
+        }
         return $cart_item_data;
     }
 
@@ -47,6 +50,9 @@ class MJB_WooCommerce
     {
         if (isset($values['mjb_job_id'])) {
             $item->add_meta_data('_mjb_job_id', $values['mjb_job_id']);
+        }
+        if (isset($values['mjb_unlock_application_id'])) {
+            $item->add_meta_data('_mjb_unlock_application_id', $values['mjb_unlock_application_id']);
         }
     }
 
@@ -82,6 +88,33 @@ class MJB_WooCommerce
 
                 update_user_meta($user_id, '_mjb_job_credits', $current_user_credits + $total_credits);
             }
+
+            // 3. Single CV Unlock Logic
+            $application_id_unlock = $item->get_meta('_mjb_unlock_application_id');
+            if ($application_id_unlock && $user_id) {
+                $unlocked = get_user_meta($user_id, '_mjb_unlocked_applications', true);
+                if (!is_array($unlocked)) {
+                    $unlocked = array();
+                }
+                if (!in_array($application_id_unlock, $unlocked)) {
+                    $unlocked[] = $application_id_unlock;
+                    update_user_meta($user_id, '_mjb_unlocked_applications', $unlocked);
+                }
+            }
+
+            // 4. Access Pass Logic (Duration in Days)
+            $access_days = get_post_meta($product_id, '_mjb_cv_access_duration', true);
+            if ($access_days && $user_id) {
+                // Calculate new expiry
+                $current_expiry = get_user_meta($user_id, '_mjb_cv_access_expires', true);
+                $now = current_time('timestamp');
+
+                // If currently valid, extend from current expiry. If expired or new, start from now.
+                $start_time = ($current_expiry && $current_expiry > $now) ? $current_expiry : $now;
+                $new_expiry = strtotime('+' . intval($access_days) . ' days', $start_time);
+
+                update_user_meta($user_id, '_mjb_cv_access_expires', $new_expiry);
+            }
         }
     }
 
@@ -98,6 +131,14 @@ class MJB_WooCommerce
             'desc_tip' => true,
             'type' => 'number',
         ));
+
+        woocommerce_wp_text_input(array(
+            'id' => '_mjb_cv_access_duration',
+            'label' => __('CV Access Pass Duration (Days)', 'modern-job-board'),
+            'description' => __('Number of days this pass grants access to all CVs.', 'modern-job-board'),
+            'desc_tip' => true,
+            'type' => 'number',
+        ));
         echo '</div>';
     }
 
@@ -109,6 +150,11 @@ class MJB_WooCommerce
         $credits = isset($_POST['_mjb_package_qty']) ? sanitize_text_field($_POST['_mjb_package_qty']) : '';
         if ($credits) {
             update_post_meta($post_id, '_mjb_package_qty', esc_attr($credits));
+        }
+
+        $duration = isset($_POST['_mjb_cv_access_duration']) ? sanitize_text_field($_POST['_mjb_cv_access_duration']) : '';
+        if ($duration) {
+            update_post_meta($post_id, '_mjb_cv_access_duration', esc_attr($duration));
         }
     }
 }

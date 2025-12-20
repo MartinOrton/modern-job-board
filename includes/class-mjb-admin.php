@@ -176,6 +176,19 @@ class MJB_Admin
         echo '<p class="description">' . __('Enter the WooCommerce Product ID for the job listing fee.', 'modern-job-board') . '</p>';
     }
 
+    public function paid_cv_access_callback()
+    {
+        $required = get_option('mjb_paid_cv_access');
+        echo '<input type="checkbox" name="mjb_paid_cv_access" value="1" ' . checked(1, $required, false) . '> ' . __('Hide candidate details until unlocked or pass purchased', 'modern-job-board');
+    }
+
+    public function cv_unlock_product_id_callback()
+    {
+        $id = get_option('mjb_cv_unlock_product_id');
+        echo '<input type="number" name="mjb_cv_unlock_product_id" value="' . esc_attr($id) . '" class="small-text">';
+        echo '<p class="description">' . __('Enter the WooCommerce Product ID for unlocking a single application.', 'modern-job-board') . '</p>';
+    }
+
     /**
      * Add columns to Job Application list.
      */
