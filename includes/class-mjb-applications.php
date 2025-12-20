@@ -136,6 +136,23 @@ class MJB_Applications
                 update_post_meta($application_id, '_candidate_resume', $resume_url);
             }
 
+            // Save Custom Fields
+            global $mjb_custom_fields;
+            if (isset($mjb_custom_fields)) {
+                $fields = $mjb_custom_fields->get_fields('application');
+                foreach ($fields as $field) {
+                    $key = 'mjb_app_field_' . $field['key'];
+                    if (isset($_POST[$key])) {
+                        $val = sanitize_text_field($_POST[$key]);
+                        update_post_meta($application_id, '_mjb_' . $field['key'], $val);
+                        // Append to content for easy viewing in Admin?
+                        // Or just store as meta. Let's store as meta.
+                        // Optionally append to body:
+                        // $candidate_message .= "\n\n" . $field['label'] . ': ' . $val;
+                    }
+                }
+            }
+
             // Send Notification
             global $mjb_emails;
             if (isset($mjb_emails)) {

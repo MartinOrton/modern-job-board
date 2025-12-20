@@ -129,6 +129,17 @@ class Modern_Job_Board
             $mjb_woocommerce->init();
         }
 
+        // Initialize Custom Fields
+        require_once MJB_PATH . 'includes/class-mjb-custom-fields.php';
+        global $mjb_custom_fields;
+        $mjb_custom_fields = new MJB_Custom_Fields();
+        $mjb_custom_fields->init();
+
+        // Initialize Tools (CSV Import/Export)
+        require_once MJB_PATH . 'includes/class-mjb-tools.php';
+        $mjb_tools = new MJB_Tools();
+        $mjb_tools->init();
+
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
     }

@@ -163,8 +163,6 @@ class MJB_Dashboard
                 $email = get_post_meta($app_id, '_candidate_email', true);
                 $resume = get_post_meta($app_id, '_candidate_resume', true);
 
-                echo '<td>';
-
                 // Permission Check
                 $can_view = true; // Default
                 if (get_option('mjb_paid_cv_access')) {
@@ -186,17 +184,37 @@ class MJB_Dashboard
                     }
                 }
 
+                // Column: Candidate Name
+                echo '<td>';
                 if ($can_view) {
-                    // Visible
-                    echo esc_html($name) . '<br>';
+                    echo esc_html($name);
+                } else {
+                    echo '<span class="mjb-blurred">' . __('Hidden', 'modern-job-board') . '</span>';
+                }
+                echo '</td>';
+
+                // Column: Email
+                echo '<td>';
+                if ($can_view) {
                     echo '<a href="mailto:' . esc_attr($email) . '">' . esc_html($email) . '</a>';
+                } else {
+                    echo '<span class="mjb-blurred">' . __('Hidden', 'modern-job-board') . '</span>';
+                }
+                echo '</td>';
+
+                // Column: Date (Always visible)
+                echo '<td>' . get_the_date() . '</td>';
+
+                // Column: Resume / Unlock
+                echo '<td>';
+                if ($can_view) {
                     if ($resume) {
-                        echo '<br><a href="' . esc_url($resume) . '" target="_blank">' . __('Download Resume', 'modern-job-board') . '</a>';
+                        echo '<a href="' . esc_url($resume) . '" target="_blank" class="button button-small">' . __('Download', 'modern-job-board') . '</a>';
+                    } else {
+                        echo '-';
                     }
                 } else {
-                    // Hidden
-                    echo '<strong>' . __('Name Hidden', 'modern-job-board') . '</strong><br>';
-                    echo '<em>' . __('Email Hidden', 'modern-job-board') . '</em>';
+                    echo '<span class="mjb-locked">' . __('Locked', 'modern-job-board') . '</span>';
 
                     // Unlock Button
                     $unlock_product_id = get_option('mjb_cv_unlock_product_id');
@@ -207,64 +225,12 @@ class MJB_Dashboard
                             'mjb_unlock_application_id' => $app_id
                         ), $cart_url);
 
-                        echo '<br><a href="' . esc_url($unlock_link) . '" class="button mjb-unlock-btn" style="margin-top:5px;">' . __('Unlock Details', 'modern-job-board') . '</a>';
-                    } else {
-                        echo '<br><em>' . __('Access Restricted', 'modern-job-board') . '</em>';
+                        echo '<div style="margin-top:5px;"><a href="' . esc_url($unlock_link) . '" class="button button-small mjb-unlock-btn" style="background:#f0ad4e;border-color:#eea236;color:#fff;">' . __('Unlock', 'modern-job-board') . '</a></div>';
                     }
                 }
                 echo '</td>';
-                // echo '<td>' . esc_html($name) . '</td>'; // Removed original separate cells
-                // echo '<td><a href="mailto:' . esc_attr($email) . '">' . esc_html($email) . '</a></td>'; // Merged into one cell for better UI control or keeps columns?
-                // Wait, the table header has Name, Email, Date, Resume, Message.
-                // Merging them complicates the table structure unless we replace columns. 
-                // Let's keep columns but apply masking in each.
 
-                // REVERTING MERGE to keep table structure:
-
-                // Column: Candidate Name
-                echo '<td>';
-                if ($can_view) {
-                    echo esc_html($name);
-                } else {
-                    echo __('Hidden', 'modern-job-board');
-                }
-                echo '</td>';
-
-                // Column: Email
-                echo '<td>';
-                if ($can_view) {
-                    echo '<a href="mailto:' . esc_attr($email) . '">' . esc_html($email) . '</a>';
-                } else {
-                    echo __('Hidden', 'modern-job-board');
-                }
-                echo '</td>';
-
-                // Column: Date (Always visible)
-                echo '<td>' . get_the_date() . '</td>';
-
-                // Column: Resume
-                echo '<td>';
-                if ($can_view) {
-                    if ($resume) {
-                        echo '<a href="' . esc_url($resume) . '" target="_blank">' . __('Download', 'modern-job-board') . '</a>';
-                    } else {
-                        echo '-';
-                    }
-                } else {
-                    // Show Unlock here
-                    $unlock_product_id = get_option('mjb_cv_unlock_product_id');
-                    if ($unlock_product_id && function_exists('wc_get_cart_url')) {
-                        $cart_url = wc_get_cart_url();
-                        $unlock_link = add_query_arg(array(
-                            'add-to-cart' => $unlock_product_id,
-                            'mjb_unlock_application_id' => $app_id
-                        ), $cart_url);
-                        echo '<a href="' . esc_url($unlock_link) . '" class="button button-small">' . __('Unlock', 'modern-job-board') . '</a>';
-                    } else {
-                        echo __('Locked', 'modern-job-board');
-                    }
-                }
-                echo '</td>';
+                // Column: Message
                 echo '<td>' . wp_trim_words(get_the_content(), 10) . '</td>';
                 echo '</tr>';
             }

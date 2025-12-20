@@ -298,6 +298,37 @@ class MJB_Shortcodes
                     toggleApplicationMethod();
                 };
             </script>
+            
+            <!-- Custom Fields -->
+            <?php
+            global $mjb_custom_fields;
+            if (isset($mjb_custom_fields)) {
+                $fields = $mjb_custom_fields->get_fields('job');
+                foreach ($fields as $field) {
+                    $value = $job_id ? get_post_meta($job_id, '_mjb_' . $field['key'], true) : '';
+                    echo '<p>';
+                    echo '<label>' . esc_html($field['label']) . '</label>';
+                    
+                    if ($field['type'] === 'text' || $field['type'] === 'number') {
+                        echo '<input type="' . esc_attr($field['type']) . '" name="mjb_field_' . esc_attr($field['key']) . '" value="' . esc_attr($value) . '" ' . ($field['required'] ? 'required' : '') . '>';
+                    } elseif ($field['type'] === 'textarea') {
+                        echo '<textarea name="mjb_field_' . esc_attr($field['key']) . '" ' . ($field['required'] ? 'required' : '') . '>' . esc_textarea($value) . '</textarea>';
+                    } elseif ($field['type'] === 'select') {
+                        echo '<select name="mjb_field_' . esc_attr($field['key']) . '" ' . ($field['required'] ? 'required' : '') . '>';
+                        $options = explode(',', $field['options']);
+                        foreach ($options as $opt) {
+                            $opt = trim($opt);
+                            echo '<option value="' . esc_attr($opt) . '" ' . selected($value, $opt, false) . '>' . esc_html($opt) . '</option>';
+                        }
+                        echo '</select>';
+                    } elseif ($field['type'] === 'checkbox') {
+                         echo '<input type="checkbox" name="mjb_field_' . esc_attr($field['key']) . '" value="1" ' . checked(1, $value, false) . '>';
+                    }
+                    echo '</p>';
+                }
+            }
+            ?>
+
             <p>
                 <input type="submit" name="mjb_submit_job"
                     value="<?php echo $job_id ? __('Update Job', 'modern-job-board') : __('Submit Job', 'modern-job-board'); ?>">
@@ -402,6 +433,24 @@ class MJB_Shortcodes
             global $mjb_emails;
             if (isset($mjb_emails)) {
                 $mjb_emails->send_new_job_notification($post_id);
+            }
+
+            // Save Custom Fields
+            global $mjb_custom_fields;
+            if (isset($mjb_custom_fields)) {
+                $fields = $mjb_custom_fields->get_fields('job');
+                foreach ($fields as $field) {
+                    $key = 'mjb_field_' . $field['key'];
+                    if (isset($_POST[$key])) {
+                        $val = sanitize_text_field($_POST[$key]);
+                        update_post_meta($post_id, '_mjb_' . $field['key'], $val);
+                    } else {
+                        // Checkbox unchecked
+                        if ($field['type'] === 'checkbox') {
+                             update_post_meta($post_id, '_mjb_' . $field['key'], 0);
+                        }
+                    }
+                }
             }
             
             // Payment Logic
