@@ -28,7 +28,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 - **Employer Management**:
   - Frontend Employer Registration.
 
-## [1.0.0] - 2024-11-20
+## [1.0.0] - 2025-11-20
 ### Added
 - Initial release.
 - Job Listings and Company CPTs.
