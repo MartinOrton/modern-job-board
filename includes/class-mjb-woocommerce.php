@@ -27,6 +27,11 @@ class MJB_WooCommerce
         // Handle payment complete
         add_action('woocommerce_payment_complete', array($this, 'activate_paid_job'));
         add_action('woocommerce_order_status_completed', array($this, 'activate_paid_job'));
+
+        // Handle Refunds / Cancellations / Failures
+        add_action('woocommerce_order_status_refunded', array($this, 'handle_order_status_change'));
+        add_action('woocommerce_order_status_cancelled', array($this, 'handle_order_status_change'));
+        add_action('woocommerce_order_status_failed', array($this, 'handle_order_status_change'));
     }
 
     /**
@@ -114,6 +119,65 @@ class MJB_WooCommerce
                 $new_expiry = strtotime('+' . intval($access_days) . ' days', $start_time);
 
                 update_user_meta($user_id, '_mjb_cv_access_expires', $new_expiry);
+            }
+        }
+    }
+
+    /**
+     * Handle Order Status Change (Refund/Cancel/Failed).
+     */
+    public function handle_order_status_change($order_id)
+    {
+        $order = wc_get_order($order_id);
+        $user_id = $order->get_user_id();
+
+        foreach ($order->get_items() as $item) {
+            // 1. Revert Pay-Per-Post
+            $job_id = $item->get_meta('_mjb_job_id');
+            if ($job_id) {
+                // Check if current status is publish before reverting? 
+                // Yes, unpublish.
+                wp_update_post(array(
+                    'ID' => $job_id,
+                    'post_status' => 'pending_payment', // Set back to pending payment
+                ));
+            }
+
+            // 2. Revert Credits
+            $product_id = $item->get_product_id();
+            $credits = get_post_meta($product_id, '_mjb_package_qty', true);
+            if ($credits && $user_id) {
+                $qty = $item->get_quantity();
+                $total_credits_to_remove = intval($credits) * intval($qty);
+
+                $current_user_credits = get_user_meta($user_id, '_mjb_job_credits', true);
+                $current_user_credits = $current_user_credits ? intval($current_user_credits) : 0;
+
+                $new_credits = max(0, $current_user_credits - $total_credits_to_remove); // Prevent negative
+                update_user_meta($user_id, '_mjb_job_credits', $new_credits);
+            }
+
+            // 3. Revert Single Unlock
+            $application_id_unlock = $item->get_meta('_mjb_unlock_application_id');
+            if ($application_id_unlock && $user_id) {
+                $unlocked = get_user_meta($user_id, '_mjb_unlocked_applications', true);
+                if (is_array($unlocked)) {
+                    $key = array_search($application_id_unlock, $unlocked);
+                    if ($key !== false) {
+                        unset($unlocked[$key]);
+                        // Re-index array
+                        $unlocked = array_values($unlocked);
+                        update_user_meta($user_id, '_mjb_unlocked_applications', $unlocked);
+                    }
+                }
+            }
+
+            // 4. Revert Access Pass
+            $access_days = get_post_meta($product_id, '_mjb_cv_access_duration', true);
+            if ($access_days && $user_id) {
+                // We can't easily calculating "amount of time remaining from this specific order" if stacked.
+                // Simple approach: Expire immediately.
+                update_user_meta($user_id, '_mjb_cv_access_expires', current_time('timestamp') - 3600); // Set to past
             }
         }
     }

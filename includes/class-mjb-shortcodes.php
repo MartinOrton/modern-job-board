@@ -67,6 +67,9 @@ class MJB_Shortcodes
             'posts_per_page' => 10,
         );
 
+        // Filter args
+        $args = apply_filters('mjb_job_listing_query_args', $args, $atts);
+
         // Apply Search Filters Manual (Shortcode context)
         // Note: Ideally we'd use MJB_Search logic here, but for consistency with inline args:
         if (!empty($_GET['search_keywords'])) {
@@ -107,9 +110,13 @@ class MJB_Shortcodes
 
         $jobs = new WP_Query($args);
 
+        do_action('mjb_before_job_listings', $jobs);
+
         echo '<div id="mjb-jobs-list">';
         self::render_job_loop($jobs);
         echo '</div>';
+        
+        do_action('mjb_after_job_listings', $jobs);
 
         wp_reset_postdata();
 
@@ -206,7 +213,9 @@ class MJB_Shortcodes
             // If submitted, get updated values? Or redirect? For simplicity, we handle submission logic below.
         }
         ?>
+        <?php do_action('mjb_before_job_submission_form'); ?>
         <form method="post" class="mjb-job-form" enctype="multipart/form-data">
+            <?php do_action('mjb_job_submission_form_start'); ?>
             <?php wp_nonce_field('mjb_submit_job', 'mjb_job_nonce'); ?>
             <?php if ($job_id): ?>
                 <input type="hidden" name="job_id" value="<?php echo esc_attr($job_id); ?>">
@@ -333,7 +342,9 @@ class MJB_Shortcodes
                 <input type="submit" name="mjb_submit_job"
                     value="<?php echo $job_id ? __('Update Job', 'modern-job-board') : __('Submit Job', 'modern-job-board'); ?>">
             </p>
+            <?php do_action('mjb_job_submission_form_end'); ?>
         </form>
+        <?php do_action('mjb_after_job_submission_form'); ?>
         <?php
         return ob_get_clean();
     }
@@ -393,6 +404,8 @@ class MJB_Shortcodes
             'post_type' => 'job_listing',
             'post_status' => 'pending', // Always reset to pending on edit? Or keep status? Let's keep status if edit.
         );
+        
+        $post_data = apply_filters('mjb_pre_job_submission_data', $post_data, $_POST);
 
         if ($existing_job_id) {
             $post_data['ID'] = $existing_job_id;
@@ -501,6 +514,9 @@ class MJB_Shortcodes
                     }
                 }
             }
+
+            // Hook for post-submission actions
+            do_action('mjb_job_submitted', $post_id);
 
             echo '<p class="mjb-success">' . $message . '</p>';
         }

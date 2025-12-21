@@ -126,6 +126,8 @@ class MJB_Applications
             'post_status' => 'publish',
         );
 
+        $post_data = apply_filters('mjb_pre_application_submission_data', $post_data, $_POST);
+
         $application_id = wp_insert_post($post_data);
 
         if ($application_id) {
@@ -158,6 +160,9 @@ class MJB_Applications
             if (isset($mjb_emails)) {
                 $mjb_emails->send_new_application_notification($application_id);
             }
+
+            // Hook for post-submission actions
+            do_action('mjb_application_submitted', $application_id);
 
             // Redirect to prevent resubmission
             wp_safe_redirect(add_query_arg('application_submitted', 'true', get_permalink($job_id)));

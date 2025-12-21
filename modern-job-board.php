@@ -140,6 +140,15 @@ class Modern_Job_Board
         $mjb_tools = new MJB_Tools();
         $mjb_tools->init();
 
+        // Initialize Integrations (Feeds & API)
+        require_once MJB_PATH . 'includes/class-mjb-feeds.php';
+        $mjb_feeds = new MJB_Feeds();
+        $mjb_feeds->init();
+
+        require_once MJB_PATH . 'includes/class-mjb-rest-api.php';
+        $mjb_api = new MJB_REST_API();
+        $mjb_api->init();
+
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
     }
