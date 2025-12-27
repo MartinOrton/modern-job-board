@@ -18,6 +18,7 @@ A powerful, feature-rich WordPress plugin for creating a professional job board.
 ### 👥 User Roles & Dashboards
 - **Employer System**: registration, account management, and a frontend dashboard to manage jobs and view applications.
 - **Candidate System**: registration, profile management, and CV/Resume uploads.
+- **Secure Resume Storage**: Resumes are stored in a dedicated, admin-only area and separated from the public media library.
 - **Apply with Profile**: Logged-in candidates can apply to jobs instantly using their stored resume.
 
 ### 💰 Monetization (WooCommerce)

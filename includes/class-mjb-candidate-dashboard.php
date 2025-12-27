@@ -74,42 +74,73 @@ class MJB_Candidate_Dashboard
             $uploadedfile = $_FILES['mjb_resume'];
             $upload_overrides = array('test_form' => false);
 
+            // Hook to change upload dir
+            add_filter('upload_dir', array($this, 'custom_upload_dir'));
+
             $movefile = wp_handle_upload($uploadedfile, $upload_overrides);
+
+            // Remove hook
+            remove_filter('upload_dir', array($this, 'custom_upload_dir'));
 
             if ($movefile && !isset($movefile['error'])) {
                 $user_id = get_current_user_id();
 
-                // Prepare attachment data
-                $attachment = array(
-                    'guid' => $movefile['url'],
-                    'post_mime_type' => $movefile['type'],
-                    'post_title' => basename($movefile['file']),
-                    'post_content' => '',
-                    'post_status' => 'inherit'
+                // Create MJB Resume Post
+                $resume_post = array(
+                    'post_title' => $uploadedfile['name'] . ' - ' . get_userdata($user_id)->display_name,
+                    'post_type' => 'mjb_resume',
+                    'post_status' => 'publish',
+                    'post_author' => $user_id,
                 );
 
-                // Insert the attachment.
-                $attach_id = wp_insert_attachment($attachment, $movefile['file']);
+                $resume_id = wp_insert_post($resume_post);
 
-                // Generate attachment metadata and update the database record.
-                require_once(ABSPATH . 'wp-admin/includes/image.php');
-                $attach_data = wp_generate_attachment_metadata($attach_id, $movefile['file']);
-                wp_update_attachment_metadata($attach_id, $attach_data);
+                if ($resume_id) {
+                    update_post_meta($resume_id, '_resume_file_url', $movefile['url']);
+                    update_post_meta($resume_id, '_resume_file_path', $movefile['file']);
+                    update_post_meta($resume_id, '_candidate_user_id', $user_id);
 
-                // Start: Security - Protect File (Basic) - Ensure it's not browseable if not intended
-                // For now, standard media library is fine as per plan.
+                    // Update User Meta with the Resume POST ID (not attachment ID)
+                    update_user_meta($user_id, '_candidate_resume_id', $resume_id);
 
-                // Update User Meta
-                update_user_meta($user_id, '_candidate_resume_id', $attach_id);
-
-                wp_redirect(add_query_arg('resume_updated', 'true', get_permalink()));
-                exit;
+                    wp_redirect(add_query_arg('resume_updated', 'true', get_permalink()));
+                    exit;
+                }
             } else {
-                // Handle error
                 wp_redirect(add_query_arg('resume_error', 'true', get_permalink()));
                 exit;
             }
         }
+    }
+
+    /**
+     * Custom Upload Directory.
+     */
+    public function custom_upload_dir($path)
+    {
+        if (!empty($path['error'])) {
+            return $path;
+        }
+
+        $custom_dir = '/mjb-resumes' . $path['subdir'];
+
+        $path['path'] = str_replace($path['subdir'], '', $path['path']);
+        // Logic fix: wp_upload_dir returns path including basedir. We want to append mjb-resumes to basedir.
+        // Actually simplest is to just append to basedir? No, we want time based?
+        // Let's rely on standard structure but inside mjb-resumes folder.
+
+        // $path['path'] is '.../uploads/2024/01'
+        // We want '.../uploads/mjb-resumes/2024/01'
+
+        $path['path'] = str_replace('uploads', 'uploads/mjb-resumes', $path['path']);
+        $path['url'] = str_replace('uploads', 'uploads/mjb-resumes', $path['url']);
+
+        // Verify dir exists
+        if (!file_exists($path['path'])) {
+            wp_mkdir_p($path['path']);
+        }
+
+        return $path;
     }
 
     /**

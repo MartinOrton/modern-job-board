@@ -2,6 +2,14 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.2.1] - 2025-12-28
+### Improved
+- **Resume Management**:
+  - Moved Resumes to a dedicated "Resumes" Custom Post Type for better organization.
+  - Added new admin menu "Resumes" restricted to Administrators.
+  - Implemented custom upload directory (`/wp-content/uploads/mjb-resumes/`) to keep candidate files separate from the main Media Library.
+  - Updated "Apply with Profile" to support the new secure resume objects.
+
 ## [1.2.0] - 2025-12-21
 ### Added
 - **Custom Fields Builder**: Admin UI to create custom fields for Job Listings and Applications.

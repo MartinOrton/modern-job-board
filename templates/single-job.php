@@ -55,8 +55,19 @@ get_header(); ?>
                                 $current_user = wp_get_current_user();
                                 $candidate_name = $current_user->exists() ? $current_user->first_name . ' ' . $current_user->last_name : '';
                                 $candidate_email = $current_user->exists() ? $current_user->user_email : '';
-                                $resume_id = $current_user->exists() ? get_user_meta($current_user->ID, '_candidate_resume_id', true) : false;
-                                $resume_url = $resume_id ? wp_get_attachment_url($resume_id) : '';
+
+                                $resume_url = '';
+                                if ($current_user->exists()) {
+                                    $resume_id = get_user_meta($current_user->ID, '_candidate_resume_id', true);
+                                    if ($resume_id) {
+                                        // Check if attachment or MJB Resume
+                                        if (get_post_type($resume_id) === 'mjb_resume') {
+                                            $resume_url = get_post_meta($resume_id, '_resume_file_url', true);
+                                        } else {
+                                            $resume_url = wp_get_attachment_url($resume_id);
+                                        }
+                                    }
+                                }
                                 ?>
                                 <form method="post" action="" enctype="multipart/form-data" class="mjb-application-form">
                                     <?php wp_nonce_field('mjb_submit_application', 'mjb_application_nonce'); ?>

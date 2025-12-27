@@ -101,7 +101,13 @@ class MJB_Applications
             $user_id = get_current_user_id();
             $resume_id = get_user_meta($user_id, '_candidate_resume_id', true);
             if ($resume_id) {
-                $resume_url = wp_get_attachment_url($resume_id);
+                // Check if it's an attachment (Legacy) or MJB Resume Post
+                $post_type = get_post_type($resume_id);
+                if ($post_type === 'mjb_resume') {
+                    $resume_url = get_post_meta($resume_id, '_resume_file_url', true);
+                } else {
+                    $resume_url = wp_get_attachment_url($resume_id);
+                }
             }
         }
 

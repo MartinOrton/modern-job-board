@@ -110,6 +110,41 @@ class MJB_CPT
             'capability_type' => 'post',
         );
         register_post_type('company', $args_company);
+
+        // Resume CPT
+        $labels_resume = array(
+            'name' => _x('Resumes', 'Post Type General Name', 'modern-job-board'),
+            'singular_name' => _x('Resume', 'Post Type Singular Name', 'modern-job-board'),
+            'menu_name' => __('Resumes', 'modern-job-board'),
+            'all_items' => __('All Resumes', 'modern-job-board'),
+            'add_new_item' => __('Add New Resume', 'modern-job-board'), // Usually handled via frontend, but allowing admin add
+            'edit_item' => __('Edit Resume', 'modern-job-board'),
+            'view_item' => __('View Resume', 'modern-job-board'),
+        );
+        $args_resume = array(
+            'label' => __('Resume', 'modern-job-board'),
+            'description' => __('Candidate Resumes', 'modern-job-board'),
+            'labels' => $labels_resume,
+            'supports' => array('title', 'custom-fields'), // No editor needed really
+            'hierarchical' => false,
+            'public' => false, // Not publicly queryable via frontend URL
+            'show_ui' => true,
+            'show_in_menu' => true,
+            'menu_position' => 7,
+            'menu_icon' => 'dashicons-media-document',
+            'show_in_admin_bar' => true,
+            'show_in_nav_menus' => false,
+            'can_export' => true,
+            'has_archive' => false,
+            'exclude_from_search' => true,
+            'publicly_queryable' => false,
+            'capability_type' => 'post',
+            'capabilities' => array(
+                'create_posts' => 'do_not_allow', // Admins can manage, but maybe not create manually easily? Let's treat like Contact Form 7 entries.
+            ),
+            'map_meta_cap' => true, 
+        );
+        register_post_type('mjb_resume', $args_resume);
     }
 
     /**
