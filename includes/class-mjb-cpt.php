@@ -68,7 +68,7 @@ class MJB_CPT
             'hierarchical' => false,
             'public' => true,
             'show_ui' => true,
-            'show_in_menu' => true,
+            'show_in_menu' => 'modern-job-board',
             'menu_position' => 5,
             'menu_icon' => 'dashicons-businessman',
             'show_in_admin_bar' => true,
@@ -98,7 +98,7 @@ class MJB_CPT
             'hierarchical' => false,
             'public' => true,
             'show_ui' => true,
-            'show_in_menu' => true,
+            'show_in_menu' => 'modern-job-board',
             'menu_position' => 6,
             'menu_icon' => 'dashicons-building',
             'show_in_admin_bar' => true,
@@ -129,7 +129,7 @@ class MJB_CPT
             'hierarchical' => false,
             'public' => false, // Not publicly queryable via frontend URL
             'show_ui' => true,
-            'show_in_menu' => true,
+            'show_in_menu' => 'modern-job-board',
             'menu_position' => 7,
             'menu_icon' => 'dashicons-media-document',
             'show_in_admin_bar' => true,
@@ -142,7 +142,7 @@ class MJB_CPT
             'capabilities' => array(
                 'create_posts' => 'do_not_allow', // Admins can manage, but maybe not create manually easily? Let's treat like Contact Form 7 entries.
             ),
-            'map_meta_cap' => true, 
+            'map_meta_cap' => true,
         );
         register_post_type('mjb_resume', $args_resume);
     }

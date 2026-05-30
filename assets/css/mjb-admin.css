@@ -1,0 +1,250 @@
+/* Modern Job Board Admin Styles */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap');
+
+:root {
+    --mjb-primary: #0F766E;
+    --mjb-primary-hover: #0d6960;
+    --mjb-primary-light: rgba(15, 118, 110, 0.08);
+    --mjb-primary-surface: #E0F2F1;
+    --mjb-accent: #F97316;
+    --mjb-accent-light: rgba(249, 115, 22, 0.1);
+    --mjb-bg-neutral: #F5F5F7;
+    --mjb-bg-white: #FFFFFF;
+    --mjb-text-primary: #1a1a2e;
+    --mjb-text-secondary: #64748b;
+    --mjb-text-muted: #94a3b8;
+    --mjb-border: #e2e8f0;
+    --mjb-border-strong: #cbd5e1;
+    --mjb-success: #22c55e;
+    
+    --mjb-font-sans: 'DM Sans', sans-serif;
+    --mjb-font-serif: 'Instrument Serif', serif;
+}
+
+/* Scoped variables for MJB Pages */
+body[class*="page_modern-job-board"],
+body[class*="post-type-job_"],
+body[class*="post-type-company"],
+body[class*="post-type-mjb_resume"] {
+    --wp-admin-theme-color: var(--mjb-primary);
+    background-color: var(--mjb-bg-neutral);
+    font-family: var(--mjb-font-sans);
+    color: var(--mjb-text-primary);
+}
+
+/* Typography Overrides */
+.mjb-dashboard-page h1,
+.mjb-dashboard-page h2,
+.mjb-dashboard-page h3 {
+    font-family: var(--mjb-font-serif);
+    font-weight: 400;
+    color: var(--mjb-text-primary);
+}
+
+.mjb-dashboard-page h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.mjb-dashboard-page .subtitle {
+    font-size: 1.125rem;
+    color: var(--mjb-text-secondary);
+    margin-top: 0;
+    margin-bottom: 2rem;
+    max-width: 600px;
+}
+
+/* Dashboard Container */
+.mjb-dashboard-wrap {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Initial Reset for WP Styles in specific areas */
+.mjb-dashboard-wrap * {
+    box-sizing: border-box;
+}
+
+/* Stats Graphic */
+.mjb-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.mjb-stat-card {
+    background: var(--mjb-bg-white);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid var(--mjb-border);
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+}
+
+.mjb-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    border-color: rgba(15, 118, 110, 0.3);
+}
+
+.mjb-stat-val {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--mjb-primary);
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+    font-family: var(--mjb-font-sans);
+}
+
+.mjb-stat-lbl {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--mjb-text-secondary);
+    font-weight: 600;
+}
+
+/* Quick Actions / Features */
+.mjb-features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.mjb-feature-card {
+    background: var(--mjb-bg-white);
+    padding: 1.75rem;
+    border-radius: 1rem;
+    border: 1px solid var(--mjb-border);
+    transition: all 0.3s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+}
+
+.mjb-feature-card:hover {
+    transform: scale(1.01);
+    border-color: var(--mjb-primary);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.mjb-feature-icon {
+    width: 3rem;
+    height: 3rem;
+    background: var(--mjb-primary-surface);
+    color: var(--mjb-primary);
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    font-size: 1.5rem;
+}
+
+.mjb-feature-card h3 {
+    font-family: var(--mjb-font-sans);
+    font-weight: 700;
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+    color: var(--mjb-text-primary);
+}
+
+.mjb-feature-card p {
+    font-size: 0.875rem;
+    color: var(--mjb-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+/* Buttons */
+.mjb-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.mjb-btn-primary {
+    background-color: var(--mjb-primary);
+    color: white;
+}
+
+.mjb-btn-primary:hover {
+    background-color: var(--mjb-primary-hover);
+    color: white;
+}
+
+/* Badge */
+.mjb-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--mjb-primary-light);
+    border: 1px solid rgba(15, 118, 110, 0.2);
+    color: var(--mjb-primary);
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
+    margin-left: 1rem;
+}
+
+/* Utilities */
+.mjb-mt-4 { margin-top: 1rem; }
+.mjb-mt-8 { margin-top: 2rem; }
+
+/* WP Admin Overrides (Gentle) */
+#wpcontent {
+    background-color: var(--mjb-bg-neutral);
+}
+
+/* Table styles for other MJB admin pages to match */
+.wp-list-table {
+    border-radius: 8px;
+    border: 1px solid var(--mjb-border);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    background: #fff;
+    overflow: hidden;
+}
+
+.wp-list-table thead th {
+    background: var(--mjb-bg-neutral);
+    color: var(--mjb-text-primary);
+    font-family: var(--mjb-font-sans);
+    font-weight: 600;
+    border-bottom: 1px solid var(--mjb-border);
+}
+
+.post-type-job_listing .wrap > h1, 
+.post-type-job_application .wrap > h1,
+.post-type-company .wrap > h1 {
+    font-family: var(--mjb-font-serif);
+    font-size: 2rem;
+    color: var(--mjb-text-primary);
+    padding: 1rem 0;
+}
+
+/* Hide WP default notifications if they clash? No, keep them but style */
+.notice {
+    border-radius: 4px;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.notice-success {
+    background: #E8F5E9;
+    color: #1B5E20;
+    border-left: 4px solid #2E7D32;
+}

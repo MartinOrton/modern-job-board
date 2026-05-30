@@ -30,15 +30,67 @@ class MJB_Admin
         // Meta Box for Job Data
         add_action('add_meta_boxes', array($this, 'add_job_meta_boxes'));
         add_action('save_post', array($this, 'save_job_meta_data'));
+
+        // Enqueue Admin Assets
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
+    }
+
+    /**
+     * Enqueue Admin Assets.
+     */
+    public function enqueue_admin_assets()
+    {
+        $screen = get_current_screen();
+        
+        // Only load on MJB pages
+        if (
+            strpos($screen->id, 'modern-job-board') !== false ||
+            strpos($screen->id, 'job_listing') !== false ||
+            strpos($screen->id, 'job_application') !== false ||
+            strpos($screen->id, 'company') !== false ||
+            strpos($screen->id, 'mjb_resume') !== false
+        ) {
+            wp_enqueue_style(
+                'mjb-admin-css',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/css/mjb-admin.css',
+                array(),
+                '1.0.0'
+            );
+        }
     }
 
     /**
      * Add Admin Menu.
      */
+    /**
+     * Add Admin Menu.
+     */
     public function add_admin_menu()
     {
+        // Main Menu Item
+        add_menu_page(
+            __('Modern Job Board', 'modern-job-board'),
+            __('Modern Job Board', 'modern-job-board'),
+            'manage_options',
+            'modern-job-board',
+            array($this, 'admin_dashboard_html'),
+            'dashicons-businessman',
+            56
+        );
+
+        // Dashboard Submenu (Default)
         add_submenu_page(
-            'edit.php?post_type=job_listing',
+            'modern-job-board',
+            __('Dashboard', 'modern-job-board'),
+            __('Dashboard', 'modern-job-board'),
+            'manage_options',
+            'modern-job-board',
+            array($this, 'admin_dashboard_html')
+        );
+
+        // Settings Submenu
+        add_submenu_page(
+            'modern-job-board',
             __('Settings', 'modern-job-board'),
             __('Settings', 'modern-job-board'),
             'manage_options',
@@ -48,39 +100,93 @@ class MJB_Admin
     }
 
     /**
+     * Admin Dashboard HTML.
+     */
+    public function admin_dashboard_html()
+    {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        
+        // Basic Stats
+        $job_count = wp_count_posts('job_listing')->publish;
+        $app_count = wp_count_posts('job_application')->publish;
+        $company_count = wp_count_posts('company')->publish;
+        $resume_count = wp_count_posts('mjb_resume')->publish; 
+
+        // Logo SVG
+        $logo_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>';
+        
+        ?>
+        <div class="wrap mjb-dashboard-page">
+            <div class="mjb-dashboard-wrap">
+                <header style="margin-bottom: 3rem;">
+                    <h1>Modern Job Board <span class="mjb-badge">v1.2.1</span></h1>
+                    <p class="subtitle"><?php _e('Manage your job board with complete control.', 'modern-job-board'); ?></p>
+                </header>
+                
+                <div class="mjb-stats-grid">
+                    <div class="mjb-stat-card">
+                        <div class="mjb-stat-val"><?php echo intval($job_count); ?></div>
+                        <div class="mjb-stat-lbl"><?php _e('Active Jobs', 'modern-job-board'); ?></div>
+                    </div>
+                    <div class="mjb-stat-card">
+                        <div class="mjb-stat-val"><?php echo intval($app_count); ?></div>
+                        <div class="mjb-stat-lbl"><?php _e('Applications', 'modern-job-board'); ?></div>
+                    </div>
+                    <div class="mjb-stat-card">
+                        <div class="mjb-stat-val"><?php echo intval($company_count); ?></div>
+                        <div class="mjb-stat-lbl"><?php _e('Companies', 'modern-job-board'); ?></div>
+                    </div>
+                    <div class="mjb-stat-card">
+                        <div class="mjb-stat-val"><?php echo intval($resume_count); ?></div>
+                        <div class="mjb-stat-lbl"><?php _e('Resumes', 'modern-job-board'); ?></div>
+                    </div>
+                </div>
+                
+                <h2 style="font-family: var(--mjb-font-sans); font-size: 1.25rem; margin-bottom: 1.5rem; font-weight: 700;"><?php _e('Quick Actions', 'modern-job-board'); ?></h2>
+                
+                <div class="mjb-features-grid">
+                    <!-- Manage Jobs -->
+                    <a href="<?php echo admin_url('edit.php?post_type=job_listing'); ?>" class="mjb-feature-card">
+                        <div class="mjb-feature-icon">
+                            <span class="dashicons dashicons-businessman" style="font-size: 1.5rem; width: auto; height: auto;"></span>
+                        </div>
+                        <h3><?php _e('Manage Jobs', 'modern-job-board'); ?></h3>
+                        <p><?php _e('View, edit, and moderate job listings. manage expiration dates and featured status.', 'modern-job-board'); ?></p>
+                    </a>
+
+                    <!-- Manage Applications -->
+                    <a href="<?php echo admin_url('edit.php?post_type=job_application'); ?>" class="mjb-feature-card">
+                        <div class="mjb-feature-icon">
+                            <span class="dashicons dashicons-email" style="font-size: 1.5rem; width: auto; height: auto;"></span>
+                        </div>
+                        <h3><?php _e('Applications', 'modern-job-board'); ?></h3>
+                        <p><?php _e('Review candidate applications and download resumes.', 'modern-job-board'); ?></p>
+                    </a>
+
+                    <!-- Settings -->
+                    <a href="<?php echo admin_url('admin.php?page=mjb-settings'); ?>" class="mjb-feature-card">
+                        <div class="mjb-feature-icon">
+                            <span class="dashicons dashicons-admin-settings" style="font-size: 1.5rem; width: auto; height: auto;"></span>
+                        </div>
+                        <h3><?php _e('Settings', 'modern-job-board'); ?></h3>
+                        <p><?php _e('Configure listings, Google Maps API, and monetization options.', 'modern-job-board'); ?></p>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
      * Register Settings.
      */
     public function register_settings()
     {
-        register_setting('mjb_settings_group', 'mjb_stripe_publishable_key');
-        register_setting('mjb_settings_group', 'mjb_stripe_secret_key');
         register_setting('mjb_settings_group', 'mjb_currency', array('default' => 'USD'));
         register_setting('mjb_settings_group', 'mjb_listing_duration', array('default' => 30));
         register_setting('mjb_settings_group', 'mjb_google_maps_api_key');
-
-        // Payment Settings Section
-        add_settings_section(
-            'mjb_payment_section',
-            __('Payment Settings', 'modern-job-board'),
-            null,
-            'mjb-settings'
-        );
-
-        add_settings_field(
-            'mjb_stripe_publishable_key',
-            __('Stripe Publishable Key', 'modern-job-board'),
-            array($this, 'stripe_pk_callback'),
-            'mjb-settings',
-            'mjb_payment_section'
-        );
-
-        add_settings_field(
-            'mjb_stripe_secret_key',
-            __('Stripe Secret Key', 'modern-job-board'),
-            array($this, 'stripe_sk_callback'),
-            'mjb-settings',
-            'mjb_payment_section'
-        );
 
         // Listing Settings Section
         add_settings_section(
@@ -105,13 +211,25 @@ class MJB_Admin
             'mjb-settings',
             'mjb_listing_section'
         );
+        
+        // Payment Settings (WooCommerce only)
+        // Re-using Payment Section but purely for Logic toggle?
+        add_settings_section(
+            'mjb_payment_section',
+            __('Monetization Settings', 'modern-job-board'),
+            null,
+            'mjb-settings'
+        );
 
-        // Payment Settings
         register_setting('mjb_settings_group', 'mjb_payment_required');
         add_settings_field('mjb_payment_required', __('Require Payment', 'modern-job-board'), array($this, 'payment_required_callback'), 'mjb-settings', 'mjb_payment_section');
 
         register_setting('mjb_settings_group', 'mjb_submission_product_id');
         add_settings_field('mjb_submission_product_id', __('Submission Product ID', 'modern-job-board'), array($this, 'submission_product_id_callback'), 'mjb-settings', 'mjb_payment_section');
+
+        // CV Unlock settings (if they existed, keeping consistent)
+        register_setting('mjb_settings_group', 'mjb_cv_unlock_product_id');
+        add_settings_field('mjb_cv_unlock_product_id', __('CV Unlock Product ID', 'modern-job-board'), array($this, 'cv_unlock_product_id_callback'), 'mjb-settings', 'mjb_payment_section');
     }
 
     /**
@@ -139,18 +257,6 @@ class MJB_Admin
     /**
      * Callbacks.
      */
-    public function stripe_pk_callback()
-    {
-        $value = get_option('mjb_stripe_publishable_key');
-        echo '<input type="text" name="mjb_stripe_publishable_key" value="' . esc_attr($value) . '" class="regular-text">';
-    }
-
-    public function stripe_sk_callback()
-    {
-        $value = get_option('mjb_stripe_secret_key');
-        echo '<input type="password" name="mjb_stripe_secret_key" value="' . esc_attr($value) . '" class="regular-text">';
-    }
-
     public function listing_duration_callback()
     {
         $value = get_option('mjb_listing_duration', 30);
@@ -174,12 +280,6 @@ class MJB_Admin
         $id = get_option('mjb_submission_product_id');
         echo '<input type="number" name="mjb_submission_product_id" value="' . esc_attr($id) . '" class="small-text">';
         echo '<p class="description">' . __('Enter the WooCommerce Product ID for the job listing fee.', 'modern-job-board') . '</p>';
-    }
-
-    public function paid_cv_access_callback()
-    {
-        $required = get_option('mjb_paid_cv_access');
-        echo '<input type="checkbox" name="mjb_paid_cv_access" value="1" ' . checked(1, $required, false) . '> ' . __('Hide candidate details until unlocked or pass purchased', 'modern-job-board');
     }
 
     public function cv_unlock_product_id_callback()

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Job Board – The WordPress Job Board Plugin You Own</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+        <div class="container navbar-content">
+            <a href="#" class="logo">
+                <div class="logo-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                </div>
+                Modern Job Board
+            </a>
+
+            <div class="nav-links desktop-only">
+                <a href="#features">Features</a>
+                <a href="#comparison">Compare</a>
+                <a href="#developers">Developers</a>
+                <a href="#pricing">Pricing</a>
+                <a href="https://github.com/MartinOrton/modern-job-board" class="btn btn-primary btn-sm">Download Free</a>
+            </div>
+
+            <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle menu">
+                <svg class="icon-menu" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+                <svg class="icon-close hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+        </div>
+        <div class="mobile-menu" id="mobile-menu">
+            <a href="#features" class="mobile-link">Features</a>
+            <a href="#comparison" class="mobile-link">Compare</a>
+            <a href="#developers" class="mobile-link">Developers</a>
+            <a href="#pricing" class="mobile-link">Pricing</a>
+            <a href="https://github.com/MartinOrton/modern-job-board" class="btn btn-primary mobile-btn">Download Free</a>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero -->
+        <section class="hero section">
+            <div class="container hero-grid">
+                <div class="hero-content">
+                    <div class="reveal">
+                        <div class="badge">
+                            <span class="badge-dot"></span>
+                            WordPress Plugin • v1.2.1
+                        </div>
+                    </div>
+                    <div class="reveal delay-1">
+                        <h1 class="hero-title">The job board plugin <em class="italic-highlight">you actually own</em></h1>
+                    </div>
+                    <div class="reveal delay-2">
+                        <p class="hero-text">Stop paying monthly SaaS fees. Build a professional job board on WordPress with complete control over your data, unlimited customization, and powerful monetization tools.</p>
+                    </div>
+                    <div class="reveal delay-3">
+                        <div class="hero-actions">
+                            <a href="https://github.com/MartinOrton/modern-job-board" class="btn btn-primary btn-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                Download Free
+                            </a>
+                            <a href="#features" class="btn btn-outline btn-lg">
+                                Explore Features
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-visual">
+                    <div class="hero-card reveal delay-2">
+                        <div class="card-header">
+                            <div class="company-logo">AC</div>
+                            <div class="company-info">
+                                <h4>Acme Corporation</h4>
+                                <p>Technology • San Francisco</p>
+                            </div>
+                            <span class="badge-accent">Featured</span>
+                        </div>
+                        <div class="card-stats">
+                            <div class="stat-item"><div class="stat-val">12</div><div class="stat-lbl">Active Jobs</div></div>
+                            <div class="stat-item"><div class="stat-val">48</div><div class="stat-lbl">Applications</div></div>
+                            <div class="stat-item"><div class="stat-val">3.2k</div><div class="stat-lbl">Views</div></div>
+                        </div>
+                        <div class="job-list">
+                            <!-- Job 1 -->
+                            <div class="job-item">
+                                <div class="job-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                                </div>
+                                <div class="job-info">
+                                    <h5>Senior Frontend Developer</h5>
+                                    <p>$120k – $150k • Remote</p>
+                                </div>
+                                <div class="job-meta">
+                                    <div class="social-share">
+                                        <button class="share-btn twitter" aria-label="Share on Twitter"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-12.7 15.8-3.9-1.7-4.5-5.7-4.2-6.5 2.6-2.5 5.5-2.1 5.5-2.1-5.7 0-5.8-6.1-5-7 0 0 3.1 1.6 5.2 2 1.5-5.8 11.2-5 12.8 0 0 0 1.5-.5 2.5-1.5-.5 1.5-1.5 2.5-2 3z"/></svg></button>
+                                        <button class="share-btn linkedin" aria-label="Share on LinkedIn"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg></button>
+                                    </div>
+                                    <span class="job-tag">Full-time</span>
+                                </div>
+                            </div>
+                            <!-- Job 2 -->
+                            <div class="job-item">
+                                <div class="job-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+                                </div>
+                                <div class="job-info">
+                                    <h5>Product Manager</h5>
+                                    <p>$130k – $160k • Hybrid</p>
+                                </div>
+                                <div class="job-meta">
+                                    <div class="social-share">
+                                        <button class="share-btn twitter" aria-label="Share on Twitter"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-12.7 15.8-3.9-1.7-4.5-5.7-4.2-6.5 2.6-2.5 5.5-2.1 5.5-2.1-5.7 0-5.8-6.1-5-7 0 0 3.1 1.6 5.2 2 1.5-5.8 11.2-5 12.8 0 0 0 1.5-.5 2.5-1.5-.5 1.5-1.5 2.5-2 3z"/></svg></button>
+                                        <button class="share-btn linkedin" aria-label="Share on LinkedIn"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg></button>
+                                    </div>
+                                    <span class="job-tag">Full-time</span>
+                                </div>
+                            </div>
+                            <!-- Job 3 -->
+                            <div class="job-item">
+                                <div class="job-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.087 0-.875.75-1.562 1.687-1.562H15.75A6.25 6.25 0 0 0 22 10.25c0-4.563-4.438-8.25-10-8.25z"/></svg>
+                                </div>
+                                <div class="job-info">
+                                    <h5>UX Designer</h5>
+                                    <p>$90k – $110k • On-site</p>
+                                </div>
+                                <div class="job-meta">
+                                    <div class="social-share">
+                                        <button class="share-btn twitter" aria-label="Share on Twitter"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-12.7 15.8-3.9-1.7-4.5-5.7-4.2-6.5 2.6-2.5 5.5-2.1 5.5-2.1-5.7 0-5.8-6.1-5-7 0 0 3.1 1.6 5.2 2 1.5-5.8 11.2-5 12.8 0 0 0 1.5-.5 2.5-1.5-.5 1.5-1.5 2.5-2 3z"/></svg></button>
+                                        <button class="share-btn linkedin" aria-label="Share on LinkedIn"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg></button>
+                                    </div>
+                                    <span class="job-tag">Contract</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hero-bg-accents">
+                        <div class="bg-accent-1"></div>
+                        <div class="bg-accent-2"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats -->
+        <section class="section stats-section">
+            <div class="container stats-grid">
+                <div class="stat-block reveal">
+                    <h3>100%</h3>
+                    <p>Data Ownership</p>
+                </div>
+                <div class="stat-block reveal delay-1">
+                    <h3>$0</h3>
+                    <p>Monthly Fees</p>
+                </div>
+                <div class="stat-block reveal delay-2">
+                    <h3>6+</h3>
+                    <p>Ready Shortcodes</p>
+                </div>
+                <div class="stat-block reveal delay-3">
+                    <h3>∞</h3>
+                    <p>Customization</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section id="features" class="section bg-neutral">
+            <div class="container">
+                <div class="section-header reveal">
+                    <span class="eyebrow">Features</span>
+                    <h2>Everything you need to run a job board</h2>
+                    <p>From job posting to monetization, Modern Job Board handles it all while giving you complete control.</p>
+                </div>
+                <div class="features-grid">
+                    <!-- Feature Items (9) -->
+                    <div class="feature-card reveal">
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></div>
+                        <h3>Frontend Job Submission</h3>
+                        <p>Employers post jobs directly from your site with an intuitive form. Supports custom fields, application methods, and company profiles.</p>
+                    </div>
+                    <div class="feature-card reveal delay-1">
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
+                        <h3>AJAX Filtering</h3>
+                        <p>Lightning-fast job search with filters for keywords, location, category, and job type. No page reloads needed.</p>
+                    </div>
+                    <div class="feature-card reveal delay-2">
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                        <h3>Candidate System</h3>
+                        <p>Complete candidate management with profiles, secure resume storage, and one-click applications using stored CVs.</p>
+                    </div>
+                    <div class="feature-card reveal">
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                        <h3>WooCommerce Monetization</h3>
+                        <p>Multiple revenue streams: pay-per-post, job credit packages, CV unlocks, and time-based access passes.</p>
+                    </div>
+                    <div class="feature-card reveal delay-1">
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg></div>
+                        <h3>Google Maps Integration</h3>
+                        <p>Visual location display on job pages helps candidates understand where opportunities are located.</p>
+                    </div>
+                    <div class="feature-card reveal delay-2">
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+                        <h3>SEO Ready</h3>
+                        <p>Automatic Schema.org JobPosting structured data for optimal visibility in Google for Jobs results.</p>
+                    </div>
+                     <div class="feature-card reveal">
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                        <h3>Auto Expiration</h3>
+                        <p>Jobs automatically expire after your configured duration. Background cron jobs handle cleanup automatically.</p>
+                    </div>
+                    <div class="feature-card reveal delay-1">
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+                        <h3>Custom Fields Builder</h3>
+                        <p>Create unlimited custom fields for jobs and applications through a simple admin UI. No code required.</p>
+                    </div>
+                    <div class="feature-card reveal delay-2">
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg></div>
+                        <h3>CSV Import/Export</h3>
+                        <p>Bulk import job listings or export your data for analysis. Perfect for migrations and reporting.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison -->
+        <section id="comparison" class="section">
+            <div class="container">
+                <div class="section-header reveal">
+                    <span class="eyebrow">Compare</span>
+                    <h2>Why choose a plugin over SaaS?</h2>
+                    <p>See how Modern Job Board stacks up against typical SaaS job board platforms.</p>
+                </div>
+                <div class="comparison-table-wrapper reveal delay-1">
+                    <div class="comparison-table">
+                        <div class="row header-row">
+                            <div class="col feature">Feature</div>
+                            <div class="col mjb">Modern Job Board</div>
+                            <div class="col saas">SaaS Platforms</div>
+                        </div>
+                        <div class="row">
+                            <div class="col feature">Cost Model</div>
+                            <div class="col mjb highlight"><svg class="icon-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> One-time / Free</div>
+                            <div class="col saas"><svg class="icon-minus" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/></svg> Monthly subscription</div>
+                        </div>
+                         <div class="row">
+                            <div class="col feature">Data Ownership</div>
+                            <div class="col mjb highlight"><svg class="icon-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 100% yours</div>
+                            <div class="col saas"><svg class="icon-minus" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/></svg> Hosted on their servers</div>
+                        </div>
+                        <div class="row">
+                            <div class="col feature">Customization</div>
+                            <div class="col mjb highlight"><svg class="icon-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Unlimited (code + WP)</div>
+                            <div class="col saas"><svg class="icon-minus" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/></svg> Limited to settings</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Developers -->
+        <section id="developers" class="section bg-white">
+             <div class="container">
+                <div class="section-header reveal">
+                    <span class="eyebrow">Developers</span>
+                    <h2>Built for extensibility</h2>
+                    <p>REST API, XML feeds, and extensive hooks make integration straightforward.</p>
+                </div>
+                <div class="dev-grid">
+                    <div class="dev-content">
+                        <div class="dev-item reveal">
+                            <h3>REST API</h3>
+                            <p>Access job listings programmatically with the built-in JSON API. Perfect for mobile apps, external integrations, or headless WordPress setups.</p>
+                        </div>
+                        <div class="dev-item reveal delay-1">
+                            <h3>XML Job Feed</h3>
+                            <p>Syndicate your listings to Indeed, Google Jobs, and other aggregators with the standardized feed at <code class="inline-code">/feed/job-listings</code></p>
+                        </div>
+                        <div class="dev-item reveal delay-2">
+                            <h3>Actions & Filters</h3>
+                            <p>Dozens of hooks let you customize job queries, form submissions, email notifications, and more without touching core plugin files.</p>
+                        </div>
+                    </div>
+                    <div class="dev-code reveal delay-2">
+                        <div class="code-window">
+                            <div class="window-controls">
+                                <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                            </div>
+                            <pre><code><span class="comment">// REST API Endpoint</span>
+GET /wp-json/mjb/v1/jobs
+
+<span class="comment">// Response</span>
+[
+  <span class="key">"id"</span>: <span class="number">123</span>,
+  <span class="key">"title"</span>: <span class="string">"Senior Developer"</span>,
+  <span class="key">"company"</span>: <span class="string">"Acme Inc"</span>,
+  <span class="key">"location"</span>: <span class="string">"Remote"</span>
+]
+
+<span class="comment">// Filter job queries</span>
+<span class="func">add_filter</span>(<span class="string">'mjb_job_query'</span>, <span class="keyword">function</span>($args) {
+  $args[<span class="string">'orderby'</span>] = <span class="string">'rand'</span>;
+  <span class="keyword">return</span> $args;
+});</code></pre>
+                        </div>
+                    </div>
+                </div>
+             </div>
+        </section>
+
+        <!-- Pricing -->
+        <section id="pricing" class="section bg-neutral">
+            <div class="container">
+                <div class="section-header reveal">
+                    <span class="eyebrow">Pricing</span>
+                    <h2>Simple, honest pricing</h2>
+                    <p>No subscriptions, no hidden fees. Pay once, own forever.</p>
+                </div>
+                <div class="pricing-grid">
+                    <!-- Free -->
+                    <div class="pricing-card reveal delay-1">
+                        <h3>Open Source</h3>
+                        <p class="price-sub">Full-featured core plugin</p>
+                        <div class="price">Free</div>
+                        <ul class="price-features">
+                            <li><span class="check-icon">✓</span> All core features</li>
+                            <li><span class="check-icon">✓</span> Employer & Candidate system</li>
+                            <li><span class="check-icon">✓</span> WooCommerce integration</li>
+                            <li><span class="check-icon">✓</span> REST API & XML feeds</li>
+                        </ul>
+                        <a href="https://github.com/MartinOrton/modern-job-board" class="btn btn-outline btn-block">Download from GitHub</a>
+                    </div>
+                    <!-- Pro -->
+                    <div class="pricing-card pro reveal delay-2">
+                        <div class="recommended-badge">Recommended</div>
+                        <h3>Pro Support</h3>
+                        <p class="price-sub">Priority help & customization</p>
+                        <div class="price">$149 <span class="period">/year</span></div>
+                        <ul class="price-features">
+                            <li><span class="check-icon">✓</span> Everything in Free</li>
+                            <li><span class="check-icon">✓</span> Priority email support</li>
+                            <li><span class="check-icon">✓</span> Installation assistance</li>
+                            <li><span class="check-icon">✓</span> 2 hours custom development</li>
+                        </ul>
+                        <a href="mailto:hello@martinorton.com" class="btn btn-primary btn-block">Get Pro Support</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta-section">
+            <div class="container reveal">
+                <h2>Ready to own your job board?</h2>
+                <p>Download Modern Job Board today and start building your recruitment platform without monthly fees or platform lock-in.</p>
+                <a href="https://github.com/MartinOrton/modern-job-board" class="btn btn-white btn-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+                    View on GitHub
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-brand">
+                 <div class="logo-icon sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                </div>
+                Modern Job Board
+            </div>
+            <div class="footer-links">
+                <a href="#">GitHub</a>
+                <a href="#">Documentation</a>
+                <a href="#">Author</a>
+            </div>
+            <div class="footer-copy">© 2025 Modern Job Board. Built by Martin Orton.</div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

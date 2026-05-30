@@ -52,7 +52,7 @@ class MJB_Applications
             'hierarchical' => false,
             'public' => false,
             'show_ui' => true,
-            'show_in_menu' => 'edit.php?post_type=job_listing',
+            'show_in_menu' => 'modern-job-board',
             'menu_position' => 10,
             'show_in_admin_bar' => false,
             'show_in_nav_menus' => false,
