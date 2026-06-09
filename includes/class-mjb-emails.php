@@ -15,8 +15,6 @@ class MJB_Emails
      */
     public function init()
     {
-        // No hooks needed for now as we call methods directly, 
-        // but keeping init for consistency and future hook-based emails (e.g. status transitions).
     }
 
     /**
@@ -56,23 +54,26 @@ class MJB_Emails
             return;
         }
 
-        $employer_id = $job->post_author;
-        $employer = get_userdata($employer_id);
+        $application_email = get_post_meta($job_id, '_application_email', true);
+        $employer = get_userdata($job->post_author);
 
-        if (!$employer) {
+        if ($application_email) {
+            $to = $application_email;
+        } elseif ($employer) {
+            $to = $employer->user_email;
+        } else {
             return;
         }
 
         $candidate_name = get_post_meta($application_id, '_candidate_name', true);
 
-        $to = $employer->user_email;
         $subject = sprintf(__('New Application for %s', 'modern-job-board'), $job->post_title);
 
         $message = sprintf(__('You have received a new application for "%s".', 'modern-job-board'), $job->post_title) . "\n\n";
         $message .= sprintf(__('Candidate Name: %s', 'modern-job-board'), $candidate_name) . "\n";
         $message .= sprintf(__('Candidate Email: %s', 'modern-job-board'), get_post_meta($application_id, '_candidate_email', true)) . "\n";
 
-        $resume_url = get_post_meta($application_id, '_candidate_resume', true);
+        $resume_url = MJB_Resumes::get_application_download_url($application_id);
         if ($resume_url) {
             $message .= sprintf(__('Resume: %s', 'modern-job-board'), $resume_url) . "\n";
         }

@@ -2,6 +2,27 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.3.0] - 2026-06-09
+### Security
+- **Protected resume downloads**: Resumes are blocked from direct public access via `.htaccess` and served through authenticated, nonce-protected download endpoints.
+- **Resume upload validation**: Server-side file type and size checks (PDF, DOC, DOCX; max 5 MB) on all resume uploads.
+- **Job submission access control**: Frontend job posting now requires a logged-in employer account.
+- **Export capability checks**: CSV export/import handlers now verify `manage_options` in addition to nonces.
+
+### Fixed
+- **Candidate dashboard resume link**: Fixed broken "View Resume" link for `mjb_resume` post types.
+- **CSV import company type**: Import now creates `company` posts instead of the non-existent `job_company` type.
+- **WooCommerce double-processing**: Order benefits (credits, unlocks, publishing) are applied once per order via a processed flag.
+- **Application custom fields**: Custom application fields now render on the job application form.
+- **Application notifications**: Emails now respect per-job notification addresses and use protected resume links.
+- **REST API pagination**: `per_page` is capped at 100.
+
+### Added
+- **Plugin activation/deactivation hooks**: Registers `employer` and `candidate` roles, secures resume storage, and clears cron on deactivation.
+- **User-facing notices**: Forms redirect with clear success and error messages.
+- **Paid CV access setting**: Admin toggle to require payment before employers can view candidate details.
+- **Conditional asset loading**: Frontend CSS/JS only loads on job board pages and shortcodes.
+
 ## [1.2.1] - 2025-12-28
 ### Improved
 - **Resume Management**:

@@ -25,32 +25,38 @@ class MJB_Candidate_Dashboard
      */
     public function handle_profile_update()
     {
-        if (isset($_POST['mjb_update_profile']) && isset($_POST['mjb_profile_nonce'])) {
-            if (!wp_verify_nonce($_POST['mjb_profile_nonce'], 'mjb_profile_action')) {
-                return;
-            }
-
-            if (!is_user_logged_in()) {
-                return;
-            }
-
-            $user_id = get_current_user_id();
-            $first_name = sanitize_text_field($_POST['mjb_first_name']);
-            $last_name = sanitize_text_field($_POST['mjb_last_name']);
-            $headline = sanitize_text_field($_POST['mjb_headline']);
-
-            wp_update_user(array(
-                'ID' => $user_id,
-                'first_name' => $first_name,
-                'last_name' => $last_name
-            ));
-
-            update_user_meta($user_id, '_candidate_headline', $headline);
-
-            // Redirect to avoid form resubmission
-            wp_redirect(add_query_arg('updated', 'true', get_permalink()));
-            exit;
+        if (!isset($_POST['mjb_update_profile']) || !isset($_POST['mjb_profile_nonce'])) {
+            return;
         }
+
+        $redirect_url = get_permalink();
+
+        if (!wp_verify_nonce($_POST['mjb_profile_nonce'], 'mjb_profile_action')) {
+            MJB_Notices::redirect($redirect_url, 'error_security');
+        }
+
+        if (!is_user_logged_in()) {
+            MJB_Notices::redirect($redirect_url, 'error_permission');
+        }
+
+        $user_id = get_current_user_id();
+        $first_name = isset($_POST['mjb_first_name']) ? sanitize_text_field($_POST['mjb_first_name']) : '';
+        $last_name = isset($_POST['mjb_last_name']) ? sanitize_text_field($_POST['mjb_last_name']) : '';
+        $headline = isset($_POST['mjb_headline']) ? sanitize_text_field($_POST['mjb_headline']) : '';
+
+        if (empty($first_name) || empty($last_name)) {
+            MJB_Notices::redirect($redirect_url, 'error_missing_fields');
+        }
+
+        wp_update_user(array(
+            'ID' => $user_id,
+            'first_name' => $first_name,
+            'last_name' => $last_name
+        ));
+
+        update_user_meta($user_id, '_candidate_headline', $headline);
+
+        MJB_Notices::redirect($redirect_url, 'success_profile');
     }
 
     /**
@@ -58,89 +64,49 @@ class MJB_Candidate_Dashboard
      */
     public function handle_resume_upload()
     {
-        if (isset($_POST['mjb_upload_resume']) && isset($_POST['mjb_resume_nonce'])) {
-            if (!wp_verify_nonce($_POST['mjb_resume_nonce'], 'mjb_resume_action')) {
-                return;
-            }
-
-            if (!is_user_logged_in()) {
-                return;
-            }
-
-            if (!function_exists('wp_handle_upload')) {
-                require_once(ABSPATH . 'wp-admin/includes/file.php');
-            }
-
-            $uploadedfile = $_FILES['mjb_resume'];
-            $upload_overrides = array('test_form' => false);
-
-            // Hook to change upload dir
-            add_filter('upload_dir', array($this, 'custom_upload_dir'));
-
-            $movefile = wp_handle_upload($uploadedfile, $upload_overrides);
-
-            // Remove hook
-            remove_filter('upload_dir', array($this, 'custom_upload_dir'));
-
-            if ($movefile && !isset($movefile['error'])) {
-                $user_id = get_current_user_id();
-
-                // Create MJB Resume Post
-                $resume_post = array(
-                    'post_title' => $uploadedfile['name'] . ' - ' . get_userdata($user_id)->display_name,
-                    'post_type' => 'mjb_resume',
-                    'post_status' => 'publish',
-                    'post_author' => $user_id,
-                );
-
-                $resume_id = wp_insert_post($resume_post);
-
-                if ($resume_id) {
-                    update_post_meta($resume_id, '_resume_file_url', $movefile['url']);
-                    update_post_meta($resume_id, '_resume_file_path', $movefile['file']);
-                    update_post_meta($resume_id, '_candidate_user_id', $user_id);
-
-                    // Update User Meta with the Resume POST ID (not attachment ID)
-                    update_user_meta($user_id, '_candidate_resume_id', $resume_id);
-
-                    wp_redirect(add_query_arg('resume_updated', 'true', get_permalink()));
-                    exit;
-                }
-            } else {
-                wp_redirect(add_query_arg('resume_error', 'true', get_permalink()));
-                exit;
-            }
-        }
-    }
-
-    /**
-     * Custom Upload Directory.
-     */
-    public function custom_upload_dir($path)
-    {
-        if (!empty($path['error'])) {
-            return $path;
+        if (!isset($_POST['mjb_upload_resume']) || !isset($_POST['mjb_resume_nonce'])) {
+            return;
         }
 
-        $custom_dir = '/mjb-resumes' . $path['subdir'];
+        $redirect_url = get_permalink();
 
-        $path['path'] = str_replace($path['subdir'], '', $path['path']);
-        // Logic fix: wp_upload_dir returns path including basedir. We want to append mjb-resumes to basedir.
-        // Actually simplest is to just append to basedir? No, we want time based?
-        // Let's rely on standard structure but inside mjb-resumes folder.
-
-        // $path['path'] is '.../uploads/2024/01'
-        // We want '.../uploads/mjb-resumes/2024/01'
-
-        $path['path'] = str_replace('uploads', 'uploads/mjb-resumes', $path['path']);
-        $path['url'] = str_replace('uploads', 'uploads/mjb-resumes', $path['url']);
-
-        // Verify dir exists
-        if (!file_exists($path['path'])) {
-            wp_mkdir_p($path['path']);
+        if (!wp_verify_nonce($_POST['mjb_resume_nonce'], 'mjb_resume_action')) {
+            MJB_Notices::redirect($redirect_url, 'error_security');
         }
 
-        return $path;
+        if (!is_user_logged_in()) {
+            MJB_Notices::redirect($redirect_url, 'error_permission');
+        }
+
+        if (empty($_FILES['mjb_resume']['name'])) {
+            MJB_Notices::redirect($redirect_url, 'error_resume_required');
+        }
+
+        $uploaded = MJB_Resumes::upload_file($_FILES['mjb_resume']);
+        if (is_wp_error($uploaded)) {
+            $code = $uploaded->get_error_code() === 'invalid_type' ? 'error_invalid_resume' : 'error_resume_upload';
+            MJB_Notices::redirect($redirect_url, $code);
+        }
+
+        $user_id = get_current_user_id();
+        $resume_post = array(
+            'post_title' => sanitize_file_name($_FILES['mjb_resume']['name']) . ' - ' . get_userdata($user_id)->display_name,
+            'post_type' => 'mjb_resume',
+            'post_status' => 'publish',
+            'post_author' => $user_id,
+        );
+
+        $resume_id = wp_insert_post($resume_post);
+
+        if (!$resume_id || is_wp_error($resume_id)) {
+            MJB_Notices::redirect($redirect_url, 'error_resume_upload');
+        }
+
+        update_post_meta($resume_id, '_resume_file_path', $uploaded['file']);
+        update_post_meta($resume_id, '_candidate_user_id', $user_id);
+        update_user_meta($user_id, '_candidate_resume_id', $resume_id);
+
+        MJB_Notices::redirect($redirect_url, 'success_resume');
     }
 
     /**
@@ -155,7 +121,7 @@ class MJB_Candidate_Dashboard
         $user_id = get_current_user_id();
         $user = get_userdata($user_id);
 
-        if (!in_array('candidate', (array) $user->roles)) {
+        if (!in_array('candidate', (array) $user->roles, true)) {
             return '<p>' . __('This dashboard is for candidates only.', 'modern-job-board') . '</p>';
         }
 
@@ -163,20 +129,14 @@ class MJB_Candidate_Dashboard
         $last_name = get_user_meta($user_id, 'last_name', true);
         $headline = get_user_meta($user_id, '_candidate_headline', true);
         $resume_id = get_user_meta($user_id, '_candidate_resume_id', true);
-        $resume_url = $resume_id ? wp_get_attachment_url($resume_id) : '';
+        $resume_url = MJB_Resumes::get_resume_display_url($resume_id);
 
         ob_start();
         ?>
         <div class="mjb-candidate-dashboard">
             <h2><?php _e('Candidate Dashboard', 'modern-job-board'); ?></h2>
 
-            <?php if (isset($_GET['updated']) && $_GET['updated'] == 'true'): ?>
-                <div class="mjb-message success"><?php _e('Profile updated successfully.', 'modern-job-board'); ?></div>
-            <?php endif; ?>
-
-            <?php if (isset($_GET['resume_updated']) && $_GET['resume_updated'] == 'true'): ?>
-                <div class="mjb-message success"><?php _e('Resume uploaded successfully.', 'modern-job-board'); ?></div>
-            <?php endif; ?>
+            <?php echo MJB_Notices::render(); ?>
 
             <div class="mjb-dashboard-section">
                 <h3><?php _e('Profile Details', 'modern-job-board'); ?></h3>

@@ -17,9 +17,6 @@ class MJB_Shortcodes
     {
         add_shortcode('mjb_jobs', array($this, 'output_jobs'));
         add_shortcode('mjb_job_form', array($this, 'output_job_form'));
-        add_shortcode('mjb_jobs', array($this, 'output_jobs'));
-        add_shortcode('mjb_job_form', array($this, 'output_job_form'));
-        // Dashboard shortcode moved to MJB_Dashboard class
     }
 
     /**
@@ -172,7 +169,21 @@ class MJB_Shortcodes
      */
     public function output_job_form($atts)
     {
+        if (!is_user_logged_in()) {
+            return '<p>' . sprintf(
+                __('You must be <a href="%s">logged in as an employer</a> to post jobs.', 'modern-job-board'),
+                esc_url(wp_login_url(get_permalink()))
+            ) . '</p>';
+        }
+
+        $user = wp_get_current_user();
+        if (!in_array('employer', (array) $user->roles, true) && !user_can($user, 'manage_options')) {
+            return '<p>' . __('This form is for employer accounts only.', 'modern-job-board') . '</p>';
+        }
+
         ob_start();
+
+        echo MJB_Notices::render();
 
         // Check for Edit Actions
         $job_id = 0;
@@ -354,19 +365,27 @@ class MJB_Shortcodes
      */
     private function handle_job_submission($existing_job_id = 0)
     {
-        $title = sanitize_text_field($_POST['job_title']);
-        $description = wp_kses_post($_POST['job_description']);
-        
-        // Handle Company Logic
-        $company_selection = sanitize_text_field($_POST['company_selection']);
+        $redirect_url = wp_get_referer() ? wp_get_referer() : home_url('/');
+
+        if (!is_user_logged_in()) {
+            MJB_Notices::redirect($redirect_url, 'error_login_required');
+        }
+
+        $title = isset($_POST['job_title']) ? sanitize_text_field($_POST['job_title']) : '';
+        $description = isset($_POST['job_description']) ? wp_kses_post($_POST['job_description']) : '';
+
+        if (empty($title) || empty($description)) {
+            MJB_Notices::redirect($redirect_url, 'error_missing_fields');
+        }
+
+        $company_selection = isset($_POST['company_selection']) ? sanitize_text_field($_POST['company_selection']) : '';
         $company_id = 0;
         $company_name_text = '';
 
         if ($company_selection === 'new') {
-            $company_name_text = sanitize_text_field($_POST['new_company_name']);
+            $company_name_text = isset($_POST['new_company_name']) ? sanitize_text_field($_POST['new_company_name']) : '';
             if (empty($company_name_text)) {
-                // Error handling should be better, but for now:
-                return; 
+                MJB_Notices::redirect($redirect_url, 'error_invalid_company');
             }
             
             // Create new Company
@@ -382,8 +401,7 @@ class MJB_Shortcodes
             // Verify ownership
             $company_post = get_post($company_id);
             if (!$company_post || $company_post->post_type !== 'company' || intval($company_post->post_author) !== get_current_user_id()) {
-                // Invalid company selected
-                 return;
+                MJB_Notices::redirect($redirect_url, 'error_invalid_company');
             }
             $company_name_text = $company_post->post_title;
         }
@@ -394,7 +412,7 @@ class MJB_Shortcodes
             // Re-verify ownership for security (double check)
             $job = get_post($existing_job_id);
             if (!$job || intval($job->post_author) !== get_current_user_id()) {
-                return;
+                MJB_Notices::redirect($redirect_url, 'error_permission');
             }
         }
 
@@ -413,11 +431,11 @@ class MJB_Shortcodes
             // Actually, usually edits require re-approval. Let's set to pending.
             $post_data['post_status'] = 'pending';
             $post_id = wp_update_post($post_data);
-            $message = __('Job updated successfully! It is pending review.', 'modern-job-board');
+            $notice_code = 'success_job_updated';
         } else {
             $post_data['post_status'] = 'pending';
             $post_id = wp_insert_post($post_data);
-            $message = __('Job submitted successfully! It is pending review.', 'modern-job-board');
+            $notice_code = 'success_job_submitted';
 
             // Set Expiration Date
             $duration = get_option('mjb_listing_duration', 30);
@@ -491,9 +509,7 @@ class MJB_Shortcodes
                      // Optional: Add note that credit was used
                      update_post_meta($post_id, '_mjb_credit_used', true);
                      
-                     $message = __('Job submitted successfully using a job credit!', 'modern-job-board');
-                     echo '<p class="mjb-success">' . $message . '</p>';
-                     return; // Skip payment redirect
+                     MJB_Notices::redirect($redirect_url, 'success_job_credit');
                 }
 
                 // If no credits, proceed to Pay-Per-Post
@@ -518,7 +534,7 @@ class MJB_Shortcodes
             // Hook for post-submission actions
             do_action('mjb_job_submitted', $post_id);
 
-            echo '<p class="mjb-success">' . $message . '</p>';
+            MJB_Notices::redirect($redirect_url, $notice_code);
         }
     }
 

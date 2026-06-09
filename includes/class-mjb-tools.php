@@ -121,7 +121,7 @@ class MJB_Tools
      */
     public function handle_export_jobs()
     {
-        if (isset($_POST['mjb_action']) && $_POST['mjb_action'] == 'export_jobs' && check_admin_referer('mjb_export_jobs_nonce')) {
+        if (isset($_POST['mjb_action']) && $_POST['mjb_action'] == 'export_jobs' && check_admin_referer('mjb_export_jobs_nonce') && current_user_can('manage_options')) {
             $filename = 'jobs-export-' . date('Y-m-d') . '.csv';
 
             header('Content-Type: text/csv');
@@ -182,7 +182,7 @@ class MJB_Tools
      */
     public function handle_export_applications()
     {
-        if (isset($_POST['mjb_action']) && $_POST['mjb_action'] == 'export_applications' && check_admin_referer('mjb_export_applications_nonce')) {
+        if (isset($_POST['mjb_action']) && $_POST['mjb_action'] == 'export_applications' && check_admin_referer('mjb_export_applications_nonce') && current_user_can('manage_options')) {
             $filename = 'applications-export-' . date('Y-m-d') . '.csv';
 
             header('Content-Type: text/csv');
@@ -216,7 +216,7 @@ class MJB_Tools
                         get_post_meta($app_id, '_candidate_name', true),
                         get_post_meta($app_id, '_candidate_email', true),
                         wp_strip_all_tags(get_the_content()), // Message often in content
-                        get_post_meta($app_id, '_candidate_resume', true)
+                        MJB_Resumes::get_application_download_url($app_id)
                     ));
                 }
             }
@@ -231,7 +231,7 @@ class MJB_Tools
      */
     public function handle_import_jobs()
     {
-        if (isset($_POST['mjb_action']) && $_POST['mjb_action'] == 'import_jobs' && check_admin_referer('mjb_import_jobs_nonce')) {
+        if (isset($_POST['mjb_action']) && $_POST['mjb_action'] == 'import_jobs' && check_admin_referer('mjb_import_jobs_nonce') && current_user_can('manage_options')) {
             if (!empty($_FILES['import_file']['tmp_name'])) {
                 $file = $_FILES['import_file']['tmp_name'];
 
@@ -294,13 +294,13 @@ class MJB_Tools
                         // For V1, let's just create a new company for every job or skip if complex.
                         // Better: If company name is provided, check if exists, if not create.
                         if ($company_name) {
-                            $company_post = get_page_by_title($company_name, OBJECT, 'job_company');
+                            $company_post = get_page_by_title($company_name, OBJECT, 'company');
                             if ($company_post) {
                                 $company_id = $company_post->ID;
                             } else {
                                 $company_id = wp_insert_post(array(
                                     'post_title' => $company_name,
-                                    'post_type' => 'job_company',
+                                    'post_type' => 'company',
                                     'post_status' => 'publish'
                                 ));
                             }

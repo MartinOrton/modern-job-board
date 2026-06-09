@@ -3,7 +3,7 @@
  * Plugin Name: Modern Job Board
  * Plugin URI: https://github.com/MartinOrton/modern-job-board
  * Description: A lightweight job board plugin for WordPress.
- * Version: 1.0.0
+ * Version: 1.3.0
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
  * Text Domain: modern-job-board
@@ -14,9 +14,16 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '1.0.0');
+define('MJB_VERSION', '1.3.0');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
+
+require_once MJB_PATH . 'includes/class-mjb-resumes.php';
+require_once MJB_PATH . 'includes/class-mjb-activator.php';
+require_once MJB_PATH . 'includes/class-mjb-notices.php';
+
+register_activation_hook(__FILE__, array('MJB_Activator', 'activate'));
+register_deactivation_hook(__FILE__, array('MJB_Activator', 'deactivate'));
 
 // Include core classes.
 require_once MJB_PATH . 'includes/class-mjb-cpt.php';
@@ -67,6 +74,11 @@ class Modern_Job_Board
      */
     private function init_hooks()
     {
+        add_action('init', array($this, 'load_textdomain'));
+
+        $resumes = new MJB_Resumes();
+        $resumes->init();
+
         // Initialize CPTs
         $cpt = new MJB_CPT();
         $cpt->init();
@@ -154,10 +166,56 @@ class Modern_Job_Board
     }
 
     /**
+     * Load plugin text domain.
+     */
+    public function load_textdomain()
+    {
+        load_plugin_textdomain('modern-job-board', false, dirname(plugin_basename(__FILE__)) . '/languages');
+    }
+
+    /**
+     * Whether frontend assets should load on the current request.
+     *
+     * @return bool
+     */
+    private function should_load_assets()
+    {
+        if (is_singular(array('job_listing', 'company')) || is_post_type_archive('job_listing') || is_tax(array('job_type', 'job_category', 'job_location'))) {
+            return true;
+        }
+
+        global $post;
+        if (!$post instanceof WP_Post) {
+            return false;
+        }
+
+        $shortcodes = array(
+            'mjb_jobs',
+            'mjb_job_form',
+            'mjb_dashboard',
+            'mjb_employer_registration',
+            'mjb_candidate_registration',
+            'mjb_candidate_dashboard',
+        );
+
+        foreach ($shortcodes as $shortcode) {
+            if (has_shortcode($post->post_content, $shortcode)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Enqueue frontend scripts and styles.
      */
     public function enqueue_scripts()
     {
+        if (!$this->should_load_assets()) {
+            return;
+        }
+
         wp_enqueue_style('mjb-style', MJB_URL . 'assets/css/mjb-style.css', array(), MJB_VERSION);
 
         wp_enqueue_script('mjb-ajax-search', MJB_URL . 'assets/js/mjb-ajax-search.js', array('jquery'), MJB_VERSION, true);

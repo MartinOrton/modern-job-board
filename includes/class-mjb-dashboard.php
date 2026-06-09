@@ -34,7 +34,7 @@ class MJB_Dashboard
 
             if ($job && $job->post_type === 'job_listing' && intval($job->post_author) === get_current_user_id()) {
                 wp_trash_post($job_id);
-                wp_redirect(remove_query_arg(array('action', 'job_id', '_wpnonce')));
+                wp_safe_redirect(remove_query_arg(array('action', 'job_id', '_wpnonce')));
                 exit;
             }
         }
@@ -47,6 +47,11 @@ class MJB_Dashboard
     {
         if (!is_user_logged_in()) {
             return '<p>' . __('You must be logged in to view the dashboard.', 'modern-job-board') . '</p>';
+        }
+
+        $user = wp_get_current_user();
+        if (!in_array('employer', (array) $user->roles, true) && !user_can($user, 'manage_options')) {
+            return '<p>' . __('This dashboard is for employer accounts only.', 'modern-job-board') . '</p>';
         }
 
         ob_start();
@@ -161,27 +166,11 @@ class MJB_Dashboard
                 $app_id = get_the_ID();
                 $name = get_post_meta($app_id, '_candidate_name', true);
                 $email = get_post_meta($app_id, '_candidate_email', true);
-                $resume = get_post_meta($app_id, '_candidate_resume', true);
+                $resume = MJB_Resumes::get_application_download_url($app_id);
 
-                // Permission Check
-                $can_view = true; // Default
+                $can_view = true;
                 if (get_option('mjb_paid_cv_access')) {
-                    $can_view = false;
-                    $user_id = get_current_user_id();
-
-                    // 1. Check Global Access Pass
-                    $expires = get_user_meta($user_id, '_mjb_cv_access_expires', true);
-                    if ($expires && $expires > current_time('timestamp')) {
-                        $can_view = true;
-                    }
-
-                    // 2. Check Single Unlock
-                    if (!$can_view) {
-                        $unlocked = get_user_meta($user_id, '_mjb_unlocked_applications', true);
-                        if (is_array($unlocked) && in_array($app_id, $unlocked)) {
-                            $can_view = true;
-                        }
-                    }
+                    $can_view = MJB_Resumes::employer_has_cv_access(get_current_user_id(), $app_id);
                 }
 
                 // Column: Candidate Name

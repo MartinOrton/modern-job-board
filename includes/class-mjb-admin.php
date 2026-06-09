@@ -54,7 +54,7 @@ class MJB_Admin
                 'mjb-admin-css',
                 plugin_dir_url(dirname(__FILE__)) . 'assets/css/mjb-admin.css',
                 array(),
-                '1.0.0'
+                MJB_VERSION
             );
         }
     }
@@ -121,7 +121,7 @@ class MJB_Admin
         <div class="wrap mjb-dashboard-page">
             <div class="mjb-dashboard-wrap">
                 <header style="margin-bottom: 3rem;">
-                    <h1>Modern Job Board <span class="mjb-badge">v1.2.1</span></h1>
+                    <h1>Modern Job Board <span class="mjb-badge">v<?php echo esc_html(MJB_VERSION); ?></span></h1>
                     <p class="subtitle"><?php _e('Manage your job board with complete control.', 'modern-job-board'); ?></p>
                 </header>
                 
@@ -230,6 +230,9 @@ class MJB_Admin
         // CV Unlock settings (if they existed, keeping consistent)
         register_setting('mjb_settings_group', 'mjb_cv_unlock_product_id');
         add_settings_field('mjb_cv_unlock_product_id', __('CV Unlock Product ID', 'modern-job-board'), array($this, 'cv_unlock_product_id_callback'), 'mjb-settings', 'mjb_payment_section');
+
+        register_setting('mjb_settings_group', 'mjb_paid_cv_access');
+        add_settings_field('mjb_paid_cv_access', __('Paid CV Access', 'modern-job-board'), array($this, 'paid_cv_access_callback'), 'mjb-settings', 'mjb_payment_section');
     }
 
     /**
@@ -289,6 +292,13 @@ class MJB_Admin
         echo '<p class="description">' . __('Enter the WooCommerce Product ID for unlocking a single application.', 'modern-job-board') . '</p>';
     }
 
+    public function paid_cv_access_callback()
+    {
+        $enabled = get_option('mjb_paid_cv_access');
+        echo '<input type="checkbox" name="mjb_paid_cv_access" value="1" ' . checked(1, $enabled, false) . '> ';
+        echo esc_html__('Require payment before employers can view candidate details and resumes.', 'modern-job-board');
+    }
+
     /**
      * Add columns to Job Application list.
      */
@@ -311,7 +321,7 @@ class MJB_Admin
     {
         switch ($column) {
             case 'candidate_name':
-                echo get_post_meta($post_id, '_candidate_name', true);
+                echo esc_html(get_post_meta($post_id, '_candidate_name', true));
                 break;
             case 'job_applied_for':
                 $job_id = get_post_meta($post_id, '_job_applied_for', true);
@@ -322,7 +332,7 @@ class MJB_Admin
                 }
                 break;
             case 'resume':
-                $resume_url = get_post_meta($post_id, '_candidate_resume', true);
+                $resume_url = MJB_Resumes::get_application_download_url($post_id);
                 if ($resume_url) {
                     echo '<a href="' . esc_url($resume_url) . '" target="_blank">' . __('Download Resume', 'modern-job-board') . '</a>';
                 } else {

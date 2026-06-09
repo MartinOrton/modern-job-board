@@ -24,50 +24,50 @@ class MJB_Employer_Registration
      */
     public function handle_registration()
     {
-        if (isset($_POST['mjb_register_employer']) && isset($_POST['mjb_registration_nonce'])) {
-            if (!wp_verify_nonce($_POST['mjb_registration_nonce'], 'mjb_register_action')) {
-                return;
-            }
-
-            $username = sanitize_user($_POST['mjb_username']);
-            $email = sanitize_email($_POST['mjb_email']);
-            $password = $_POST['mjb_password'];
-            $company_name = sanitize_text_field($_POST['mjb_company_name']);
-            $phone = sanitize_text_field($_POST['mjb_phone']);
-
-            // Validation
-            if (empty($username) || empty($email) || empty($password)) {
-                // Add error handling logic here (e.g., store in session/transient)
-                return;
-            }
-
-            if (username_exists($username) || email_exists($email)) {
-                // Add error handling logic here
-                return;
-            }
-
-            // Create User
-            $user_id = wp_create_user($username, $password, $email);
-
-            if (!is_wp_error($user_id)) {
-                // Set Role
-                $user = new WP_User($user_id);
-                $user->set_role('employer');
-
-                // Save Meta
-                update_user_meta($user_id, '_company_name', $company_name);
-                update_user_meta($user_id, '_phone_number', $phone);
-
-                // Auto Login
-                wp_set_current_user($user_id);
-                wp_set_auth_cookie($user_id);
-
-                // Redirect to Dashboard (or home if dashboard not set)
-                // Assuming /job-dashboard/ exists or homepage
-                wp_redirect(home_url('/job-dashboard/'));
-                exit;
-            }
+        if (!isset($_POST['mjb_register_employer']) || !isset($_POST['mjb_registration_nonce'])) {
+            return;
         }
+
+        $redirect_url = wp_get_referer() ? wp_get_referer() : home_url('/');
+
+        if (!wp_verify_nonce($_POST['mjb_registration_nonce'], 'mjb_register_action')) {
+            MJB_Notices::redirect($redirect_url, 'error_security');
+        }
+
+        $username = isset($_POST['mjb_username']) ? sanitize_user($_POST['mjb_username']) : '';
+        $email = isset($_POST['mjb_email']) ? sanitize_email($_POST['mjb_email']) : '';
+        $password = isset($_POST['mjb_password']) ? $_POST['mjb_password'] : '';
+        $company_name = isset($_POST['mjb_company_name']) ? sanitize_text_field($_POST['mjb_company_name']) : '';
+        $phone = isset($_POST['mjb_phone']) ? sanitize_text_field($_POST['mjb_phone']) : '';
+
+        if (empty($username) || empty($email) || empty($password)) {
+            MJB_Notices::redirect($redirect_url, 'error_missing_fields');
+        }
+
+        if (username_exists($username)) {
+            MJB_Notices::redirect($redirect_url, 'error_username_exists');
+        }
+
+        if (email_exists($email)) {
+            MJB_Notices::redirect($redirect_url, 'error_email_exists');
+        }
+
+        $user_id = wp_create_user($username, $password, $email);
+
+        if (is_wp_error($user_id)) {
+            MJB_Notices::redirect($redirect_url, 'error_registration_failed');
+        }
+
+        $user = new WP_User($user_id);
+        $user->set_role('employer');
+
+        update_user_meta($user_id, '_company_name', $company_name);
+        update_user_meta($user_id, '_phone_number', $phone);
+
+        wp_set_current_user($user_id);
+        wp_set_auth_cookie($user_id);
+
+        MJB_Notices::redirect(home_url('/job-dashboard/'), 'success_employer_registered');
     }
 
     /**
@@ -82,6 +82,7 @@ class MJB_Employer_Registration
         ob_start();
         ?>
         <div class="mjb-registration-form-container">
+            <?php echo MJB_Notices::render(); ?>
             <form method="post" action="" class="mjb-form">
                 <?php wp_nonce_field('mjb_register_action', 'mjb_registration_nonce'); ?>
 

@@ -24,54 +24,56 @@ class MJB_Candidate_Registration
      */
     public function handle_registration()
     {
-        if (isset($_POST['mjb_register_candidate']) && isset($_POST['mjb_candidate_nonce'])) {
-            if (!wp_verify_nonce($_POST['mjb_candidate_nonce'], 'mjb_candidate_action')) {
-                return;
-            }
-
-            $username = sanitize_user($_POST['mjb_username']);
-            $email = sanitize_email($_POST['mjb_email']);
-            $password = $_POST['mjb_password'];
-            $first_name = sanitize_text_field($_POST['mjb_first_name']);
-            $last_name = sanitize_text_field($_POST['mjb_last_name']);
-            $headline = sanitize_text_field($_POST['mjb_headline']);
-
-            // Validation
-            if (empty($username) || empty($email) || empty($password)) {
-                return;
-            }
-
-            if (username_exists($username) || email_exists($email)) {
-                return;
-            }
-
-            // Create User
-            $user_id = wp_create_user($username, $password, $email);
-
-            if (!is_wp_error($user_id)) {
-                // Set Role
-                $user = new WP_User($user_id);
-                $user->set_role('candidate');
-
-                // Update User Data (Name)
-                wp_update_user(array(
-                    'ID' => $user_id,
-                    'first_name' => $first_name,
-                    'last_name' => $last_name
-                ));
-
-                // Save Meta
-                update_user_meta($user_id, '_candidate_headline', $headline);
-
-                // Auto Login
-                wp_set_current_user($user_id);
-                wp_set_auth_cookie($user_id);
-
-                // Redirect to Home or Candidate Dashboard (TODO)
-                wp_redirect(home_url('/'));
-                exit;
-            }
+        if (!isset($_POST['mjb_register_candidate']) || !isset($_POST['mjb_candidate_nonce'])) {
+            return;
         }
+
+        $redirect_url = wp_get_referer() ? wp_get_referer() : home_url('/');
+
+        if (!wp_verify_nonce($_POST['mjb_candidate_nonce'], 'mjb_candidate_action')) {
+            MJB_Notices::redirect($redirect_url, 'error_security');
+        }
+
+        $username = isset($_POST['mjb_username']) ? sanitize_user($_POST['mjb_username']) : '';
+        $email = isset($_POST['mjb_email']) ? sanitize_email($_POST['mjb_email']) : '';
+        $password = isset($_POST['mjb_password']) ? $_POST['mjb_password'] : '';
+        $first_name = isset($_POST['mjb_first_name']) ? sanitize_text_field($_POST['mjb_first_name']) : '';
+        $last_name = isset($_POST['mjb_last_name']) ? sanitize_text_field($_POST['mjb_last_name']) : '';
+        $headline = isset($_POST['mjb_headline']) ? sanitize_text_field($_POST['mjb_headline']) : '';
+
+        if (empty($username) || empty($email) || empty($password) || empty($first_name) || empty($last_name)) {
+            MJB_Notices::redirect($redirect_url, 'error_missing_fields');
+        }
+
+        if (username_exists($username)) {
+            MJB_Notices::redirect($redirect_url, 'error_username_exists');
+        }
+
+        if (email_exists($email)) {
+            MJB_Notices::redirect($redirect_url, 'error_email_exists');
+        }
+
+        $user_id = wp_create_user($username, $password, $email);
+
+        if (is_wp_error($user_id)) {
+            MJB_Notices::redirect($redirect_url, 'error_registration_failed');
+        }
+
+        $user = new WP_User($user_id);
+        $user->set_role('candidate');
+
+        wp_update_user(array(
+            'ID' => $user_id,
+            'first_name' => $first_name,
+            'last_name' => $last_name
+        ));
+
+        update_user_meta($user_id, '_candidate_headline', $headline);
+
+        wp_set_current_user($user_id);
+        wp_set_auth_cookie($user_id);
+
+        MJB_Notices::redirect(home_url('/'), 'success_candidate_registered');
     }
 
     /**
@@ -86,6 +88,7 @@ class MJB_Candidate_Registration
         ob_start();
         ?>
         <div class="mjb-registration-form-container">
+            <?php echo MJB_Notices::render(); ?>
             <form method="post" action="" class="mjb-form">
                 <?php wp_nonce_field('mjb_candidate_action', 'mjb_candidate_nonce'); ?>
 

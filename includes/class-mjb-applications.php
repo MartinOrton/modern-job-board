@@ -33,7 +33,7 @@ class MJB_Applications
             'attributes' => __('Application Attributes', 'modern-job-board'),
             'parent_item_colon' => __('Parent Application:', 'modern-job-board'),
             'all_items' => __('All Applications', 'modern-job-board'),
-            'add_new_item' => __('Add New Application', 'modern-job-board'), // Usually disabled
+            'add_new_item' => __('Add New Application', 'modern-job-board'),
             'add_new' => __('Add New', 'modern-job-board'),
             'new_item' => __('New Application', 'modern-job-board'),
             'edit_item' => __('Edit Application', 'modern-job-board'),
@@ -62,7 +62,7 @@ class MJB_Applications
             'publicly_queryable' => false,
             'capability_type' => 'post',
             'capabilities' => array(
-                'create_posts' => 'do_not_allow', // Prevent admin creation by default if desired, but good for testing
+                'create_posts' => 'do_not_allow',
             ),
             'map_meta_cap' => true,
         );
@@ -78,49 +78,66 @@ class MJB_Applications
             return;
         }
 
+        $job_id = isset($_POST['job_id']) ? intval($_POST['job_id']) : 0;
+        $redirect_url = $job_id ? get_permalink($job_id) : home_url('/');
+
         if (!wp_verify_nonce($_POST['mjb_application_nonce'], 'mjb_submit_application')) {
-            return;
+            MJB_Notices::redirect($redirect_url, 'error_security');
         }
 
-        $job_id = intval($_POST['job_id']);
-        $candidate_name = sanitize_text_field($_POST['candidate_name']);
-        $candidate_email = sanitize_email($_POST['candidate_email']);
-        $candidate_message = sanitize_textarea_field($_POST['candidate_message']);
-
-        // Basic Validation
-        if (empty($candidate_name) || empty($candidate_email)) {
-            // In a real app, we'd add error handling/flashing messages here.
-            return;
+        $job = get_post($job_id);
+        if (!$job || $job->post_type !== 'job_listing' || $job->post_status !== 'publish') {
+            MJB_Notices::redirect($redirect_url, 'error_invalid_job');
         }
 
-        // Handle File Upload or Logic
-        $resume_url = '';
+        $candidate_name = isset($_POST['candidate_name']) ? sanitize_text_field($_POST['candidate_name']) : '';
+        $candidate_email = isset($_POST['candidate_email']) ? sanitize_email($_POST['candidate_email']) : '';
+        $candidate_message = isset($_POST['candidate_message']) ? sanitize_textarea_field($_POST['candidate_message']) : '';
 
-        // Check if using profile resume
+        if (empty($candidate_name) || empty($candidate_email) || empty($candidate_message)) {
+            MJB_Notices::redirect($redirect_url, 'error_missing_fields');
+        }
+
+        $resume_path = '';
+        $resume_post_id = 0;
+
         if (isset($_POST['mjb_use_profile_resume']) && is_user_logged_in()) {
             $user_id = get_current_user_id();
-            $resume_id = get_user_meta($user_id, '_candidate_resume_id', true);
-            if ($resume_id) {
-                // Check if it's an attachment (Legacy) or MJB Resume Post
-                $post_type = get_post_type($resume_id);
-                if ($post_type === 'mjb_resume') {
-                    $resume_url = get_post_meta($resume_id, '_resume_file_url', true);
-                } else {
-                    $resume_url = wp_get_attachment_url($resume_id);
-                }
+            $resume_post_id = intval(get_user_meta($user_id, '_candidate_resume_id', true));
+
+            if ($resume_post_id) {
+                $resume_path = MJB_Resumes::get_resume_post_file_path($resume_post_id);
             }
         }
 
-        // Fallback to upload if not using profile resume or if it failed
-        if (empty($resume_url) && isset($_FILES['candidate_resume']) && !empty($_FILES['candidate_resume']['name'])) {
-            $resume_url = $this->handle_file_upload($_FILES['candidate_resume']);
-            if (is_wp_error($resume_url)) {
-                // Handle error
-                return;
+        if (empty($resume_path) && isset($_FILES['candidate_resume']) && !empty($_FILES['candidate_resume']['name'])) {
+            $uploaded = MJB_Resumes::upload_file($_FILES['candidate_resume']);
+            if (is_wp_error($uploaded)) {
+                $code = $uploaded->get_error_code() === 'invalid_type' ? 'error_invalid_resume' : 'error_resume_upload';
+                MJB_Notices::redirect($redirect_url, $code);
             }
-        } elseif (empty($resume_url)) {
-            // No resume found (neither profile nor upload)
-            return;
+            $resume_path = $uploaded['file'];
+        }
+
+        if (empty($resume_path)) {
+            MJB_Notices::redirect($redirect_url, 'error_resume_required');
+        }
+
+        global $mjb_custom_fields;
+        if (isset($mjb_custom_fields)) {
+            $fields = $mjb_custom_fields->get_fields('application');
+            foreach ($fields as $field) {
+                if (!empty($field['required'])) {
+                    $key = 'mjb_app_field_' . $field['key'];
+                    if ($field['type'] === 'checkbox') {
+                        if (empty($_POST[$key])) {
+                            MJB_Notices::redirect($redirect_url, 'error_missing_fields');
+                        }
+                    } elseif (empty($_POST[$key])) {
+                        MJB_Notices::redirect($redirect_url, 'error_missing_fields');
+                    }
+                }
+            }
         }
 
         $post_title = sprintf(__('Application for %s by %s', 'modern-job-board'), get_the_title($job_id), $candidate_name);
@@ -136,62 +153,37 @@ class MJB_Applications
 
         $application_id = wp_insert_post($post_data);
 
-        if ($application_id) {
-            update_post_meta($application_id, '_job_applied_for', $job_id);
-            update_post_meta($application_id, '_candidate_name', $candidate_name);
-            update_post_meta($application_id, '_candidate_email', $candidate_email);
-            if ($resume_url) {
-                update_post_meta($application_id, '_candidate_resume', $resume_url);
-            }
+        if (!$application_id || is_wp_error($application_id)) {
+            MJB_Notices::redirect($redirect_url, 'error_registration_failed');
+        }
 
-            // Save Custom Fields
-            global $mjb_custom_fields;
-            if (isset($mjb_custom_fields)) {
-                $fields = $mjb_custom_fields->get_fields('application');
-                foreach ($fields as $field) {
-                    $key = 'mjb_app_field_' . $field['key'];
-                    if (isset($_POST[$key])) {
-                        $val = sanitize_text_field($_POST[$key]);
-                        update_post_meta($application_id, '_mjb_' . $field['key'], $val);
-                        // Append to content for easy viewing in Admin?
-                        // Or just store as meta. Let's store as meta.
-                        // Optionally append to body:
-                        // $candidate_message .= "\n\n" . $field['label'] . ': ' . $val;
-                    }
+        update_post_meta($application_id, '_job_applied_for', $job_id);
+        update_post_meta($application_id, '_candidate_name', $candidate_name);
+        update_post_meta($application_id, '_candidate_email', $candidate_email);
+        update_post_meta($application_id, '_candidate_resume_path', $resume_path);
+
+        if ($resume_post_id) {
+            update_post_meta($application_id, '_candidate_resume_id', $resume_post_id);
+        }
+
+        if (isset($mjb_custom_fields)) {
+            $fields = $mjb_custom_fields->get_fields('application');
+            foreach ($fields as $field) {
+                $key = 'mjb_app_field_' . $field['key'];
+                if (isset($_POST[$key])) {
+                    $val = sanitize_text_field($_POST[$key]);
+                    update_post_meta($application_id, '_mjb_' . $field['key'], $val);
                 }
             }
-
-            // Send Notification
-            global $mjb_emails;
-            if (isset($mjb_emails)) {
-                $mjb_emails->send_new_application_notification($application_id);
-            }
-
-            // Hook for post-submission actions
-            do_action('mjb_application_submitted', $application_id);
-
-            // Redirect to prevent resubmission
-            wp_safe_redirect(add_query_arg('application_submitted', 'true', get_permalink($job_id)));
-            exit;
         }
-    }
 
-    /**
-     * Handle File Upload
-     */
-    private function handle_file_upload($file)
-    {
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
-        require_once(ABSPATH . 'wp-admin/includes/image.php');
-        require_once(ABSPATH . 'wp-admin/includes/media.php');
-
-        $upload_overrides = array('test_form' => false);
-        $movefile = wp_handle_upload($file, $upload_overrides);
-
-        if ($movefile && !isset($movefile['error'])) {
-            return $movefile['url'];
-        } else {
-            return new WP_Error('upload_error', $movefile['error']);
+        global $mjb_emails;
+        if (isset($mjb_emails)) {
+            $mjb_emails->send_new_application_notification($application_id);
         }
+
+        do_action('mjb_application_submitted', $application_id);
+
+        MJB_Notices::redirect($redirect_url, 'success_application');
     }
 }

@@ -47,24 +47,20 @@ get_header(); ?>
                             echo '<a href="' . esc_url($app_url) . '" target="_blank" class="button mjb-apply-button">' . __('Apply for this job', 'modern-job-board') . '</a>';
                         } else {
                             // Internal Application Form
-                            if (isset($_GET['application_submitted']) && $_GET['application_submitted'] == 'true') {
-                                echo '<p class="mjb-success">' . __('Application submitted successfully!', 'modern-job-board') . '</p>';
-                            } else {
-                                ?>
-                                <?php
+                            echo MJB_Notices::render();
+
+                            if (empty($_GET['mjb_notice']) || strpos(sanitize_key(wp_unslash($_GET['mjb_notice'])), 'success_') !== 0) {
                                 $current_user = wp_get_current_user();
                                 $candidate_name = $current_user->exists() ? $current_user->first_name . ' ' . $current_user->last_name : '';
                                 $candidate_email = $current_user->exists() ? $current_user->user_email : '';
 
-                                $resume_url = '';
+                                $resume_label = '';
                                 if ($current_user->exists()) {
                                     $resume_id = get_user_meta($current_user->ID, '_candidate_resume_id', true);
                                     if ($resume_id) {
-                                        // Check if attachment or MJB Resume
-                                        if (get_post_type($resume_id) === 'mjb_resume') {
-                                            $resume_url = get_post_meta($resume_id, '_resume_file_url', true);
-                                        } else {
-                                            $resume_url = wp_get_attachment_url($resume_id);
+                                        $resume_path = MJB_Resumes::get_resume_post_file_path($resume_id);
+                                        if ($resume_path) {
+                                            $resume_label = basename($resume_path);
                                         }
                                     }
                                 }
@@ -87,12 +83,12 @@ get_header(); ?>
 
                                     <p>
                                         <label for="candidate_resume"><?php _e('Resume (PDF/Doc)', 'modern-job-board'); ?></label>
-                                        <?php if ($resume_url): ?>
+                                        <?php if ($resume_label): ?>
                                         <div class="mjb-profile-resume-option" style="margin-bottom: 10px;">
                                             <label>
                                                 <input type="checkbox" name="mjb_use_profile_resume" id="mjb_use_profile_resume"
                                                     value="1">
-                                                <?php printf(__('Attach my profile resume: <strong>%s</strong>', 'modern-job-board'), basename($resume_url)); ?>
+                                                <?php printf(__('Attach my profile resume: <strong>%s</strong>', 'modern-job-board'), esc_html($resume_label)); ?>
                                             </label>
                                         </div>
                                         <div id="mjb-upload-resume-container">
@@ -125,6 +121,38 @@ get_header(); ?>
                                             for="candidate_message"><?php _e('Message / Cover Letter', 'modern-job-board'); ?></label>
                                         <textarea name="candidate_message" id="candidate_message" rows="5" required></textarea>
                                     </p>
+
+                                    <?php
+                                    global $mjb_custom_fields;
+                                    if (isset($mjb_custom_fields)) {
+                                        $fields = $mjb_custom_fields->get_fields('application');
+                                        foreach ($fields as $field) {
+                                            echo '<p>';
+                                            echo '<label for="mjb_app_field_' . esc_attr($field['key']) . '">' . esc_html($field['label']) . '</label>';
+
+                                            $field_name = 'mjb_app_field_' . $field['key'];
+                                            $required = !empty($field['required']) ? 'required' : '';
+
+                                            if ($field['type'] === 'text' || $field['type'] === 'number') {
+                                                echo '<input type="' . esc_attr($field['type']) . '" name="' . esc_attr($field_name) . '" id="' . esc_attr($field_name) . '" ' . $required . '>';
+                                            } elseif ($field['type'] === 'textarea') {
+                                                echo '<textarea name="' . esc_attr($field_name) . '" id="' . esc_attr($field_name) . '" ' . $required . '></textarea>';
+                                            } elseif ($field['type'] === 'select') {
+                                                echo '<select name="' . esc_attr($field_name) . '" id="' . esc_attr($field_name) . '" ' . $required . '>';
+                                                $options = explode(',', $field['options']);
+                                                foreach ($options as $opt) {
+                                                    $opt = trim($opt);
+                                                    echo '<option value="' . esc_attr($opt) . '">' . esc_html($opt) . '</option>';
+                                                }
+                                                echo '</select>';
+                                            } elseif ($field['type'] === 'checkbox') {
+                                                echo '<input type="checkbox" name="' . esc_attr($field_name) . '" id="' . esc_attr($field_name) . '" value="1" ' . $required . '>';
+                                            }
+
+                                            echo '</p>';
+                                        }
+                                    }
+                                    ?>
 
                                     <p>
                                         <input type="submit" name="mjb_submit_application"

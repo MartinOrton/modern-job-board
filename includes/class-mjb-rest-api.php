@@ -35,6 +35,7 @@ class MJB_REST_API
     public function get_jobs($request)
     {
         $per_page = $request->get_param('per_page') ? intval($request->get_param('per_page')) : 10;
+        $per_page = min(max($per_page, 1), 100);
 
         $args = array(
             'post_type' => 'job_listing',

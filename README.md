@@ -60,4 +60,4 @@ A powerful, feature-rich WordPress plugin for creating a professional job board.
 
 
 ---
-Copyright © 2025 Modern Job Board.
+Copyright © 2026 Modern Job Board.
