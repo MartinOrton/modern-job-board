@@ -69,6 +69,50 @@ class MJB_Page_Resolver
     }
 
     /**
+     * Prefer the current referer, then a shortcode-backed page URL.
+     *
+     * @param string $shortcode
+     * @param string $option_key
+     * @param string $fallback_path
+     * @return string
+     */
+    public static function get_request_fallback_url($shortcode, $option_key, $fallback_path = '/')
+    {
+        $referer = wp_get_referer();
+        if ($referer) {
+            return $referer;
+        }
+
+        return self::get_page_url($shortcode, $option_key, array(), $fallback_path);
+    }
+
+    /**
+     * Resolve the public jobs listing page URL.
+     *
+     * @param array $query_args
+     * @return string
+     */
+    public static function get_jobs_page_url($query_args = array())
+    {
+        return self::get_page_url('mjb_jobs', 'mjb_jobs_page_id', $query_args, '/jobs/');
+    }
+
+    /**
+     * Base URL for front-end actions that accept query arguments.
+     *
+     * @return string
+     */
+    public static function get_front_action_base_url()
+    {
+        $jobs_page = self::resolve_page_id('mjb_jobs', 'mjb_jobs_page_id');
+        if ($jobs_page) {
+            return get_permalink($jobs_page);
+        }
+
+        return home_url('/');
+    }
+
+    /**
      * Build a permalink for a shortcode-backed page.
      *
      * @param string $shortcode

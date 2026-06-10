@@ -371,7 +371,11 @@ class MJB_Shortcodes
      */
     private function handle_job_submission($existing_job_id = 0)
     {
-        $redirect_url = wp_get_referer() ? wp_get_referer() : home_url('/');
+        $redirect_url = MJB_Page_Resolver::get_request_fallback_url(
+            'mjb_job_form',
+            self::JOB_FORM_PAGE_OPTION,
+            '/post-a-job/'
+        );
 
         if (!is_user_logged_in()) {
             MJB_Notices::redirect($redirect_url, 'error_login_required');

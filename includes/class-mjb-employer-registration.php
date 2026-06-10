@@ -28,7 +28,11 @@ class MJB_Employer_Registration
             return;
         }
 
-        $redirect_url = wp_get_referer() ? wp_get_referer() : home_url('/');
+        $redirect_url = MJB_Page_Resolver::get_request_fallback_url(
+            'mjb_employer_registration',
+            'mjb_employer_registration_page_id',
+            '/employer-registration/'
+        );
 
         if (!wp_verify_nonce($_POST['mjb_registration_nonce'], 'mjb_register_action')) {
             MJB_Notices::redirect($redirect_url, 'error_security');

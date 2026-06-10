@@ -244,6 +244,31 @@ class MJB_Admin
         add_settings_field('mjb_paid_cv_access', __('Paid CV Access', 'modern-job-board'), array($this, 'paid_cv_access_callback'), 'mjb-settings', 'mjb_payment_section');
 
         add_settings_section(
+            'mjb_integrations_section',
+            __('Integrations', 'modern-job-board'),
+            array($this, 'integrations_section_callback'),
+            'mjb-settings'
+        );
+
+        register_setting('mjb_settings_group', 'mjb_webhook_urls');
+        add_settings_field(
+            'mjb_webhook_urls',
+            __('Webhook URLs', 'modern-job-board'),
+            array($this, 'webhook_urls_callback'),
+            'mjb-settings',
+            'mjb_integrations_section'
+        );
+
+        register_setting('mjb_settings_group', 'mjb_webhook_secret');
+        add_settings_field(
+            'mjb_webhook_secret',
+            __('Webhook Secret', 'modern-job-board'),
+            array($this, 'webhook_secret_callback'),
+            'mjb-settings',
+            'mjb_integrations_section'
+        );
+
+        add_settings_section(
             'mjb_security_section',
             __('Application Security', 'modern-job-board'),
             array($this, 'security_section_callback'),
@@ -322,6 +347,25 @@ class MJB_Admin
         $enabled = get_option('mjb_paid_cv_access');
         echo '<input type="checkbox" name="mjb_paid_cv_access" value="1" ' . checked(1, $enabled, false) . '> ';
         echo esc_html__('Require payment before employers can view candidate details and resumes.', 'modern-job-board');
+    }
+
+    public function integrations_section_callback()
+    {
+        echo '<p>' . esc_html__('Send JSON webhook payloads when applications are submitted, statuses change, or jobs are submitted. One URL per line.', 'modern-job-board') . '</p>';
+    }
+
+    public function webhook_urls_callback()
+    {
+        $value = get_option('mjb_webhook_urls', '');
+        echo '<textarea name="mjb_webhook_urls" rows="4" class="large-text code">' . esc_textarea($value) . '</textarea>';
+        echo '<p class="description">' . esc_html__('Events: application.submitted, application.status_updated, job.submitted', 'modern-job-board') . '</p>';
+    }
+
+    public function webhook_secret_callback()
+    {
+        $value = get_option('mjb_webhook_secret', '');
+        echo '<input type="password" name="mjb_webhook_secret" value="' . esc_attr($value) . '" class="regular-text" autocomplete="off">';
+        echo '<p class="description">' . esc_html__('Optional HMAC secret sent as the X-MJB-Signature header (SHA-256).', 'modern-job-board') . '</p>';
     }
 
     public function security_section_callback()

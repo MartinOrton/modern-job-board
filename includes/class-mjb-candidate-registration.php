@@ -28,7 +28,11 @@ class MJB_Candidate_Registration
             return;
         }
 
-        $redirect_url = wp_get_referer() ? wp_get_referer() : home_url('/');
+        $redirect_url = MJB_Page_Resolver::get_request_fallback_url(
+            'mjb_candidate_registration',
+            'mjb_candidate_registration_page_id',
+            '/candidate-registration/'
+        );
 
         if (!wp_verify_nonce($_POST['mjb_candidate_nonce'], 'mjb_candidate_action')) {
             MJB_Notices::redirect($redirect_url, 'error_security');

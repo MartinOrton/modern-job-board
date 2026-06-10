@@ -33,6 +33,8 @@ $GLOBALS['mjb_test_next_post_id'] = 1000;
 $GLOBALS['mjb_test_user_roles'] = array();
 $GLOBALS['mjb_test_user_emails'] = array();
 $GLOBALS['mjb_test_status_updates'] = array();
+$GLOBALS['mjb_test_referer'] = false;
+$GLOBALS['mjb_test_remote_posts'] = array();
 
 if (!function_exists('__')) {
     function __($text, $domain = null)
@@ -54,6 +56,41 @@ if (!function_exists('do_action')) {
         if ($hook === 'mjb_application_status_updated' && count($args) === 3) {
             $GLOBALS['mjb_test_status_updates'][] = $args;
         }
+    }
+}
+
+if (!function_exists('wp_get_referer')) {
+    function wp_get_referer()
+    {
+        return $GLOBALS['mjb_test_referer'] ?? false;
+    }
+}
+
+if (!function_exists('wp_json_encode')) {
+    function wp_json_encode($data)
+    {
+        return json_encode($data);
+    }
+}
+
+if (!function_exists('is_singular')) {
+    function is_singular($post_type = '')
+    {
+        return false;
+    }
+}
+
+if (!function_exists('get_queried_object_id')) {
+    function get_queried_object_id()
+    {
+        return 0;
+    }
+}
+
+if (!function_exists('esc_textarea')) {
+    function esc_textarea($text)
+    {
+        return htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8');
     }
 }
 
@@ -443,6 +480,8 @@ if (!function_exists('is_wp_error')) {
 if (!function_exists('wp_remote_post')) {
     function wp_remote_post($url, $args = array())
     {
+        $GLOBALS['mjb_test_remote_posts'][] = array('url' => $url, 'args' => $args);
+
         if (!empty($GLOBALS['mjb_test_remote_responses'])) {
             return array_shift($GLOBALS['mjb_test_remote_responses']);
         }
@@ -610,6 +649,10 @@ if (!class_exists('MJB_Test_WPDB')) {
 
         public function prepare($query, ...$args)
         {
+            if (count($args) === 1 && is_array($args[0])) {
+                $args = $args[0];
+            }
+
             if (empty($args)) {
                 return $query;
             }
@@ -625,7 +668,23 @@ if (!class_exists('MJB_Test_WPDB')) {
         {
             return $GLOBALS['mjb_test_duplicate_exists'];
         }
+
+        public function get_results($query, $output = OBJECT)
+        {
+            $rows = $GLOBALS['mjb_test_db_results'] ?? array();
+            if ($output === ARRAY_A) {
+                return $rows;
+            }
+
+            return array_map(static function ($row) {
+                return (object) $row;
+            }, $rows);
+        }
     }
+}
+
+if (!defined('ARRAY_A')) {
+    define('ARRAY_A', 'ARRAY_A');
 }
 
 $GLOBALS['wpdb'] = new MJB_Test_WPDB();
@@ -644,3 +703,6 @@ require_once dirname(__DIR__) . '/includes/class-mjb-xml-importer.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-page-wizard.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-application-status.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-rest-api-v2.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-dashboard.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-analytics.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-webhooks.php';

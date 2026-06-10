@@ -2,6 +2,18 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.8.1] - 2026-06-10
+### Added
+- **Candidate status emails**: Applicants receive an email when employers change application workflow status.
+- **Outbound webhooks**: Configure webhook URLs and optional HMAC secret in Settings → Integrations.
+- **Employer analytics**: Job views, applications, and conversion rates on the employer dashboard.
+- **REST analytics**: `GET /wp-json/mjb/v2/analytics` returns totals and per-job performance for employers.
+- **Job view tracking**: Single job pages increment `_mjb_view_count` once per visitor per hour.
+
+### Improved
+- **Page resolver fallbacks**: Registration, applications, job forms, and resume downloads use resolved shortcode pages instead of `home_url('/')`.
+- **PHPCS ruleset**: Expanded to include safe redirect checks alongside SQL safety rules.
+
 ## [1.8.0] - 2026-06-10
 ### Added
 - **Application workflow statuses**: Employers can track applications as New, Reviewed, Shortlisted, Rejected, or Hired from the dashboard.

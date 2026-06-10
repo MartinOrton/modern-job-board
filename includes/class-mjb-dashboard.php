@@ -129,6 +129,22 @@ class MJB_Dashboard
         $jobs = new WP_Query($args);
         $job_ids = wp_list_pluck($jobs->posts, 'ID');
         $app_counts = self::get_application_counts_for_jobs($job_ids);
+        $analytics = MJB_Analytics::get_employer_job_stats(get_current_user_id());
+        $totals = MJB_Analytics::summarize_job_stats($analytics);
+
+        echo '<h3>' . esc_html__('Performance Overview', 'modern-job-board') . '</h3>';
+        echo '<table class="mjb-dashboard-table mjb-analytics-summary" style="margin-bottom:24px;">';
+        echo '<thead><tr>';
+        echo '<th>' . esc_html__('Jobs', 'modern-job-board') . '</th>';
+        echo '<th>' . esc_html__('Views', 'modern-job-board') . '</th>';
+        echo '<th>' . esc_html__('Applications', 'modern-job-board') . '</th>';
+        echo '<th>' . esc_html__('Conversion', 'modern-job-board') . '</th>';
+        echo '</tr></thead><tbody><tr>';
+        echo '<td>' . esc_html((string) $totals['jobs']) . '</td>';
+        echo '<td>' . esc_html((string) $totals['views']) . '</td>';
+        echo '<td>' . esc_html((string) $totals['applications']) . '</td>';
+        echo '<td>' . esc_html($totals['conversion_rate'] . '%') . '</td>';
+        echo '</tr></tbody></table>';
 
         echo '<h3>' . __('Your Jobs', 'modern-job-board') . '</h3>';
 
@@ -137,7 +153,9 @@ class MJB_Dashboard
             echo '<thead><tr>';
             echo '<th>' . __('Title', 'modern-job-board') . '</th>';
             echo '<th>' . __('Status', 'modern-job-board') . '</th>';
+            echo '<th>' . __('Views', 'modern-job-board') . '</th>';
             echo '<th>' . __('Applications', 'modern-job-board') . '</th>';
+            echo '<th>' . __('Conversion', 'modern-job-board') . '</th>';
             echo '<th>' . __('Date', 'modern-job-board') . '</th>';
             echo '<th>' . __('Actions', 'modern-job-board') . '</th>';
             echo '</tr></thead>';
@@ -156,11 +174,15 @@ class MJB_Dashboard
                 ));
 
                 $app_count = isset($app_counts[$job_id]) ? intval($app_counts[$job_id]) : 0;
+                $view_count = intval(get_post_meta($job_id, MJB_Analytics::VIEW_COUNT_META, true));
+                $conversion = $view_count > 0 ? round(($app_count / $view_count) * 100, 1) . '%' : '—';
 
                 echo '<tr>';
                 echo '<td><a href="' . get_permalink() . '">' . get_the_title() . '</a></td>';
                 echo '<td>' . get_post_status_object(get_post_status())->label . '</td>';
-                echo '<td>' . $app_count . '</td>';
+                echo '<td>' . esc_html((string) $view_count) . '</td>';
+                echo '<td>' . esc_html((string) $app_count) . '</td>';
+                echo '<td>' . esc_html((string) $conversion) . '</td>';
                 echo '<td>' . get_the_date() . '</td>';
                 echo '<td>';
                 echo '<a href="' . esc_url($edit_link) . '" class="button">' . __('Edit', 'modern-job-board') . '</a> ';

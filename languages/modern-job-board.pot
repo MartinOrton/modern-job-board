@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Modern Job Board\n"
 "Report-Msgid-Bugs-To: https://github.com/MartinOrton/modern-job-board\n"
-"POT-Creation-Date: 2026-06-10 18:30+0000\n"
+"POT-Creation-Date: 2026-06-10 18:35+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -112,6 +112,9 @@ msgstr ""
 msgid "Application submitted successfully!"
 msgstr ""
 
+msgid "Application update for %s: %s"
+msgstr ""
+
 msgid "Applications"
 msgstr ""
 
@@ -185,6 +188,9 @@ msgid "Company: %s"
 msgstr ""
 
 msgid "Configure listings, Google Maps API, and monetization options."
+msgstr ""
+
+msgid "Conversion"
 msgstr ""
 
 msgid "Create Missing Pages"
@@ -292,6 +298,9 @@ msgstr ""
 msgid "Error: Shortcodes class not found."
 msgstr ""
 
+msgid "Events: application.submitted, application.status_updated, job.submitted"
+msgstr ""
+
 msgid "Exp: %s"
 msgstr ""
 
@@ -365,6 +374,9 @@ msgid "Import jobs from an MJB XML feed or compatible RSS feed. Duplicate items 
 msgstr ""
 
 msgid "Insert into job"
+msgstr ""
+
+msgid "Integrations"
 msgstr ""
 
 msgid "Internal (Email)"
@@ -565,6 +577,9 @@ msgstr ""
 msgid "Open Setup Wizard"
 msgstr ""
 
+msgid "Optional HMAC secret sent as the X-MJB-Signature header (SHA-256)."
+msgstr ""
+
 msgid "Options (for Select)"
 msgstr ""
 
@@ -581,6 +596,9 @@ msgid "Parent Job:"
 msgstr ""
 
 msgid "Password"
+msgstr ""
+
+msgid "Performance Overview"
 msgstr ""
 
 msgid "Phone Number"
@@ -704,6 +722,9 @@ msgid "Security check failed. Please try again."
 msgstr ""
 
 msgid "Select"
+msgstr ""
+
+msgid "Send JSON webhook payloads when applications are submitted, statuses change, or jobs are submitted. One URL per line."
 msgstr ""
 
 msgid "Set featured image"
@@ -853,6 +874,15 @@ msgstr ""
 msgid "View, edit, and moderate job listings. manage expiration dates and featured status."
 msgstr ""
 
+msgid "Views"
+msgstr ""
+
+msgid "Webhook Secret"
+msgstr ""
+
+msgid "Webhook URLs"
+msgstr ""
+
 msgid "Website"
 msgstr ""
 
@@ -902,6 +932,9 @@ msgid "Your Jobs"
 msgstr ""
 
 msgid "Your application could not be submitted. Please try again."
+msgstr ""
+
+msgid "Your application for \"%s\" has been updated to: %s"
 msgstr ""
 
 msgid "Your dashboard: %s"

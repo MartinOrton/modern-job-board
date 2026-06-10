@@ -59,4 +59,19 @@ class PageResolverTest extends TestCase
         $this->assertArrayNotHasKey('mjb_employer_dashboard_page_id', $GLOBALS['mjb_test_options']);
         $this->assertSame(55, $GLOBALS['mjb_test_options']['mjb_job_form_page_id']);
     }
+
+    public function test_get_jobs_page_url_uses_jobs_page_permalink()
+    {
+        $GLOBALS['mjb_test_options']['mjb_jobs_page_id'] = 15;
+        $GLOBALS['mjb_test_post_status'][15] = 'publish';
+        $GLOBALS['mjb_test_permalinks'][15] = 'https://example.test/jobs/';
+
+        $this->assertSame('https://example.test/jobs/?q=dev', MJB_Page_Resolver::get_jobs_page_url(array('q' => 'dev')));
+    }
+
+    public function test_get_request_fallback_url_uses_shortcode_page_without_referer()
+    {
+        $url = MJB_Page_Resolver::get_request_fallback_url('mjb_job_form', 'mjb_job_form_page_id', '/post-a-job/');
+        $this->assertSame('https://example.test/post-a-job/', $url);
+    }
 }

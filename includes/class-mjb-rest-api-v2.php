@@ -64,6 +64,14 @@ class MJB_REST_API_V2
             ),
         ));
 
+        register_rest_route('mjb/v2', '/analytics', array(
+            array(
+                'methods' => 'GET',
+                'callback' => array($this, 'get_analytics'),
+                'permission_callback' => array($this, 'employer_permissions_check'),
+            ),
+        ));
+
         register_rest_route('mjb/v2', '/candidate/profile', array(
             array(
                 'methods' => 'GET',
@@ -232,6 +240,21 @@ class MJB_REST_API_V2
             'resume_id' => $resume_id,
             'resume_url' => MJB_Resumes::get_resume_display_url($resume_id),
         );
+    }
+
+    /**
+     * Get employer analytics summary and per-job stats.
+     *
+     * @return WP_REST_Response
+     */
+    public function get_analytics()
+    {
+        $stats = MJB_Analytics::get_employer_job_stats(get_current_user_id());
+
+        return new WP_REST_Response(array(
+            'totals' => MJB_Analytics::summarize_job_stats($stats),
+            'jobs' => $stats,
+        ), 200);
     }
 
     /**

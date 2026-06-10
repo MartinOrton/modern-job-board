@@ -15,6 +15,23 @@ class MJB_Emails
      */
     public function init()
     {
+        add_action('mjb_application_status_updated', array($this, 'handle_application_status_updated'), 10, 3);
+    }
+
+    /**
+     * Notify candidates when their application status changes.
+     *
+     * @param int    $application_id
+     * @param string $old_status
+     * @param string $new_status
+     */
+    public function handle_application_status_updated($application_id, $old_status, $new_status)
+    {
+        if ($old_status === $new_status || $new_status === MJB_Application_Status::DEFAULT_STATUS) {
+            return;
+        }
+
+        $this->send_application_status_update_to_candidate($application_id, $old_status, $new_status);
     }
 
     /**
@@ -137,5 +154,57 @@ class MJB_Emails
         do_action('mjb_after_send_email', 'candidate_confirmation', $candidate_email, $subject, $message, $application_id);
 
         do_action('mjb_candidate_application_confirmation_sent', $application_id, $candidate_email);
+    }
+
+    /**
+     * Send a status update email to the candidate.
+     *
+     * @param int    $application_id
+     * @param string $old_status
+     * @param string $new_status
+     */
+    public function send_application_status_update_to_candidate($application_id, $old_status, $new_status)
+    {
+        $application_id = intval($application_id);
+        $job_id = intval(get_post_meta($application_id, '_job_applied_for', true));
+        $job = $job_id ? get_post($job_id) : null;
+
+        if (!$job) {
+            return;
+        }
+
+        $candidate_email = sanitize_email(get_post_meta($application_id, '_candidate_email', true));
+        if (!$candidate_email) {
+            return;
+        }
+
+        $candidate_name = get_post_meta($application_id, '_candidate_name', true);
+        $status_label = MJB_Application_Status::get_label($new_status);
+
+        $subject = sprintf(
+            __('Application update for %s: %s', 'modern-job-board'),
+            $job->post_title,
+            $status_label
+        );
+        $subject = apply_filters('mjb_email_status_update_subject', $subject, $application_id, $old_status, $new_status);
+
+        $message = sprintf(__('Hi %s,', 'modern-job-board'), $candidate_name) . "\n\n";
+        $message .= sprintf(
+            __('Your application for "%s" has been updated to: %s', 'modern-job-board'),
+            $job->post_title,
+            $status_label
+        ) . "\n\n";
+        $message .= sprintf(__('View the job: %s', 'modern-job-board'), get_permalink($job_id)) . "\n";
+
+        if (class_exists('MJB_Candidate_Dashboard')) {
+            $message .= sprintf(__('Your dashboard: %s', 'modern-job-board'), MJB_Candidate_Dashboard::get_page_url()) . "\n";
+        }
+
+        $message = apply_filters('mjb_email_status_update_message', $message, $application_id, $old_status, $new_status);
+
+        do_action('mjb_before_send_email', 'status_update', $candidate_email, $subject, $message, $application_id);
+        wp_mail($candidate_email, $subject, $message);
+        do_action('mjb_after_send_email', 'status_update', $candidate_email, $subject, $message, $application_id);
+        do_action('mjb_application_status_email_sent', $application_id, $candidate_email, $new_status);
     }
 }

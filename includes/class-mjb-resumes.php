@@ -251,7 +251,7 @@ class MJB_Resumes
                     'mjb_download' => 'application',
                     'mjb_id' => intval($application_id),
                 ),
-                home_url('/')
+                MJB_Page_Resolver::get_front_action_base_url()
             ),
             'mjb_download_application_' . intval($application_id),
             'mjb_nonce'
@@ -276,7 +276,7 @@ class MJB_Resumes
                     'mjb_download' => 'resume',
                     'mjb_id' => intval($resume_post_id),
                 ),
-                home_url('/')
+                MJB_Page_Resolver::get_front_action_base_url()
             ),
             'mjb_download_resume_' . intval($resume_post_id),
             'mjb_nonce'

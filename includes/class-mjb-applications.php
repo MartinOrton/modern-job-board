@@ -79,7 +79,7 @@ class MJB_Applications
         }
 
         $job_id = isset($_POST['job_id']) ? intval($_POST['job_id']) : 0;
-        $redirect_url = $job_id ? get_permalink($job_id) : home_url('/');
+        $redirect_url = $job_id ? get_permalink($job_id) : MJB_Page_Resolver::get_jobs_page_url();
 
         if (!wp_verify_nonce($_POST['mjb_application_nonce'], 'mjb_submit_application')) {
             MJB_Notices::redirect($redirect_url, 'error_security');
