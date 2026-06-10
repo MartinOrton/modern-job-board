@@ -3,7 +3,7 @@
  * Plugin Name: Modern Job Board
  * Plugin URI: https://github.com/MartinOrton/modern-job-board
  * Description: A lightweight job board plugin for WordPress.
- * Version: 1.8.2
+ * Version: 1.8.3
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
  * Text Domain: modern-job-board
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '1.8.2');
+define('MJB_VERSION', '1.8.3');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
 
@@ -30,6 +30,7 @@ require_once MJB_PATH . 'includes/class-mjb-xml-importer.php';
 require_once MJB_PATH . 'includes/class-mjb-page-wizard.php';
 require_once MJB_PATH . 'includes/class-mjb-application-status.php';
 require_once MJB_PATH . 'includes/class-mjb-rest-api-v2.php';
+require_once MJB_PATH . 'includes/class-mjb-data-grid.php';
 require_once MJB_PATH . 'includes/class-mjb-analytics.php';
 require_once MJB_PATH . 'includes/class-mjb-webhook-queue.php';
 require_once MJB_PATH . 'includes/class-mjb-webhooks.php';

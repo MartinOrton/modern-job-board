@@ -104,38 +104,33 @@ class MJB_Custom_Fields
             <div style="display:flex; gap:20px;">
                 <!-- List -->
                 <div style="flex:1;">
-                    <table class="widefat fixed striped">
-                        <thead>
-                            <tr>
-                                <th><?php esc_html_e('Label', 'modern-job-board'); ?></th>
-                                <th><?php esc_html_e('Key', 'modern-job-board'); ?></th>
-                                <th><?php esc_html_e('Type', 'modern-job-board'); ?></th>
-                                <th><?php esc_html_e('Location', 'modern-job-board'); ?></th>
-                                <th><?php esc_html_e('Actions', 'modern-job-board'); ?></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (empty($fields)): ?>
-                                <tr>
-                                    <td colspan="5"><?php esc_html_e('No custom fields defined.', 'modern-job-board'); ?></td>
-                                </tr>
-                            <?php else: ?>
-                                <?php foreach ($fields as $index => $field): ?>
-                                    <tr>
-                                        <td><?php echo esc_html($field['label']); ?></td>
-                                        <td><?php echo esc_html($field['key']); ?></td>
-                                        <td><?php echo esc_html($field['type']); ?></td>
-                                        <td><?php echo esc_html(ucfirst($field['location'])); ?></td>
-                                        <td>
-                                            <a href="<?php echo esc_url(wp_nonce_url(add_query_arg(array('action' => 'delete_field', 'index' => $index)), 'delete_field_' . $index)); ?>"
-                                                onclick="return confirm('<?php echo esc_js(__('Delete this field?', 'modern-job-board')); ?>');"
-                                                class="button button-small delete"><?php esc_html_e('Delete', 'modern-job-board'); ?></a>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                    <?php
+                    $field_headers = array(
+                        __('Label', 'modern-job-board'),
+                        __('Key', 'modern-job-board'),
+                        __('Type', 'modern-job-board'),
+                        __('Location', 'modern-job-board'),
+                        __('Actions', 'modern-job-board'),
+                    );
+                    $fields_grid = MJB_Data_Grid::begin('mjb-data-grid mjb-data-grid--admin', count($field_headers));
+                    $fields_grid->render_header($field_headers)->open_body();
+                    if (empty($fields)) {
+                        $fields_grid->render_empty_row(__('No custom fields defined.', 'modern-job-board'));
+                    } else {
+                        foreach ($fields as $index => $field) {
+                            $delete_url = wp_nonce_url(add_query_arg(array('action' => 'delete_field', 'index' => $index)), 'delete_field_' . $index);
+                            $actions_html = '<a href="' . esc_url($delete_url) . '" onclick="return confirm(\'' . esc_js(__('Delete this field?', 'modern-job-board')) . '\');" class="button button-small delete">' . esc_html__('Delete', 'modern-job-board') . '</a>';
+                            $fields_grid->open_row()
+                                ->render_cell(esc_html($field['label']), $field_headers[0])
+                                ->render_cell(esc_html($field['key']), $field_headers[1])
+                                ->render_cell(esc_html($field['type']), $field_headers[2])
+                                ->render_cell(esc_html(ucfirst($field['location'])), $field_headers[3])
+                                ->render_cell($actions_html, $field_headers[4])
+                                ->close_row();
+                        }
+                    }
+                    $fields_grid->close_body()->end();
+                    ?>
                 </div>
 
                 <!-- Add Form -->

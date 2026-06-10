@@ -133,33 +133,27 @@ class MJB_Dashboard
         $totals = MJB_Analytics::summarize_job_stats($analytics);
 
         echo '<h3>' . esc_html__('Performance Overview', 'modern-job-board') . '</h3>';
-        echo '<table class="mjb-dashboard-table mjb-analytics-summary" style="margin-bottom:24px;">';
-        echo '<thead><tr>';
-        echo '<th>' . esc_html__('Jobs', 'modern-job-board') . '</th>';
-        echo '<th>' . esc_html__('Views', 'modern-job-board') . '</th>';
-        echo '<th>' . esc_html__('Applications', 'modern-job-board') . '</th>';
-        echo '<th>' . esc_html__('Conversion', 'modern-job-board') . '</th>';
-        echo '</tr></thead><tbody><tr>';
-        echo '<td>' . esc_html((string) $totals['jobs']) . '</td>';
-        echo '<td>' . esc_html((string) $totals['views']) . '</td>';
-        echo '<td>' . esc_html((string) $totals['applications']) . '</td>';
-        echo '<td>' . esc_html($totals['conversion_rate'] . '%') . '</td>';
-        echo '</tr></tbody></table>';
+        echo '<div class="mjb-stats-grid mjb-analytics-summary">';
+        echo '<div class="mjb-stat-card"><div class="mjb-stat-val">' . esc_html((string) $totals['jobs']) . '</div><div class="mjb-stat-lbl">' . esc_html__('Jobs', 'modern-job-board') . '</div></div>';
+        echo '<div class="mjb-stat-card"><div class="mjb-stat-val">' . esc_html((string) $totals['views']) . '</div><div class="mjb-stat-lbl">' . esc_html__('Views', 'modern-job-board') . '</div></div>';
+        echo '<div class="mjb-stat-card"><div class="mjb-stat-val">' . esc_html((string) $totals['applications']) . '</div><div class="mjb-stat-lbl">' . esc_html__('Applications', 'modern-job-board') . '</div></div>';
+        echo '<div class="mjb-stat-card"><div class="mjb-stat-val">' . esc_html($totals['conversion_rate'] . '%') . '</div><div class="mjb-stat-lbl">' . esc_html__('Conversion', 'modern-job-board') . '</div></div>';
+        echo '</div>';
 
         echo '<h3>' . esc_html__('Your Jobs', 'modern-job-board') . '</h3>';
 
         if ($jobs->have_posts()) {
-            echo '<table class="mjb-dashboard-table">';
-            echo '<thead><tr>';
-            echo '<th>' . esc_html__('Title', 'modern-job-board') . '</th>';
-            echo '<th>' . esc_html__('Status', 'modern-job-board') . '</th>';
-            echo '<th>' . esc_html__('Views', 'modern-job-board') . '</th>';
-            echo '<th>' . esc_html__('Applications', 'modern-job-board') . '</th>';
-            echo '<th>' . esc_html__('Conversion', 'modern-job-board') . '</th>';
-            echo '<th>' . esc_html__('Date', 'modern-job-board') . '</th>';
-            echo '<th>' . esc_html__('Actions', 'modern-job-board') . '</th>';
-            echo '</tr></thead>';
-            echo '<tbody>';
+            $job_headers = array(
+                __('Title', 'modern-job-board'),
+                __('Status', 'modern-job-board'),
+                __('Views', 'modern-job-board'),
+                __('Applications', 'modern-job-board'),
+                __('Conversion', 'modern-job-board'),
+                __('Date', 'modern-job-board'),
+                __('Actions', 'modern-job-board'),
+            );
+            $jobs_grid = MJB_Data_Grid::begin('mjb-data-grid mjb-data-grid--dashboard', count($job_headers));
+            $jobs_grid->render_header($job_headers)->open_body();
 
             while ($jobs->have_posts()) {
                 $jobs->the_post();
@@ -177,28 +171,29 @@ class MJB_Dashboard
                 $view_count = intval(get_post_meta($job_id, MJB_Analytics::VIEW_COUNT_META, true));
                 $conversion = $view_count > 0 ? round(($app_count / $view_count) * 100, 1) . '%' : '—';
 
-                echo '<tr>';
-                echo '<td><a href="' . esc_url(get_permalink()) . '">' . esc_html(get_the_title()) . '</a></td>';
-                echo '<td>' . esc_html(get_post_status_object(get_post_status())->label) . '</td>';
-                echo '<td>' . esc_html((string) $view_count) . '</td>';
-                echo '<td>' . esc_html((string) $app_count) . '</td>';
-                echo '<td>' . esc_html((string) $conversion) . '</td>';
-                echo '<td>' . esc_html(get_the_date()) . '</td>';
-                echo '<td>';
-                echo '<a href="' . esc_url($edit_link) . '" class="button">' . esc_html__('Edit', 'modern-job-board') . '</a> ';
-                echo '<a href="' . esc_url($view_apps_link) . '" class="button">' . esc_html__('Applications', 'modern-job-board') . '</a> ';
-                echo '<form method="post" action="" class="mjb-inline-delete-form" style="display:inline;" onsubmit="return confirm(\'' . esc_js(__('Are you sure you want to delete this job?', 'modern-job-board')) . '\');">';
+                $actions_html = '<a href="' . esc_url($edit_link) . '" class="button">' . esc_html__('Edit', 'modern-job-board') . '</a> ';
+                $actions_html .= '<a href="' . esc_url($view_apps_link) . '" class="button">' . esc_html__('Applications', 'modern-job-board') . '</a> ';
+                $actions_html .= '<form method="post" action="" class="mjb-inline-delete-form" style="display:inline;" onsubmit="return confirm(\'' . esc_js(__('Are you sure you want to delete this job?', 'modern-job-board')) . '\');">';
+                ob_start();
                 wp_nonce_field('mjb_delete_job_' . $job_id);
-                echo '<input type="hidden" name="mjb_dashboard_action" value="delete_job">';
-                echo '<input type="hidden" name="job_id" value="' . esc_attr((string) $job_id) . '">';
-                echo '<button type="submit" class="button">' . esc_html__('Delete', 'modern-job-board') . '</button>';
-                echo '</form>';
-                echo '</td>';
-                echo '</tr>';
+                $actions_html .= ob_get_clean();
+                $actions_html .= '<input type="hidden" name="mjb_dashboard_action" value="delete_job">';
+                $actions_html .= '<input type="hidden" name="job_id" value="' . esc_attr((string) $job_id) . '">';
+                $actions_html .= '<button type="submit" class="button">' . esc_html__('Delete', 'modern-job-board') . '</button>';
+                $actions_html .= '</form>';
+
+                $jobs_grid->open_row()
+                    ->render_cell('<a href="' . esc_url(get_permalink()) . '">' . esc_html(get_the_title()) . '</a>', $job_headers[0])
+                    ->render_cell(esc_html(get_post_status_object(get_post_status())->label), $job_headers[1])
+                    ->render_cell(esc_html((string) $view_count), $job_headers[2])
+                    ->render_cell(esc_html((string) $app_count), $job_headers[3])
+                    ->render_cell(esc_html((string) $conversion), $job_headers[4])
+                    ->render_cell(esc_html(get_the_date()), $job_headers[5])
+                    ->render_cell($actions_html, $job_headers[6])
+                    ->close_row();
             }
 
-            echo '</tbody>';
-            echo '</table>';
+            $jobs_grid->close_body()->end();
             wp_reset_postdata();
         } else {
             echo '<p>' . esc_html__('You have not posted any jobs yet.', 'modern-job-board') . '</p>';
@@ -245,19 +240,20 @@ class MJB_Dashboard
         }
 
         if ($applications->have_posts()) {
-            echo '<table class="mjb-dashboard-table">';
-            echo '<thead><tr>';
-            echo '<th>' . esc_html__('Candidate', 'modern-job-board') . '</th>';
-            echo '<th>' . esc_html__('Email', 'modern-job-board') . '</th>';
-            echo '<th>' . esc_html__('Date', 'modern-job-board') . '</th>';
-            echo '<th>' . esc_html__('Resume', 'modern-job-board') . '</th>';
+            $app_headers = array(
+                __('Candidate', 'modern-job-board'),
+                __('Email', 'modern-job-board'),
+                __('Date', 'modern-job-board'),
+                __('Resume', 'modern-job-board'),
+            );
             foreach ($application_fields as $field) {
-                echo '<th>' . esc_html($field['label']) . '</th>';
+                $app_headers[] = $field['label'];
             }
-            echo '<th>' . esc_html__('Status', 'modern-job-board') . '</th>';
-            echo '<th>' . esc_html__('Message', 'modern-job-board') . '</th>';
-            echo '</tr></thead>';
-            echo '<tbody>';
+            $app_headers[] = __('Status', 'modern-job-board');
+            $app_headers[] = __('Message', 'modern-job-board');
+
+            $apps_grid = MJB_Data_Grid::begin('mjb-data-grid mjb-data-grid--dashboard', count($app_headers));
+            $apps_grid->render_header($app_headers)->open_body();
 
             while ($applications->have_posts()) {
                 $applications->the_post();
@@ -272,65 +268,56 @@ class MJB_Dashboard
                     $can_view = MJB_Resumes::employer_has_cv_access(get_current_user_id(), $app_id);
                 }
 
-                // Column: Candidate Name
-                echo '<td>';
                 if ($can_view) {
-                    echo esc_html($name);
+                    $name_html = esc_html($name);
                 } else {
-                    echo '<span class="mjb-blurred">' . esc_html__('Hidden', 'modern-job-board') . '</span>';
+                    $name_html = '<span class="mjb-blurred">' . esc_html__('Hidden', 'modern-job-board') . '</span>';
                 }
-                echo '</td>';
 
-                // Column: Email
-                echo '<td>';
                 if ($can_view) {
-                    echo '<a href="mailto:' . esc_attr($email) . '">' . esc_html($email) . '</a>';
+                    $email_html = '<a href="mailto:' . esc_attr($email) . '">' . esc_html($email) . '</a>';
                 } else {
-                    echo '<span class="mjb-blurred">' . esc_html__('Hidden', 'modern-job-board') . '</span>';
+                    $email_html = '<span class="mjb-blurred">' . esc_html__('Hidden', 'modern-job-board') . '</span>';
                 }
-                echo '</td>';
 
-                // Column: Date (Always visible)
-                echo '<td>' . esc_html(get_the_date()) . '</td>';
-
-                // Column: Resume / Unlock
-                echo '<td>';
                 if ($can_view) {
                     if ($resume) {
-                        echo '<a href="' . esc_url($resume) . '" target="_blank" class="button button-small">' . esc_html__('Download', 'modern-job-board') . '</a>';
+                        $resume_html = '<a href="' . esc_url($resume) . '" target="_blank" class="button button-small">' . esc_html__('Download', 'modern-job-board') . '</a>';
                     } else {
-                        echo '-';
+                        $resume_html = '-';
                     }
                 } else {
-                    echo '<span class="mjb-locked">' . esc_html__('Locked', 'modern-job-board') . '</span>';
-
-                    // Unlock Button
+                    $resume_html = '<span class="mjb-locked">' . esc_html__('Locked', 'modern-job-board') . '</span>';
                     $unlock_product_id = get_option('mjb_cv_unlock_product_id');
                     if ($unlock_product_id && function_exists('wc_get_cart_url')) {
                         $cart_url = wc_get_cart_url();
                         $unlock_link = add_query_arg(array(
                             'add-to-cart' => $unlock_product_id,
-                            'mjb_unlock_application_id' => $app_id
+                            'mjb_unlock_application_id' => $app_id,
                         ), $cart_url);
-
-                        echo '<div style="margin-top:5px;"><a href="' . esc_url($unlock_link) . '" class="button button-small mjb-unlock-btn" style="background:#f0ad4e;border-color:#eea236;color:#fff;">' . esc_html__('Unlock', 'modern-job-board') . '</a></div>';
+                        $resume_html .= '<div style="margin-top:5px;"><a href="' . esc_url($unlock_link) . '" class="button button-small mjb-unlock-btn" style="background:#f0ad4e;border-color:#eea236;color:#fff;">' . esc_html__('Unlock', 'modern-job-board') . '</a></div>';
                     }
                 }
-                echo '</td>';
 
+                $apps_grid->open_row()
+                    ->render_cell($name_html, $app_headers[0])
+                    ->render_cell($email_html, $app_headers[1])
+                    ->render_cell(esc_html(get_the_date()), $app_headers[2])
+                    ->render_cell($resume_html, $app_headers[3]);
+
+                $column_index = 4;
                 foreach ($application_fields as $field) {
                     $field_value = get_post_meta($app_id, '_mjb_' . $field['key'], true);
-                    echo '<td>';
                     if ($can_view) {
-                        echo esc_html((string) $field_value);
+                        $field_html = esc_html((string) $field_value);
                     } else {
-                        echo '<span class="mjb-blurred">' . esc_html__('Hidden', 'modern-job-board') . '</span>';
+                        $field_html = '<span class="mjb-blurred">' . esc_html__('Hidden', 'modern-job-board') . '</span>';
                     }
-                    echo '</td>';
+                    $apps_grid->render_cell($field_html, $app_headers[$column_index]);
+                    $column_index++;
                 }
 
-                // Column: Status
-                echo '<td>';
+                ob_start();
                 echo '<form method="post" action="" class="mjb-status-form">';
                 wp_nonce_field('mjb_update_application_' . $app_id);
                 echo '<input type="hidden" name="mjb_dashboard_action" value="update_application_status">';
@@ -343,22 +330,21 @@ class MJB_Dashboard
                 echo '</select> ';
                 echo '<button type="submit" class="button button-small">' . esc_html__('Update', 'modern-job-board') . '</button>';
                 echo '</form>';
-                echo '</td>';
+                $status_html = ob_get_clean();
 
-                $row_data = apply_filters('mjb_dashboard_application_row', array(
+                apply_filters('mjb_dashboard_application_row', array(
                     'id' => $app_id,
                     'name' => $name,
                     'email' => $email,
                     'status' => $current_status,
                 ), $app_id, $job_id);
 
-                // Column: Message
-                echo '<td>' . esc_html(wp_trim_words(get_the_content(), 10)) . '</td>';
-                echo '</tr>';
+                $apps_grid->render_cell($status_html, $app_headers[$column_index])
+                    ->render_cell(esc_html(wp_trim_words(get_the_content(), 10)), $app_headers[$column_index + 1])
+                    ->close_row();
             }
 
-            echo '</tbody>';
-            echo '</table>';
+            $apps_grid->close_body()->end();
             wp_reset_postdata();
         } else {
             echo '<p>' . esc_html__('No applications found for this job.', 'modern-job-board') . '</p>';

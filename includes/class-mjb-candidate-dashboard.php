@@ -240,12 +240,13 @@ class MJB_Candidate_Dashboard
             return;
         }
 
-        echo '<table class="mjb-dashboard-table">';
-        echo '<thead><tr>';
-        echo '<th>' . esc_html__('Job', 'modern-job-board') . '</th>';
-        echo '<th>' . esc_html__('Applied', 'modern-job-board') . '</th>';
-        echo '<th>' . esc_html__('Status', 'modern-job-board') . '</th>';
-        echo '</tr></thead><tbody>';
+        $app_headers = array(
+            __('Job', 'modern-job-board'),
+            __('Applied', 'modern-job-board'),
+            __('Status', 'modern-job-board'),
+        );
+        $apps_grid = MJB_Data_Grid::begin('mjb-data-grid mjb-data-grid--dashboard', count($app_headers));
+        $apps_grid->render_header($app_headers)->open_body();
 
         foreach ($applications as $application) {
             $job_id = intval(get_post_meta($application->ID, '_job_applied_for', true));
@@ -253,20 +254,20 @@ class MJB_Candidate_Dashboard
             $job_title = $job ? get_the_title($job_id) : __('Unknown job', 'modern-job-board');
             $job_link = $job && $job->post_status === 'publish' ? get_permalink($job_id) : '';
 
-            echo '<tr>';
-            echo '<td>';
             if ($job_link) {
-                echo '<a href="' . esc_url($job_link) . '">' . esc_html($job_title) . '</a>';
+                $job_html = '<a href="' . esc_url($job_link) . '">' . esc_html($job_title) . '</a>';
             } else {
-                echo esc_html($job_title);
+                $job_html = esc_html($job_title);
             }
-            echo '</td>';
-            echo '<td>' . esc_html(get_the_date('', $application->ID)) . '</td>';
-            echo '<td>' . esc_html(MJB_Application_Status::get_label(MJB_Application_Status::get_status($application->ID))) . '</td>';
-            echo '</tr>';
+
+            $apps_grid->open_row()
+                ->render_cell($job_html, $app_headers[0])
+                ->render_cell(esc_html(get_the_date('', $application->ID)), $app_headers[1])
+                ->render_cell(esc_html(MJB_Application_Status::get_label(MJB_Application_Status::get_status($application->ID))), $app_headers[2])
+                ->close_row();
         }
 
-        echo '</tbody></table>';
+        $apps_grid->close_body()->end();
     }
 
     /**

@@ -299,41 +299,40 @@ class MJB_Page_Wizard
                 </div>
             <?php endif; ?>
 
-            <table class="widefat striped" style="max-width: 900px; margin-top: 20px;">
-                <thead>
-                    <tr>
-                        <th><?php esc_html_e('Page', 'modern-job-board'); ?></th>
-                        <th><?php esc_html_e('Shortcode', 'modern-job-board'); ?></th>
-                        <th><?php esc_html_e('Status', 'modern-job-board'); ?></th>
-                        <th><?php esc_html_e('URL', 'modern-job-board'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($rows as $row) : ?>
-                        <tr>
-                            <td><?php echo esc_html($row['title']); ?></td>
-                            <td><code>[<?php echo esc_html($row['shortcode']); ?>]</code></td>
-                            <td>
-                                <?php if ($row['status'] === 'ready') : ?>
-                                    <span style="color:#008a20;"><?php esc_html_e('Ready', 'modern-job-board'); ?></span>
-                                <?php else : ?>
-                                    <span style="color:#b32d2e;"><?php esc_html_e('Missing', 'modern-job-board'); ?></span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php if ($row['url']) : ?>
-                                    <a href="<?php echo esc_url($row['url']); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('View', 'modern-job-board'); ?></a>
-                                    <?php if ($row['edit_url']) : ?>
-                                        | <a href="<?php echo esc_url($row['edit_url']); ?>"><?php esc_html_e('Edit', 'modern-job-board'); ?></a>
-                                    <?php endif; ?>
-                                <?php else : ?>
-                                    &mdash;
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <?php
+            $wizard_headers = array(
+                __('Page', 'modern-job-board'),
+                __('Shortcode', 'modern-job-board'),
+                __('Status', 'modern-job-board'),
+                __('URL', 'modern-job-board'),
+            );
+            $wizard_grid = MJB_Data_Grid::begin('mjb-data-grid mjb-data-grid--admin', count($wizard_headers));
+            $wizard_grid->render_header($wizard_headers)->open_body();
+            foreach ($rows as $row) {
+                if ($row['status'] === 'ready') {
+                    $status_html = '<span style="color:#008a20;">' . esc_html__('Ready', 'modern-job-board') . '</span>';
+                } else {
+                    $status_html = '<span style="color:#b32d2e;">' . esc_html__('Missing', 'modern-job-board') . '</span>';
+                }
+
+                if ($row['url']) {
+                    $url_html = '<a href="' . esc_url($row['url']) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('View', 'modern-job-board') . '</a>';
+                    if ($row['edit_url']) {
+                        $url_html .= ' | <a href="' . esc_url($row['edit_url']) . '">' . esc_html__('Edit', 'modern-job-board') . '</a>';
+                    }
+                } else {
+                    $url_html = '&mdash;';
+                }
+
+                $wizard_grid->open_row()
+                    ->render_cell(esc_html($row['title']), $wizard_headers[0])
+                    ->render_cell('<code>[' . esc_html($row['shortcode']) . ']</code>', $wizard_headers[1])
+                    ->render_cell($status_html, $wizard_headers[2])
+                    ->render_cell($url_html, $wizard_headers[3])
+                    ->close_row();
+            }
+            $wizard_grid->close_body()->end();
+            ?>
 
             <form method="post" action="" style="margin-top: 24px;">
                 <?php wp_nonce_field('mjb_create_setup_pages_nonce'); ?>

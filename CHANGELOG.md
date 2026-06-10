@@ -2,6 +2,14 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.8.3] - 2026-06-10
+### Changed
+- **Div-based data grids**: Replaced all HTML tables with accessible div grids across employer/candidate dashboards, custom fields admin, and setup wizard.
+- **Performance overview**: Employer dashboard totals now use stat cards instead of a summary table.
+
+### Added
+- **`MJB_Data_Grid` helper**: Shared renderer for consistent grid markup and responsive mobile layouts.
+
 ## [1.8.2] - 2026-06-10
 ### Added
 - **Webhook retry queue**: Failed deliveries retry up to 5 times with exponential backoff (cron every 5 minutes).

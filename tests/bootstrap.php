@@ -708,6 +708,7 @@ require_once dirname(__DIR__) . '/includes/class-mjb-page-wizard.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-application-status.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-rest-api-v2.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-dashboard.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-data-grid.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-analytics.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-webhook-queue.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-webhooks.php';
