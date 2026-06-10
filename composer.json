@@ -23,6 +23,7 @@
         "test": "phpunit",
         "phpcs": "phpcs -n",
         "phpcbf": "phpcbf",
-        "make-pot": "php bin/make-pot.php"
+        "make-pot": "php bin/make-pot.php",
+        "make-charts-css": "php bin/make-charts-css.php"
     }
 }

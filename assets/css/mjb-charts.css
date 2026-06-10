@@ -1,0 +1,168 @@
+/* Modern Job Board admin performance charts */
+
+.mjb-admin-charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.mjb-chart-panel {
+    background: var(--mjb-bg-white);
+    border: 1px solid var(--mjb-border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+}
+
+.mjb-chart-panel h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-family: var(--mjb-font-sans);
+}
+
+.mjb-chart-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 1.2fr) 2fr 48px;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.mjb-chart-label {
+    font-size: 0.875rem;
+    color: var(--mjb-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mjb-chart-track {
+    background: var(--mjb-bg-neutral);
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+}
+
+.mjb-chart-bar {
+    height: 100%;
+    border-radius: 999px;
+    min-width: 2px;
+}
+
+.mjb-chart-bar-views {
+    background: var(--mjb-primary);
+}
+
+.mjb-chart-bar-apps {
+    background: var(--mjb-accent);
+}
+
+.mjb-chart-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: right;
+}
+
+/* Bar width utilities (0-100%) */
+.mjb-chart-w-0 { width: 0%; }
+.mjb-chart-w-1 { width: 1%; }
+.mjb-chart-w-2 { width: 2%; }
+.mjb-chart-w-3 { width: 3%; }
+.mjb-chart-w-4 { width: 4%; }
+.mjb-chart-w-5 { width: 5%; }
+.mjb-chart-w-6 { width: 6%; }
+.mjb-chart-w-7 { width: 7%; }
+.mjb-chart-w-8 { width: 8%; }
+.mjb-chart-w-9 { width: 9%; }
+.mjb-chart-w-10 { width: 10%; }
+.mjb-chart-w-11 { width: 11%; }
+.mjb-chart-w-12 { width: 12%; }
+.mjb-chart-w-13 { width: 13%; }
+.mjb-chart-w-14 { width: 14%; }
+.mjb-chart-w-15 { width: 15%; }
+.mjb-chart-w-16 { width: 16%; }
+.mjb-chart-w-17 { width: 17%; }
+.mjb-chart-w-18 { width: 18%; }
+.mjb-chart-w-19 { width: 19%; }
+.mjb-chart-w-20 { width: 20%; }
+.mjb-chart-w-21 { width: 21%; }
+.mjb-chart-w-22 { width: 22%; }
+.mjb-chart-w-23 { width: 23%; }
+.mjb-chart-w-24 { width: 24%; }
+.mjb-chart-w-25 { width: 25%; }
+.mjb-chart-w-26 { width: 26%; }
+.mjb-chart-w-27 { width: 27%; }
+.mjb-chart-w-28 { width: 28%; }
+.mjb-chart-w-29 { width: 29%; }
+.mjb-chart-w-30 { width: 30%; }
+.mjb-chart-w-31 { width: 31%; }
+.mjb-chart-w-32 { width: 32%; }
+.mjb-chart-w-33 { width: 33%; }
+.mjb-chart-w-34 { width: 34%; }
+.mjb-chart-w-35 { width: 35%; }
+.mjb-chart-w-36 { width: 36%; }
+.mjb-chart-w-37 { width: 37%; }
+.mjb-chart-w-38 { width: 38%; }
+.mjb-chart-w-39 { width: 39%; }
+.mjb-chart-w-40 { width: 40%; }
+.mjb-chart-w-41 { width: 41%; }
+.mjb-chart-w-42 { width: 42%; }
+.mjb-chart-w-43 { width: 43%; }
+.mjb-chart-w-44 { width: 44%; }
+.mjb-chart-w-45 { width: 45%; }
+.mjb-chart-w-46 { width: 46%; }
+.mjb-chart-w-47 { width: 47%; }
+.mjb-chart-w-48 { width: 48%; }
+.mjb-chart-w-49 { width: 49%; }
+.mjb-chart-w-50 { width: 50%; }
+.mjb-chart-w-51 { width: 51%; }
+.mjb-chart-w-52 { width: 52%; }
+.mjb-chart-w-53 { width: 53%; }
+.mjb-chart-w-54 { width: 54%; }
+.mjb-chart-w-55 { width: 55%; }
+.mjb-chart-w-56 { width: 56%; }
+.mjb-chart-w-57 { width: 57%; }
+.mjb-chart-w-58 { width: 58%; }
+.mjb-chart-w-59 { width: 59%; }
+.mjb-chart-w-60 { width: 60%; }
+.mjb-chart-w-61 { width: 61%; }
+.mjb-chart-w-62 { width: 62%; }
+.mjb-chart-w-63 { width: 63%; }
+.mjb-chart-w-64 { width: 64%; }
+.mjb-chart-w-65 { width: 65%; }
+.mjb-chart-w-66 { width: 66%; }
+.mjb-chart-w-67 { width: 67%; }
+.mjb-chart-w-68 { width: 68%; }
+.mjb-chart-w-69 { width: 69%; }
+.mjb-chart-w-70 { width: 70%; }
+.mjb-chart-w-71 { width: 71%; }
+.mjb-chart-w-72 { width: 72%; }
+.mjb-chart-w-73 { width: 73%; }
+.mjb-chart-w-74 { width: 74%; }
+.mjb-chart-w-75 { width: 75%; }
+.mjb-chart-w-76 { width: 76%; }
+.mjb-chart-w-77 { width: 77%; }
+.mjb-chart-w-78 { width: 78%; }
+.mjb-chart-w-79 { width: 79%; }
+.mjb-chart-w-80 { width: 80%; }
+.mjb-chart-w-81 { width: 81%; }
+.mjb-chart-w-82 { width: 82%; }
+.mjb-chart-w-83 { width: 83%; }
+.mjb-chart-w-84 { width: 84%; }
+.mjb-chart-w-85 { width: 85%; }
+.mjb-chart-w-86 { width: 86%; }
+.mjb-chart-w-87 { width: 87%; }
+.mjb-chart-w-88 { width: 88%; }
+.mjb-chart-w-89 { width: 89%; }
+.mjb-chart-w-90 { width: 90%; }
+.mjb-chart-w-91 { width: 91%; }
+.mjb-chart-w-92 { width: 92%; }
+.mjb-chart-w-93 { width: 93%; }
+.mjb-chart-w-94 { width: 94%; }
+.mjb-chart-w-95 { width: 95%; }
+.mjb-chart-w-96 { width: 96%; }
+.mjb-chart-w-97 { width: 97%; }
+.mjb-chart-w-98 { width: 98%; }
+.mjb-chart-w-99 { width: 99%; }
+.mjb-chart-w-100 { width: 100%; }

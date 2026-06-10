@@ -78,4 +78,24 @@ class AnalyticsTest extends TestCase
         $this->assertSame('High', $top[0]['title']);
         $this->assertSame(30, $top[0]['views']);
     }
+
+    public function test_chart_width_class_returns_utility_class()
+    {
+        $this->assertSame('mjb-chart-w-0', MJB_Analytics::chart_width_class(0));
+        $this->assertSame('mjb-chart-w-45', MJB_Analytics::chart_width_class(44.6));
+        $this->assertSame('mjb-chart-w-100', MJB_Analytics::chart_width_class(150));
+    }
+
+    public function test_render_admin_charts_html_uses_width_utilities_not_embedded_styles()
+    {
+        $html = MJB_Analytics::render_admin_charts_html(array(
+            array('title' => 'Engineer', 'views' => 80, 'applications' => 4),
+            array('title' => 'Designer', 'views' => 40, 'applications' => 2),
+        ));
+
+        $this->assertStringContainsString('mjb-chart-w-100', $html);
+        $this->assertStringContainsString('mjb-chart-w-50', $html);
+        $this->assertStringNotContainsString('<style', $html);
+        $this->assertStringNotContainsString('style=', $html);
+    }
 }

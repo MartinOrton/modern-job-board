@@ -2,6 +2,13 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.8.5] - 2026-06-10
+### Changed
+- **Chart styles in separate file**: Admin performance chart layout and bar widths moved to `assets/css/mjb-charts.css` (utility classes `mjb-chart-w-0` … `mjb-chart-w-100`); embedded `<style>` blocks removed.
+
+### Added
+- **`composer make-charts-css`**: Regenerates `mjb-charts.css` from `bin/make-charts-css.php`.
+
 ## [1.8.4] - 2026-06-10
 ### Changed
 - **No inline CSS**: Removed all `style=""` attributes from templates and PHP output; styles moved to `mjb-style.css`, `mjb-admin.css`, and new `mjb-shared.css`.

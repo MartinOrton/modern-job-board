@@ -62,6 +62,12 @@ class MJB_Admin
                 array('mjb-shared'),
                 MJB_VERSION
             );
+            wp_enqueue_style(
+                'mjb-charts-css',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/css/mjb-charts.css',
+                array('mjb-admin-css'),
+                MJB_VERSION
+            );
         }
     }
 

@@ -102,6 +102,13 @@ if (!function_exists('esc_html')) {
     }
 }
 
+if (!function_exists('esc_html_e')) {
+    function esc_html_e($text, $domain = null)
+    {
+        echo esc_html($text);
+    }
+}
+
 if (!function_exists('esc_attr')) {
     function esc_attr($text)
     {
