@@ -11,6 +11,14 @@ $GLOBALS['mjb_test_post_content'] = array();
 $GLOBALS['mjb_test_post_status'] = array();
 $GLOBALS['mjb_test_permalinks'] = array();
 $GLOBALS['mjb_test_remote_responses'] = array();
+$GLOBALS['mjb_test_duplicate_exists'] = null;
+$GLOBALS['mjb_test_post_types'] = array();
+$GLOBALS['mjb_test_post_authors'] = array();
+$GLOBALS['mjb_test_user_meta'] = array();
+$GLOBALS['mjb_test_current_user_id'] = 0;
+$GLOBALS['mjb_test_is_logged_in'] = false;
+$GLOBALS['mjb_test_user_caps'] = array();
+$GLOBALS['mjb_test_timestamp'] = 1700000000;
 
 if (!function_exists('__')) {
     function __($text, $domain = null)
@@ -137,6 +145,14 @@ if (!function_exists('update_option')) {
     }
 }
 
+if (!function_exists('delete_option')) {
+    function delete_option($key)
+    {
+        unset($GLOBALS['mjb_test_options'][$key]);
+        return true;
+    }
+}
+
 if (!function_exists('get_post_status')) {
     function get_post_status($post)
     {
@@ -156,7 +172,83 @@ if (!function_exists('get_post')) {
         return (object) array(
             'ID' => $post_id,
             'post_content' => $GLOBALS['mjb_test_post_content'][$post_id] ?? '',
+            'post_type' => $GLOBALS['mjb_test_post_types'][$post_id] ?? 'page',
+            'post_author' => $GLOBALS['mjb_test_post_authors'][$post_id] ?? 0,
         );
+    }
+}
+
+if (!function_exists('get_post_type')) {
+    function get_post_type($post)
+    {
+        $post_id = is_object($post) ? $post->ID : intval($post);
+        return $GLOBALS['mjb_test_post_types'][$post_id] ?? false;
+    }
+}
+
+if (!function_exists('get_post_field')) {
+    function get_post_field($field, $post_id)
+    {
+        if ($field === 'post_author') {
+            return $GLOBALS['mjb_test_post_authors'][intval($post_id)] ?? 0;
+        }
+        return '';
+    }
+}
+
+if (!function_exists('wp_is_post_autosave')) {
+    function wp_is_post_autosave($post_id)
+    {
+        return false;
+    }
+}
+
+if (!function_exists('wp_is_post_revision')) {
+    function wp_is_post_revision($post_id)
+    {
+        return false;
+    }
+}
+
+if (!function_exists('is_user_logged_in')) {
+    function is_user_logged_in()
+    {
+        return (bool) $GLOBALS['mjb_test_is_logged_in'];
+    }
+}
+
+if (!function_exists('get_current_user_id')) {
+    function get_current_user_id()
+    {
+        return intval($GLOBALS['mjb_test_current_user_id']);
+    }
+}
+
+if (!function_exists('user_can')) {
+    function user_can($user_id, $capability)
+    {
+        return !empty($GLOBALS['mjb_test_user_caps'][$user_id][$capability]);
+    }
+}
+
+if (!function_exists('get_user_meta')) {
+    function get_user_meta($user_id, $key = '', $single = false)
+    {
+        $all = $GLOBALS['mjb_test_user_meta'][$user_id] ?? array();
+        if ($key === '') {
+            return $all;
+        }
+        if (!isset($all[$key])) {
+            return $single ? '' : array();
+        }
+        return $single ? $all[$key] : array($all[$key]);
+    }
+}
+
+if (!function_exists('current_time')) {
+    function current_time($type)
+    {
+        return $type === 'timestamp' ? $GLOBALS['mjb_test_timestamp'] : (string) $GLOBALS['mjb_test_timestamp'];
     }
 }
 
@@ -228,7 +320,36 @@ if (!function_exists('get_posts')) {
     }
 }
 
+if (!class_exists('MJB_Test_WPDB')) {
+    class MJB_Test_WPDB
+    {
+        public $posts = 'wp_posts';
+        public $postmeta = 'wp_postmeta';
+
+        public function prepare($query, ...$args)
+        {
+            if (empty($args)) {
+                return $query;
+            }
+
+            $escaped = array_map(static function ($arg) {
+                return is_numeric($arg) ? $arg : "'" . str_replace("'", "''", (string) $arg) . "'";
+            }, $args);
+
+            return vsprintf(str_replace('%s', '%s', $query), $escaped);
+        }
+
+        public function get_var($query)
+        {
+            return $GLOBALS['mjb_test_duplicate_exists'];
+        }
+    }
+}
+
+$GLOBALS['wpdb'] = new MJB_Test_WPDB();
+
 require_once dirname(__DIR__) . '/includes/class-mjb-search.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-resumes.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-application-guard.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-page-resolver.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-recaptcha.php';

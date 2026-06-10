@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) {
 
 class MJB_Candidate_Dashboard
 {
+    const PAGE_OPTION = 'mjb_candidate_dashboard_page_id';
 
     /**
      * Initialize Dashboard.
@@ -29,7 +30,7 @@ class MJB_Candidate_Dashboard
             return;
         }
 
-        $redirect_url = get_permalink();
+        $redirect_url = self::get_page_url();
 
         if (!wp_verify_nonce($_POST['mjb_profile_nonce'], 'mjb_profile_action')) {
             MJB_Notices::redirect($redirect_url, 'error_security');
@@ -68,7 +69,7 @@ class MJB_Candidate_Dashboard
             return;
         }
 
-        $redirect_url = get_permalink();
+        $redirect_url = self::get_page_url();
 
         if (!wp_verify_nonce($_POST['mjb_resume_nonce'], 'mjb_resume_action')) {
             MJB_Notices::redirect($redirect_url, 'error_security');
@@ -195,5 +196,16 @@ class MJB_Candidate_Dashboard
         </div>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * Build a candidate dashboard URL with optional query arguments.
+     *
+     * @param array $query_args
+     * @return string
+     */
+    public static function get_page_url($query_args = array())
+    {
+        return MJB_Page_Resolver::get_page_url('mjb_candidate_dashboard', self::PAGE_OPTION, $query_args, '/candidate-dashboard/');
     }
 }

@@ -11,7 +11,7 @@ jQuery(document).ready(function ($) {
                 action: 'mjb_filter_jobs',
                 security: mjb_ajax.nonce,
                 search_keywords: $filterForm.find('input[name="search_keywords"]').val(),
-                search_location: $filterForm.find('input[name="search_location"]').val(),
+                search_location: $filterForm.find('[name="search_location"]').val(),
                 search_category: $filterForm.find('select[name="search_category"]').val(),
                 search_type: $filterForm.find('select[name="search_type"]').val()
             };

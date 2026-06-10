@@ -34,6 +34,15 @@ class MJB_Employer_Registration
             MJB_Notices::redirect($redirect_url, 'error_security');
         }
 
+        $spam_error = MJB_Application_Guard::validate_spam_protection();
+        if ($spam_error) {
+            MJB_Notices::redirect($redirect_url, $spam_error);
+        }
+
+        if (MJB_Application_Guard::is_registration_rate_limited()) {
+            MJB_Notices::redirect($redirect_url, 'error_registration_rate_limited');
+        }
+
         $username = isset($_POST['mjb_username']) ? sanitize_user($_POST['mjb_username']) : '';
         $email = isset($_POST['mjb_email']) ? sanitize_email($_POST['mjb_email']) : '';
         $password = isset($_POST['mjb_password']) ? $_POST['mjb_password'] : '';
@@ -67,6 +76,8 @@ class MJB_Employer_Registration
         wp_set_current_user($user_id);
         wp_set_auth_cookie($user_id);
 
+        MJB_Application_Guard::record_registration();
+
         MJB_Notices::redirect(MJB_Dashboard::get_page_url(), 'success_employer_registered');
     }
 
@@ -85,6 +96,10 @@ class MJB_Employer_Registration
             <?php echo MJB_Notices::render(); ?>
             <form method="post" action="" class="mjb-form">
                 <?php wp_nonce_field('mjb_register_action', 'mjb_registration_nonce'); ?>
+                <div class="mjb-hp-field" aria-hidden="true">
+                    <label for="mjb_hp_website_employer"><?php _e('Website', 'modern-job-board'); ?></label>
+                    <input type="text" name="<?php echo esc_attr(MJB_Application_Guard::HONEYPOT_FIELD); ?>" id="mjb_hp_website_employer" tabindex="-1" autocomplete="off">
+                </div>
 
                 <p>
                     <label for="mjb_username"><?php _e('Username', 'modern-job-board'); ?></label>
@@ -110,6 +125,12 @@ class MJB_Employer_Registration
                     <label for="mjb_phone"><?php _e('Phone Number', 'modern-job-board'); ?></label>
                     <input type="text" name="mjb_phone" id="mjb_phone">
                 </p>
+
+                <?php if (MJB_Recaptcha::is_enabled()) : ?>
+                <p>
+                    <div class="g-recaptcha" data-sitekey="<?php echo esc_attr(MJB_Recaptcha::get_site_key()); ?>"></div>
+                </p>
+                <?php endif; ?>
 
                 <p>
                     <input type="submit" name="mjb_register_employer"

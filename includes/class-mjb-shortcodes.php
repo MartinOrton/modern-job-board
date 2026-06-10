@@ -489,7 +489,7 @@ class MJB_Shortcodes
                              'mjb_job_id' => $post_id
                          ), $cart_url);
                          
-                         echo '<script>window.location.href="' . esc_url($redirect_url) . '";</script>';
+                         wp_safe_redirect($redirect_url);
                          exit;
                     }
                 }

@@ -10,6 +10,32 @@ if (!defined('ABSPATH')) {
 class MJB_Page_Resolver
 {
     /**
+     * Initialize cache invalidation hooks.
+     */
+    public static function init()
+    {
+        add_action('save_post_page', array(__CLASS__, 'maybe_invalidate_on_save'), 10, 3);
+        add_action('delete_post', array(__CLASS__, 'maybe_invalidate_on_delete'), 10, 2);
+        add_action('trashed_post', array(__CLASS__, 'maybe_invalidate_on_delete'), 10, 1);
+    }
+
+    /**
+     * Known shortcode to option key mappings.
+     *
+     * @return array<string, string>
+     */
+    public static function get_option_map()
+    {
+        return array(
+            'mjb_dashboard' => 'mjb_employer_dashboard_page_id',
+            'mjb_job_form' => 'mjb_job_form_page_id',
+            'mjb_candidate_dashboard' => 'mjb_candidate_dashboard_page_id',
+            'mjb_candidate_registration' => 'mjb_candidate_registration_page_id',
+            'mjb_employer_registration' => 'mjb_employer_registration_page_id',
+        );
+    }
+
+    /**
      * Resolve a published page ID containing a shortcode.
      *
      * @param string $shortcode
@@ -60,5 +86,61 @@ class MJB_Page_Resolver
         }
 
         return $url;
+    }
+
+    /**
+     * Clear cached page ID for an option key.
+     *
+     * @param string $option_key
+     */
+    public static function clear_cached_page_id($option_key)
+    {
+        delete_option($option_key);
+    }
+
+    /**
+     * Invalidate cache when a page is saved.
+     *
+     * @param int     $post_id
+     * @param WP_Post $post
+     * @param bool    $update
+     */
+    public static function maybe_invalidate_on_save($post_id, $post, $update)
+    {
+        if (wp_is_post_autosave($post_id) || wp_is_post_revision($post_id)) {
+            return;
+        }
+
+        self::invalidate_if_cached_page($post_id);
+    }
+
+    /**
+     * Invalidate cache when a page is deleted or trashed.
+     *
+     * @param int $post_id
+     */
+    public static function maybe_invalidate_on_delete($post_id)
+    {
+        if (get_post_type($post_id) !== 'page') {
+            return;
+        }
+
+        self::invalidate_if_cached_page($post_id);
+    }
+
+    /**
+     * Delete option entries that point at the given page.
+     *
+     * @param int $page_id
+     */
+    public static function invalidate_if_cached_page($page_id)
+    {
+        $page_id = intval($page_id);
+
+        foreach (self::get_option_map() as $option_key) {
+            if (intval(get_option($option_key)) === $page_id) {
+                self::clear_cached_page_id($option_key);
+            }
+        }
     }
 }

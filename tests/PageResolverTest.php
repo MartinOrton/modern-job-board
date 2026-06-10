@@ -48,4 +48,15 @@ class PageResolverTest extends TestCase
 
         $this->assertSame('https://example.test/post-job/', $url);
     }
+
+    public function test_invalidate_if_cached_page_clears_matching_option()
+    {
+        $GLOBALS['mjb_test_options']['mjb_employer_dashboard_page_id'] = 44;
+        $GLOBALS['mjb_test_options']['mjb_job_form_page_id'] = 55;
+
+        MJB_Page_Resolver::invalidate_if_cached_page(44);
+
+        $this->assertArrayNotHasKey('mjb_employer_dashboard_page_id', $GLOBALS['mjb_test_options']);
+        $this->assertSame(55, $GLOBALS['mjb_test_options']['mjb_job_form_page_id']);
+    }
 }

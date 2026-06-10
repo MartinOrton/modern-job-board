@@ -8,6 +8,8 @@ class ApplicationGuardTest extends TestCase
     {
         $GLOBALS['mjb_test_transients'] = array();
         $GLOBALS['mjb_test_posts'] = array();
+        $GLOBALS['mjb_test_duplicate_exists'] = null;
+        unset($_POST[MJB_Application_Guard::HONEYPOT_FIELD]);
     }
 
     public function test_rate_limit_key_is_stable_for_ip()
@@ -33,9 +35,27 @@ class ApplicationGuardTest extends TestCase
 
     public function test_duplicate_application_detects_existing_post()
     {
-        $GLOBALS['mjb_test_posts'] = array(101);
+        $GLOBALS['mjb_test_duplicate_exists'] = 101;
 
         $this->assertTrue(MJB_Application_Guard::has_duplicate_application(42, 'candidate@example.com'));
+    }
+
+    public function test_registration_rate_limit_blocks_after_max_attempts()
+    {
+        $ip = '203.0.113.99';
+
+        for ($i = 0; $i < MJB_Application_Guard::REG_RATE_LIMIT_MAX; $i++) {
+            MJB_Application_Guard::record_registration($ip);
+        }
+
+        $this->assertTrue(MJB_Application_Guard::is_registration_rate_limited($ip));
+    }
+
+    public function test_validate_spam_protection_rejects_honeypot()
+    {
+        $this->assertNull(MJB_Application_Guard::validate_spam_protection());
+        $_POST[MJB_Application_Guard::HONEYPOT_FIELD] = 'spam';
+        $this->assertSame('error_spam', MJB_Application_Guard::validate_spam_protection());
     }
 
     public function test_duplicate_application_returns_false_without_email()

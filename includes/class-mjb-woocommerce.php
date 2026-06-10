@@ -32,12 +32,69 @@ class MJB_WooCommerce
     public function add_job_id_to_cart($cart_item_data, $product_id)
     {
         if (isset($_GET['mjb_job_id'])) {
-            $cart_item_data['mjb_job_id'] = intval($_GET['mjb_job_id']);
+            $job_id = intval($_GET['mjb_job_id']);
+            if (self::user_can_purchase_job($job_id)) {
+                $cart_item_data['mjb_job_id'] = $job_id;
+            }
         }
+
         if (isset($_GET['mjb_unlock_application_id'])) {
-            $cart_item_data['mjb_unlock_application_id'] = intval($_GET['mjb_unlock_application_id']);
+            $application_id = intval($_GET['mjb_unlock_application_id']);
+            if (self::user_can_unlock_application($application_id)) {
+                $cart_item_data['mjb_unlock_application_id'] = $application_id;
+            }
         }
+
         return $cart_item_data;
+    }
+
+    /**
+     * Whether the current user may purchase a specific job listing.
+     *
+     * @param int $job_id
+     * @return bool
+     */
+    public static function user_can_purchase_job($job_id)
+    {
+        if (!is_user_logged_in()) {
+            return false;
+        }
+
+        $job_id = intval($job_id);
+        $job = $job_id ? get_post($job_id) : null;
+
+        if (!$job || $job->post_type !== 'job_listing') {
+            return false;
+        }
+
+        $user_id = get_current_user_id();
+
+        return user_can($user_id, 'manage_options') || intval($job->post_author) === $user_id;
+    }
+
+    /**
+     * Whether the current user may unlock a specific application.
+     *
+     * @param int $application_id
+     * @return bool
+     */
+    public static function user_can_unlock_application($application_id)
+    {
+        if (!is_user_logged_in()) {
+            return false;
+        }
+
+        $application_id = intval($application_id);
+        $job_id = intval(get_post_meta($application_id, '_job_applied_for', true));
+        $job = $job_id ? get_post($job_id) : null;
+
+        if (!$job || $job->post_type !== 'job_listing') {
+            return false;
+        }
+
+        $user_id = get_current_user_id();
+
+        return user_can($user_id, 'manage_options') || intval($job->post_author) === $user_id;
     }
 
     /**

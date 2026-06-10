@@ -3,7 +3,7 @@
  * Plugin Name: Modern Job Board
  * Plugin URI: https://github.com/MartinOrton/modern-job-board
  * Description: A lightweight job board plugin for WordPress.
- * Version: 1.5.0
+ * Version: 1.6.0
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
  * Text Domain: modern-job-board
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '1.5.0');
+define('MJB_VERSION', '1.6.0');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
 
@@ -69,6 +69,7 @@ class Modern_Job_Board
      */
     private function __construct()
     {
+        MJB_Page_Resolver::init();
         $this->init_hooks();
     }
 
@@ -211,6 +212,40 @@ class Modern_Job_Board
     }
 
     /**
+     * Whether reCAPTCHA should load on the current request.
+     *
+     * @return bool
+     */
+    private function should_enqueue_recaptcha()
+    {
+        if (!MJB_Recaptcha::is_enabled()) {
+            return false;
+        }
+
+        if (is_singular('job_listing')) {
+            return true;
+        }
+
+        global $post;
+        if (!$post instanceof WP_Post) {
+            return false;
+        }
+
+        $registration_shortcodes = array(
+            'mjb_candidate_registration',
+            'mjb_employer_registration',
+        );
+
+        foreach ($registration_shortcodes as $shortcode) {
+            if (has_shortcode($post->post_content, $shortcode)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Enqueue frontend scripts and styles.
      */
     public function enqueue_scripts()
@@ -221,7 +256,7 @@ class Modern_Job_Board
 
         wp_enqueue_style('mjb-style', MJB_URL . 'assets/css/mjb-style.css', array(), MJB_VERSION);
 
-        if (is_singular('job_listing') && MJB_Recaptcha::is_enabled()) {
+        if ($this->should_enqueue_recaptcha()) {
             wp_enqueue_script('google-recaptcha', 'https://www.google.com/recaptcha/api.js', array(), null, true);
         }
 

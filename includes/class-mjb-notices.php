@@ -76,6 +76,7 @@ class MJB_Notices
             'error_login_required' => __('You must be logged in as an employer to post jobs.', 'modern-job-board'),
             'error_duplicate_application' => __('You have already applied for this job.', 'modern-job-board'),
             'error_rate_limited' => __('Too many applications submitted. Please try again later.', 'modern-job-board'),
+            'error_registration_rate_limited' => __('Too many registration attempts. Please try again later.', 'modern-job-board'),
             'error_spam' => __('Your application could not be submitted. Please try again.', 'modern-job-board'),
             'error_recaptcha' => __('Please complete the reCAPTCHA verification.', 'modern-job-board'),
         );

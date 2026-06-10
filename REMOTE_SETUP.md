@@ -56,4 +56,4 @@ Reload nginx after editing:
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-Resumes remain available through the plugin's authenticated download endpoint (`?mjb_download_resume=...` with a valid nonce). Test by visiting a resume file URL directly — it should return **403 Forbidden**.
+Resumes remain available through the plugin's authenticated download endpoint (`?mjb_download=resume&mjb_id=...&mjb_nonce=...`). Test by visiting a resume file URL directly — it should return **403 Forbidden**.

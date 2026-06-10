@@ -70,6 +70,11 @@ class MJB_Dashboard
             'author' => get_current_user_id(),
         );
 
+        $credits = intval(get_user_meta(get_current_user_id(), '_mjb_job_credits', true));
+        if ($credits > 0) {
+            echo '<p class="mjb-dashboard-credits"><strong>' . esc_html__('Job credits:', 'modern-job-board') . '</strong> ' . esc_html((string) $credits) . '</p>';
+        }
+
         $jobs = new WP_Query($args);
         $job_ids = wp_list_pluck($jobs->posts, 'ID');
         $app_counts = self::get_application_counts_for_jobs($job_ids);
@@ -150,6 +155,12 @@ class MJB_Dashboard
         );
         $applications = new WP_Query($args);
 
+        global $mjb_custom_fields;
+        $application_fields = array();
+        if (isset($mjb_custom_fields)) {
+            $application_fields = $mjb_custom_fields->get_fields('application');
+        }
+
         if ($applications->have_posts()) {
             echo '<table class="mjb-dashboard-table">';
             echo '<thead><tr>';
@@ -157,6 +168,9 @@ class MJB_Dashboard
             echo '<th>' . __('Email', 'modern-job-board') . '</th>';
             echo '<th>' . __('Date', 'modern-job-board') . '</th>';
             echo '<th>' . __('Resume', 'modern-job-board') . '</th>';
+            foreach ($application_fields as $field) {
+                echo '<th>' . esc_html($field['label']) . '</th>';
+            }
             echo '<th>' . __('Message', 'modern-job-board') . '</th>';
             echo '</tr></thead>';
             echo '<tbody>';
@@ -218,6 +232,17 @@ class MJB_Dashboard
                     }
                 }
                 echo '</td>';
+
+                foreach ($application_fields as $field) {
+                    $field_value = get_post_meta($app_id, '_mjb_' . $field['key'], true);
+                    echo '<td>';
+                    if ($can_view) {
+                        echo esc_html((string) $field_value);
+                    } else {
+                        echo '<span class="mjb-blurred">' . __('Hidden', 'modern-job-board') . '</span>';
+                    }
+                    echo '</td>';
+                }
 
                 // Column: Message
                 echo '<td>' . wp_trim_words(get_the_content(), 10) . '</td>';

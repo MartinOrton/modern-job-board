@@ -98,12 +98,9 @@ class MJB_Applications
             MJB_Notices::redirect($redirect_url, 'error_missing_fields');
         }
 
-        if (MJB_Application_Guard::is_honeypot_triggered()) {
-            MJB_Notices::redirect($redirect_url, 'error_spam');
-        }
-
-        if (!MJB_Recaptcha::verify()) {
-            MJB_Notices::redirect($redirect_url, 'error_recaptcha');
+        $spam_error = MJB_Application_Guard::validate_spam_protection();
+        if ($spam_error) {
+            MJB_Notices::redirect($redirect_url, $spam_error);
         }
 
         if (MJB_Application_Guard::is_rate_limited()) {

@@ -2,6 +2,27 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.6.0] - 2026-06-10
+### Added
+- **GitHub Actions CI**: PHPUnit workflow runs on push and pull requests to `main`.
+- **Registration spam protection**: Honeypot, optional reCAPTCHA, and IP rate limiting on employer and candidate registration forms.
+- **Registration rate limiting**: Separate transient bucket for registration attempts (3 per hour per IP).
+- **WooCommerce cart authorization**: Job purchase and CV unlock cart links verify job/application ownership.
+- **Page resolver cache invalidation**: Clears cached shortcode page IDs when pages are updated, trashed, or deleted.
+- **Candidate dashboard page resolver**: Profile and resume form redirects use `[mjb_candidate_dashboard]` URL resolution.
+- **Expanded tests**: WooCommerce authorization, resume access, registration guard, and page resolver invalidation.
+
+### Fixed
+- **AJAX location filter**: `mjb-ajax-search.js` now reads the location `<select>` introduced in v1.4.
+- **Payment redirect**: Job submission uses `wp_safe_redirect()` instead of a JavaScript redirect to checkout.
+- **Duplicate application check**: Replaced `get_posts()` meta query with a single `$wpdb` lookup.
+- **REMOTE_SETUP.md**: Corrected protected download query string documentation.
+
+### Improved
+- **Employer dashboard**: Displays job credit balance and custom application field values in the applications table.
+- **Candidate registration redirect**: Sends new candidates to the resolved candidate dashboard page.
+- **reCAPTCHA loading**: Also enqueues on registration shortcode pages when enabled.
+
 ## [1.5.0] - 2026-06-10
 ### Added
 - **Application honeypot**: Hidden honeypot field on internal application forms to block basic bot submissions.

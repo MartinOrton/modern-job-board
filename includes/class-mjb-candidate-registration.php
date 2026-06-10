@@ -34,6 +34,15 @@ class MJB_Candidate_Registration
             MJB_Notices::redirect($redirect_url, 'error_security');
         }
 
+        $spam_error = MJB_Application_Guard::validate_spam_protection();
+        if ($spam_error) {
+            MJB_Notices::redirect($redirect_url, $spam_error);
+        }
+
+        if (MJB_Application_Guard::is_registration_rate_limited()) {
+            MJB_Notices::redirect($redirect_url, 'error_registration_rate_limited');
+        }
+
         $username = isset($_POST['mjb_username']) ? sanitize_user($_POST['mjb_username']) : '';
         $email = isset($_POST['mjb_email']) ? sanitize_email($_POST['mjb_email']) : '';
         $password = isset($_POST['mjb_password']) ? $_POST['mjb_password'] : '';
@@ -73,7 +82,9 @@ class MJB_Candidate_Registration
         wp_set_current_user($user_id);
         wp_set_auth_cookie($user_id);
 
-        MJB_Notices::redirect(home_url('/'), 'success_candidate_registered');
+        MJB_Application_Guard::record_registration();
+
+        MJB_Notices::redirect(MJB_Candidate_Dashboard::get_page_url(), 'success_candidate_registered');
     }
 
     /**
@@ -91,6 +102,10 @@ class MJB_Candidate_Registration
             <?php echo MJB_Notices::render(); ?>
             <form method="post" action="" class="mjb-form">
                 <?php wp_nonce_field('mjb_candidate_action', 'mjb_candidate_nonce'); ?>
+                <div class="mjb-hp-field" aria-hidden="true">
+                    <label for="mjb_hp_website_candidate"><?php _e('Website', 'modern-job-board'); ?></label>
+                    <input type="text" name="<?php echo esc_attr(MJB_Application_Guard::HONEYPOT_FIELD); ?>" id="mjb_hp_website_candidate" tabindex="-1" autocomplete="off">
+                </div>
 
                 <p>
                     <label for="mjb_username"><?php _e('Username', 'modern-job-board'); ?></label>
@@ -122,6 +137,12 @@ class MJB_Candidate_Registration
                     <input type="text" name="mjb_headline" id="mjb_headline"
                         placeholder="<?php esc_attr_e('e.g. Senior Web Developer', 'modern-job-board'); ?>">
                 </p>
+
+                <?php if (MJB_Recaptcha::is_enabled()) : ?>
+                <p>
+                    <div class="g-recaptcha" data-sitekey="<?php echo esc_attr(MJB_Recaptcha::get_site_key()); ?>"></div>
+                </p>
+                <?php endif; ?>
 
                 <p>
                     <input type="submit" name="mjb_register_candidate"
