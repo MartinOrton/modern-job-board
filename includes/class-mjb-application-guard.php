@@ -11,6 +11,24 @@ class MJB_Application_Guard
 {
     const RATE_LIMIT_MAX = 5;
     const RATE_LIMIT_WINDOW = 3600;
+    const HONEYPOT_FIELD = 'mjb_hp_website';
+
+    /**
+     * Determine whether the honeypot field was filled in by a bot.
+     *
+     * @param string|null $value
+     * @return bool
+     */
+    public static function is_honeypot_triggered($value = null)
+    {
+        if ($value === null) {
+            $value = isset($_POST[self::HONEYPOT_FIELD])
+                ? wp_unslash($_POST[self::HONEYPOT_FIELD])
+                : '';
+        }
+
+        return trim((string) $value) !== '';
+    }
 
     /**
      * Determine whether the client IP is rate limited.

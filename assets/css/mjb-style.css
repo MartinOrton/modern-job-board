@@ -81,3 +81,11 @@
     padding: 10px;
     border: 1px solid #ccffcc;
 }
+
+.mjb-hp-field {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}

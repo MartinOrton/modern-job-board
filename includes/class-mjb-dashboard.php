@@ -71,6 +71,8 @@ class MJB_Dashboard
         );
 
         $jobs = new WP_Query($args);
+        $job_ids = wp_list_pluck($jobs->posts, 'ID');
+        $app_counts = self::get_application_counts_for_jobs($job_ids);
 
         echo '<h3>' . __('Your Jobs', 'modern-job-board') . '</h3>';
 
@@ -88,23 +90,17 @@ class MJB_Dashboard
             while ($jobs->have_posts()) {
                 $jobs->the_post();
                 $job_id = get_the_ID();
-                $edit_link = add_query_arg(array('action' => 'edit', 'job_id' => $job_id), home_url('/post-job/'));
+                $edit_link = MJB_Shortcodes::get_job_form_page_url(array(
+                    'action' => 'edit',
+                    'job_id' => $job_id,
+                ));
                 $delete_link = wp_nonce_url(add_query_arg(array('action' => 'delete_job', 'job_id' => $job_id)), 'mjb_delete_job_' . $job_id);
                 $view_apps_link = self::get_page_url(array(
                     'action' => 'view_applications',
                     'job_id' => $job_id,
                 ));
 
-                // Get Application Count
-                $app_count = 0;
-                $apps = get_posts(array(
-                    'post_type' => 'job_application',
-                    'meta_key' => '_job_applied_for',
-                    'meta_value' => $job_id,
-                    'posts_per_page' => -1,
-                    'fields' => 'ids' // optimization
-                ));
-                $app_count = count($apps);
+                $app_count = isset($app_counts[$job_id]) ? intval($app_counts[$job_id]) : 0;
 
                 echo '<tr>';
                 echo '<td><a href="' . get_permalink() . '">' . get_the_title() . '</a></td>';
@@ -244,14 +240,7 @@ class MJB_Dashboard
      */
     public static function get_page_url($query_args = array())
     {
-        $page_id = self::resolve_page_id();
-        $url = $page_id ? get_permalink($page_id) : home_url('/job-dashboard/');
-
-        if (!empty($query_args)) {
-            $url = add_query_arg($query_args, $url);
-        }
-
-        return $url;
+        return MJB_Page_Resolver::get_page_url('mjb_dashboard', self::PAGE_OPTION, $query_args, '/job-dashboard/');
     }
 
     /**
@@ -261,26 +250,43 @@ class MJB_Dashboard
      */
     public static function resolve_page_id()
     {
-        $cached = intval(get_option(self::PAGE_OPTION));
-        if ($cached && get_post_status($cached)) {
-            return $cached;
+        return MJB_Page_Resolver::resolve_page_id('mjb_dashboard', self::PAGE_OPTION);
+    }
+
+    /**
+     * Batch-fetch application counts for multiple job IDs in a single query.
+     *
+     * @param array $job_ids
+     * @return array<int, int>
+     */
+    public static function get_application_counts_for_jobs($job_ids)
+    {
+        $job_ids = array_filter(array_map('intval', (array) $job_ids));
+        if (empty($job_ids)) {
+            return array();
         }
 
-        $pages = get_posts(array(
-            'post_type' => 'page',
-            'post_status' => 'publish',
-            'posts_per_page' => -1,
-            'fields' => 'ids',
-        ));
+        global $wpdb;
 
-        foreach ($pages as $page_id) {
-            $post = get_post($page_id);
-            if ($post && has_shortcode($post->post_content, 'mjb_dashboard')) {
-                update_option(self::PAGE_OPTION, $page_id, false);
-                return intval($page_id);
-            }
+        $placeholders = implode(', ', array_fill(0, count($job_ids), '%d'));
+        $sql = "
+            SELECT pm.meta_value AS job_id, COUNT(*) AS app_count
+            FROM {$wpdb->postmeta} pm
+            INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+            WHERE pm.meta_key = '_job_applied_for'
+            AND p.post_type = 'job_application'
+            AND p.post_status IN ('publish', 'pending', 'draft')
+            AND pm.meta_value IN ($placeholders)
+            GROUP BY pm.meta_value
+        ";
+
+        $rows = $wpdb->get_results($wpdb->prepare($sql, $job_ids), ARRAY_A);
+        $counts = array();
+
+        foreach ($rows as $row) {
+            $counts[intval($row['job_id'])] = intval($row['app_count']);
         }
 
-        return 0;
+        return $counts;
     }
 }

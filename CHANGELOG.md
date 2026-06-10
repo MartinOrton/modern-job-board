@@ -2,6 +2,19 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.5.0] - 2026-06-10
+### Added
+- **Application honeypot**: Hidden honeypot field on internal application forms to block basic bot submissions.
+- **Optional reCAPTCHA v2**: Admin settings for site/secret keys; checkbox widget on job application forms when enabled.
+- **Shared page resolver**: `MJB_Page_Resolver` auto-detects pages by shortcode for durable URLs.
+- **Job form page resolver**: Edit links and job form URLs resolve via `[mjb_job_form]` instead of hardcoded `/post-job/`.
+- **nginx resume protection docs**: `REMOTE_SETUP.md` documents the required nginx `location` block for `mjb-resumes`.
+- **Expanded tests**: Unit tests for honeypot detection, page resolver, and reCAPTCHA verification.
+
+### Improved
+- **Dashboard application counts**: Single batched SQL query replaces per-job `get_posts()` loops (N+1 fix).
+- **Dashboard URL resolution**: Delegates to shared `MJB_Page_Resolver`.
+
 ## [1.4.0] - 2026-06-09
 ### Added
 - **Centralized search builder**: Shared `MJB_Search::build_query_args()` used by shortcodes, AJAX, archives, and main query filtering.

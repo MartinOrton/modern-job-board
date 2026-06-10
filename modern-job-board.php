@@ -3,7 +3,7 @@
  * Plugin Name: Modern Job Board
  * Plugin URI: https://github.com/MartinOrton/modern-job-board
  * Description: A lightweight job board plugin for WordPress.
- * Version: 1.4.0
+ * Version: 1.5.0
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
  * Text Domain: modern-job-board
@@ -14,14 +14,16 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '1.4.0');
+define('MJB_VERSION', '1.5.0');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
 
 require_once MJB_PATH . 'includes/class-mjb-resumes.php';
 require_once MJB_PATH . 'includes/class-mjb-activator.php';
 require_once MJB_PATH . 'includes/class-mjb-notices.php';
+require_once MJB_PATH . 'includes/class-mjb-page-resolver.php';
 require_once MJB_PATH . 'includes/class-mjb-application-guard.php';
+require_once MJB_PATH . 'includes/class-mjb-recaptcha.php';
 
 register_activation_hook(__FILE__, array('MJB_Activator', 'activate'));
 register_deactivation_hook(__FILE__, array('MJB_Activator', 'deactivate'));
@@ -218,6 +220,10 @@ class Modern_Job_Board
         }
 
         wp_enqueue_style('mjb-style', MJB_URL . 'assets/css/mjb-style.css', array(), MJB_VERSION);
+
+        if (is_singular('job_listing') && MJB_Recaptcha::is_enabled()) {
+            wp_enqueue_script('google-recaptcha', 'https://www.google.com/recaptcha/api.js', array(), null, true);
+        }
 
         wp_enqueue_script('mjb-ajax-search', MJB_URL . 'assets/js/mjb-ajax-search.js', array('jquery'), MJB_VERSION, true);
         wp_localize_script('mjb-ajax-search', 'mjb_ajax', array(

@@ -42,4 +42,15 @@ class ApplicationGuardTest extends TestCase
     {
         $this->assertFalse(MJB_Application_Guard::has_duplicate_application(42, ''));
     }
+
+    public function test_honeypot_is_not_triggered_when_empty()
+    {
+        $this->assertFalse(MJB_Application_Guard::is_honeypot_triggered(''));
+        $this->assertFalse(MJB_Application_Guard::is_honeypot_triggered('   '));
+    }
+
+    public function test_honeypot_is_triggered_when_filled()
+    {
+        $this->assertTrue(MJB_Application_Guard::is_honeypot_triggered('https://spam.example'));
+    }
 }

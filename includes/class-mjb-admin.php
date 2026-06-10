@@ -233,6 +233,22 @@ class MJB_Admin
 
         register_setting('mjb_settings_group', 'mjb_paid_cv_access');
         add_settings_field('mjb_paid_cv_access', __('Paid CV Access', 'modern-job-board'), array($this, 'paid_cv_access_callback'), 'mjb-settings', 'mjb_payment_section');
+
+        add_settings_section(
+            'mjb_security_section',
+            __('Application Security', 'modern-job-board'),
+            array($this, 'security_section_callback'),
+            'mjb-settings'
+        );
+
+        register_setting('mjb_settings_group', 'mjb_recaptcha_enabled');
+        add_settings_field('mjb_recaptcha_enabled', __('Enable reCAPTCHA', 'modern-job-board'), array($this, 'recaptcha_enabled_callback'), 'mjb-settings', 'mjb_security_section');
+
+        register_setting('mjb_settings_group', 'mjb_recaptcha_site_key');
+        add_settings_field('mjb_recaptcha_site_key', __('reCAPTCHA Site Key', 'modern-job-board'), array($this, 'recaptcha_site_key_callback'), 'mjb-settings', 'mjb_security_section');
+
+        register_setting('mjb_settings_group', 'mjb_recaptcha_secret_key');
+        add_settings_field('mjb_recaptcha_secret_key', __('reCAPTCHA Secret Key', 'modern-job-board'), array($this, 'recaptcha_secret_key_callback'), 'mjb-settings', 'mjb_security_section');
     }
 
     /**
@@ -297,6 +313,31 @@ class MJB_Admin
         $enabled = get_option('mjb_paid_cv_access');
         echo '<input type="checkbox" name="mjb_paid_cv_access" value="1" ' . checked(1, $enabled, false) . '> ';
         echo esc_html__('Require payment before employers can view candidate details and resumes.', 'modern-job-board');
+    }
+
+    public function security_section_callback()
+    {
+        echo '<p>' . esc_html__('Protect the job application form from automated spam. A honeypot field is always active; reCAPTCHA v2 is optional.', 'modern-job-board') . '</p>';
+    }
+
+    public function recaptcha_enabled_callback()
+    {
+        $enabled = get_option('mjb_recaptcha_enabled');
+        echo '<input type="checkbox" name="mjb_recaptcha_enabled" value="1" ' . checked(1, $enabled, false) . '> ';
+        echo esc_html__('Require Google reCAPTCHA v2 on internal application forms.', 'modern-job-board');
+    }
+
+    public function recaptcha_site_key_callback()
+    {
+        $value = get_option('mjb_recaptcha_site_key', '');
+        echo '<input type="text" name="mjb_recaptcha_site_key" value="' . esc_attr($value) . '" class="regular-text">';
+    }
+
+    public function recaptcha_secret_key_callback()
+    {
+        $value = get_option('mjb_recaptcha_secret_key', '');
+        echo '<input type="password" name="mjb_recaptcha_secret_key" value="' . esc_attr($value) . '" class="regular-text" autocomplete="off">';
+        echo '<p class="description">' . esc_html__('Create keys at google.com/recaptcha/admin (reCAPTCHA v2, "I\'m not a robot" checkbox).', 'modern-job-board') . '</p>';
     }
 
     /**

@@ -36,3 +36,24 @@ Host my-plugin-server
 3.  Click **OK**.
 
 You are now editing files directly on the server!
+
+## Securing Resume Uploads on nginx
+
+The plugin stores resumes in `/wp-content/uploads/mjb-resumes/` and blocks direct access via `.htaccess` on Apache. **nginx ignores `.htaccess`**, so you must deny direct access in your server config.
+
+Add a `location` block inside your site's `server { }` block (adjust the path if WordPress is in a subdirectory):
+
+```nginx
+location ~* /wp-content/uploads/mjb-resumes/ {
+    deny all;
+    return 403;
+}
+```
+
+Reload nginx after editing:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Resumes remain available through the plugin's authenticated download endpoint (`?mjb_download_resume=...` with a valid nonce). Test by visiting a resume file URL directly — it should return **403 Forbidden**.

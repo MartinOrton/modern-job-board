@@ -5,6 +5,12 @@ define('HOUR_IN_SECONDS', 3600);
 
 $GLOBALS['mjb_test_transients'] = array();
 $GLOBALS['mjb_test_post_meta'] = array();
+$GLOBALS['mjb_test_options'] = array();
+$GLOBALS['mjb_test_posts'] = array();
+$GLOBALS['mjb_test_post_content'] = array();
+$GLOBALS['mjb_test_post_status'] = array();
+$GLOBALS['mjb_test_permalinks'] = array();
+$GLOBALS['mjb_test_remote_responses'] = array();
 
 if (!function_exists('__')) {
     function __($text, $domain = null)
@@ -114,6 +120,107 @@ if (!function_exists('update_post_meta')) {
     }
 }
 
+if (!function_exists('get_option')) {
+    function get_option($key, $default = false)
+    {
+        return array_key_exists($key, $GLOBALS['mjb_test_options'])
+            ? $GLOBALS['mjb_test_options'][$key]
+            : $default;
+    }
+}
+
+if (!function_exists('update_option')) {
+    function update_option($key, $value, $autoload = null)
+    {
+        $GLOBALS['mjb_test_options'][$key] = $value;
+        return true;
+    }
+}
+
+if (!function_exists('get_post_status')) {
+    function get_post_status($post)
+    {
+        $post_id = is_object($post) ? $post->ID : intval($post);
+        return $GLOBALS['mjb_test_post_status'][$post_id] ?? false;
+    }
+}
+
+if (!function_exists('get_post')) {
+    function get_post($post_id)
+    {
+        $post_id = intval($post_id);
+        if (!isset($GLOBALS['mjb_test_post_status'][$post_id])) {
+            return null;
+        }
+
+        return (object) array(
+            'ID' => $post_id,
+            'post_content' => $GLOBALS['mjb_test_post_content'][$post_id] ?? '',
+        );
+    }
+}
+
+if (!function_exists('has_shortcode')) {
+    function has_shortcode($content, $tag)
+    {
+        return strpos((string) $content, '[' . $tag) !== false;
+    }
+}
+
+if (!function_exists('get_permalink')) {
+    function get_permalink($post_id = 0)
+    {
+        return $GLOBALS['mjb_test_permalinks'][intval($post_id)] ?? 'https://example.test/?p=' . intval($post_id);
+    }
+}
+
+if (!function_exists('home_url')) {
+    function home_url($path = '')
+    {
+        return 'https://example.test' . $path;
+    }
+}
+
+if (!function_exists('add_query_arg')) {
+    function add_query_arg($key, $value = false, $url = false)
+    {
+        if (is_array($key)) {
+            $url = $value ?: '';
+            $args = $key;
+        } else {
+            $args = array($key => $value);
+        }
+
+        $separator = strpos($url, '?') === false ? '?' : '&';
+        return $url . $separator . http_build_query($args);
+    }
+}
+
+if (!function_exists('is_wp_error')) {
+    function is_wp_error($thing)
+    {
+        return is_object($thing) && isset($thing->errors);
+    }
+}
+
+if (!function_exists('wp_remote_post')) {
+    function wp_remote_post($url, $args = array())
+    {
+        if (!empty($GLOBALS['mjb_test_remote_responses'])) {
+            return array_shift($GLOBALS['mjb_test_remote_responses']);
+        }
+
+        return array('body' => json_encode(array('success' => false)));
+    }
+}
+
+if (!function_exists('wp_remote_retrieve_body')) {
+    function wp_remote_retrieve_body($response)
+    {
+        return is_array($response) && isset($response['body']) ? $response['body'] : '';
+    }
+}
+
 if (!function_exists('get_posts')) {
     function get_posts($args = array())
     {
@@ -123,4 +230,6 @@ if (!function_exists('get_posts')) {
 
 require_once dirname(__DIR__) . '/includes/class-mjb-search.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-application-guard.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-page-resolver.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-recaptcha.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-woocommerce.php';

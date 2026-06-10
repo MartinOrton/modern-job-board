@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) {
 
 class MJB_Shortcodes
 {
+    const JOB_FORM_PAGE_OPTION = 'mjb_job_form_page_id';
 
     /**
      * Initialize Shortcodes.
@@ -117,8 +118,16 @@ class MJB_Shortcodes
     }
 
     /**
-     * Output Job Submission Form.
+     * Build a job form URL with optional query arguments.
+     *
+     * @param array $query_args
+     * @return string
      */
+    public static function get_job_form_page_url($query_args = array())
+    {
+        return MJB_Page_Resolver::get_page_url('mjb_job_form', self::JOB_FORM_PAGE_OPTION, $query_args, '/post-job/');
+    }
+
     /**
      * Output Job Submission Form.
      */

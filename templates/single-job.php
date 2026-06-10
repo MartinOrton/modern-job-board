@@ -68,6 +68,10 @@ get_header(); ?>
                                 <form method="post" action="" enctype="multipart/form-data" class="mjb-application-form">
                                     <?php wp_nonce_field('mjb_submit_application', 'mjb_application_nonce'); ?>
                                     <input type="hidden" name="job_id" value="<?php echo get_the_ID(); ?>">
+                                    <div class="mjb-hp-field" aria-hidden="true">
+                                        <label for="mjb_hp_website"><?php _e('Website', 'modern-job-board'); ?></label>
+                                        <input type="text" name="<?php echo esc_attr(MJB_Application_Guard::HONEYPOT_FIELD); ?>" id="mjb_hp_website" tabindex="-1" autocomplete="off">
+                                    </div>
 
                                     <p>
                                         <label for="candidate_name"><?php _e('Full Name', 'modern-job-board'); ?></label>
@@ -153,6 +157,12 @@ get_header(); ?>
                                         }
                                     }
                                     ?>
+
+                                    <?php if (MJB_Recaptcha::is_enabled()) : ?>
+                                    <p>
+                                        <div class="g-recaptcha" data-sitekey="<?php echo esc_attr(MJB_Recaptcha::get_site_key()); ?>"></div>
+                                    </p>
+                                    <?php endif; ?>
 
                                     <p>
                                         <input type="submit" name="mjb_submit_application"
