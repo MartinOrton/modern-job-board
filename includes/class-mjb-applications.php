@@ -174,6 +174,7 @@ class MJB_Applications
         update_post_meta($application_id, '_candidate_name', $candidate_name);
         update_post_meta($application_id, '_candidate_email', $candidate_email);
         update_post_meta($application_id, '_candidate_resume_path', $resume_path);
+        MJB_Application_Status::update_status($application_id, MJB_Application_Status::DEFAULT_STATUS);
 
         if ($resume_post_id) {
             update_post_meta($application_id, '_candidate_resume_id', $resume_post_id);

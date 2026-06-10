@@ -1,0 +1,921 @@
+# Copyright (C) 2026 Martin Orton
+# This file is distributed under the GPL.
+msgid ""
+msgstr ""
+"Project-Id-Version: Modern Job Board\n"
+"Report-Msgid-Bugs-To: https://github.com/MartinOrton/modern-job-board\n"
+"POT-Creation-Date: 2026-06-10 18:30+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Domain: modern-job-board\n"
+
+msgid "%1$d jobs imported from XML. %2$d items skipped (duplicates or invalid rows)."
+msgstr ""
+
+msgid "%1$d pages created. %2$d pages were already configured."
+msgstr ""
+
+msgid "%d jobs imported successfully!"
+msgstr ""
+
+msgid "&larr; Back to Dashboard"
+msgstr ""
+
+msgid "A new job has been submitted to your board."
+msgstr ""
+
+msgid "A resume is required to apply."
+msgstr ""
+
+msgid "Actions"
+msgstr ""
+
+msgid "Active Jobs"
+msgstr ""
+
+msgid "Add Field"
+msgstr ""
+
+msgid "Add New"
+msgstr ""
+
+msgid "Add New Application"
+msgstr ""
+
+msgid "Add New Company"
+msgstr ""
+
+msgid "Add New Field"
+msgstr ""
+
+msgid "Add New Job"
+msgstr ""
+
+msgid "Add New Resume"
+msgstr ""
+
+msgid "After creating pages, visit %s and click Save to refresh rewrite rules for pretty job search URLs."
+msgstr ""
+
+msgid "All Applications"
+msgstr ""
+
+msgid "All Categories"
+msgstr ""
+
+msgid "All Companies"
+msgstr ""
+
+msgid "All Job Types"
+msgstr ""
+
+msgid "All Jobs"
+msgstr ""
+
+msgid "All Locations"
+msgstr ""
+
+msgid "All Resumes"
+msgstr ""
+
+msgid "All required frontend pages are configured."
+msgstr ""
+
+msgid "Application"
+msgstr ""
+
+msgid "Application Archives"
+msgstr ""
+
+msgid "Application Attributes"
+msgstr ""
+
+msgid "Application Method"
+msgstr ""
+
+msgid "Application Security"
+msgstr ""
+
+msgid "Application for %s by %s"
+msgstr ""
+
+msgid "Application received: %s"
+msgstr ""
+
+msgid "Application status updated."
+msgstr ""
+
+msgid "Application submitted successfully!"
+msgstr ""
+
+msgid "Applications"
+msgstr ""
+
+msgid "Applications for \"%s\""
+msgstr ""
+
+msgid "Applied"
+msgstr ""
+
+msgid "Applied For"
+msgstr ""
+
+msgid "Are you sure you want to delete this job?"
+msgstr ""
+
+msgid "Authentication required."
+msgstr ""
+
+msgid "CSV Import"
+msgstr ""
+
+msgid "CV Access Pass Duration (Days)"
+msgstr ""
+
+msgid "CV Unlock Product ID"
+msgstr ""
+
+msgid "Candidate"
+msgstr ""
+
+msgid "Candidate Dashboard"
+msgstr ""
+
+msgid "Candidate Email: %s"
+msgstr ""
+
+msgid "Candidate Name"
+msgstr ""
+
+msgid "Candidate Name: %s"
+msgstr ""
+
+msgid "Candidate Registration"
+msgstr ""
+
+msgid "Candidate Resumes"
+msgstr ""
+
+msgid "Candidate access required."
+msgstr ""
+
+msgid "Checkbox"
+msgstr ""
+
+msgid "Comma separated"
+msgstr ""
+
+msgid "Companies"
+msgstr ""
+
+msgid "Company"
+msgstr ""
+
+msgid "Company Name"
+msgstr ""
+
+msgid "Company Profiles"
+msgstr ""
+
+msgid "Company: %s"
+msgstr ""
+
+msgid "Configure listings, Google Maps API, and monetization options."
+msgstr ""
+
+msgid "Create Missing Pages"
+msgstr ""
+
+msgid "Create New Company"
+msgstr ""
+
+msgid "Create WordPress pages for each shortcode used by the job board frontend."
+msgstr ""
+
+msgid "Create frontend pages for job search, dashboards, and registration shortcodes."
+msgstr ""
+
+msgid "Create keys at google.com/recaptcha/admin (reCAPTCHA v2, \"I'm not a robot\" checkbox)."
+msgstr ""
+
+msgid "Current Resume:"
+msgstr ""
+
+msgid "Custom Fields"
+msgstr ""
+
+msgid "Custom Fields Builder"
+msgstr ""
+
+msgid "Dashboard"
+msgstr ""
+
+msgid "Date"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Delete this field?"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
+msgid "Dismiss"
+msgstr ""
+
+msgid "Download"
+msgstr ""
+
+msgid "Download Resume"
+msgstr ""
+
+msgid "Download your data in CSV format."
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Edit Application"
+msgstr ""
+
+msgid "Edit Company"
+msgstr ""
+
+msgid "Edit Job"
+msgstr ""
+
+msgid "Edit Job: %s"
+msgstr ""
+
+msgid "Edit Resume"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Email (Internal Form)"
+msgstr ""
+
+msgid "Email Address"
+msgstr ""
+
+msgid "Employer"
+msgstr ""
+
+msgid "Employer Dashboard"
+msgstr ""
+
+msgid "Employer Registration"
+msgstr ""
+
+msgid "Employer access required."
+msgstr ""
+
+msgid "Enable Pay-Per-Post"
+msgstr ""
+
+msgid "Enable reCAPTCHA"
+msgstr ""
+
+msgid "Enter the WooCommerce Product ID for the job listing fee."
+msgstr ""
+
+msgid "Enter the WooCommerce Product ID for unlocking a single application."
+msgstr ""
+
+msgid "Error: Shortcodes class not found."
+msgstr ""
+
+msgid "Exp: %s"
+msgstr ""
+
+msgid "Expiration Date:"
+msgstr ""
+
+msgid "Expires"
+msgstr ""
+
+msgid "Export"
+msgstr ""
+
+msgid "Export All Applications to CSV"
+msgstr ""
+
+msgid "Export All Jobs to CSV"
+msgstr ""
+
+msgid "Export Data"
+msgstr ""
+
+msgid "External Application URL"
+msgstr ""
+
+msgid "External URL"
+msgstr ""
+
+msgid "Featured"
+msgstr ""
+
+msgid "Featured Image"
+msgstr ""
+
+msgid "Featured Job"
+msgstr ""
+
+msgid "Filter jobs list"
+msgstr ""
+
+msgid "First Name"
+msgstr ""
+
+msgid "Google Maps API Key"
+msgstr ""
+
+msgid "Hi %s,"
+msgstr ""
+
+msgid "Hidden"
+msgstr ""
+
+msgid "Hired"
+msgstr ""
+
+msgid "Import"
+msgstr ""
+
+msgid "Import Jobs"
+msgstr ""
+
+msgid "Import Jobs from CSV"
+msgstr ""
+
+msgid "Import Jobs from Feed URL"
+msgstr ""
+
+msgid "Import Jobs from XML File"
+msgstr ""
+
+msgid "Import jobs from an MJB XML feed or compatible RSS feed. Duplicate items (matched by GUID or link) are skipped."
+msgstr ""
+
+msgid "Insert into job"
+msgstr ""
+
+msgid "Internal (Email)"
+msgstr ""
+
+msgid "Invalid application status."
+msgstr ""
+
+msgid "Invalid download link."
+msgstr ""
+
+msgid "Invalid job or permission denied."
+msgstr ""
+
+msgid "Invalid resume file type. Allowed types: PDF, DOC, DOCX."
+msgstr ""
+
+msgid "Job"
+msgstr ""
+
+msgid "Job Applications"
+msgstr ""
+
+msgid "Job Archives"
+msgstr ""
+
+msgid "Job Attributes"
+msgstr ""
+
+msgid "Job Category"
+msgstr ""
+
+msgid "Job Data"
+msgstr ""
+
+msgid "Job Listing"
+msgstr ""
+
+msgid "Job Listing Credits"
+msgstr ""
+
+msgid "Job Listings"
+msgstr ""
+
+msgid "Job Location"
+msgstr ""
+
+msgid "Job Title"
+msgstr ""
+
+msgid "Job Title: %s"
+msgstr ""
+
+msgid "Job Type"
+msgstr ""
+
+msgid "Job credits:"
+msgstr ""
+
+msgid "Job submitted successfully using a job credit!"
+msgstr ""
+
+msgid "Job submitted successfully! It is pending review."
+msgstr ""
+
+msgid "Job updated successfully! It is pending review."
+msgstr ""
+
+msgid "Jobs"
+msgstr ""
+
+msgid "Jobs list"
+msgstr ""
+
+msgid "Jobs list navigation"
+msgstr ""
+
+msgid "Key"
+msgstr ""
+
+msgid "Keywords..."
+msgstr ""
+
+msgid "Label"
+msgstr ""
+
+msgid "Last Name"
+msgstr ""
+
+msgid "Listing Duration (Days)"
+msgstr ""
+
+msgid "Listing Settings"
+msgstr ""
+
+msgid "Loading..."
+msgstr ""
+
+msgid "Location"
+msgstr ""
+
+msgid "Locked"
+msgstr ""
+
+msgid "Manage Jobs"
+msgstr ""
+
+msgid "Manage your job board with complete control."
+msgstr ""
+
+msgid "Message"
+msgstr ""
+
+msgid "Message:"
+msgstr ""
+
+msgid "Missing"
+msgstr ""
+
+msgid "Modern Job Board"
+msgstr ""
+
+msgid "Modern Job Board Setup"
+msgstr ""
+
+msgid "Modern Job Board Tools"
+msgstr ""
+
+msgid "Modern Job Board setup is incomplete. Create the required frontend pages to enable dashboards, registration, and job search."
+msgstr ""
+
+msgid "Monetization Settings"
+msgstr ""
+
+msgid "My Applications"
+msgstr ""
+
+msgid "My Resume"
+msgstr ""
+
+msgid "New"
+msgstr ""
+
+msgid "New Application"
+msgstr ""
+
+msgid "New Application for %s"
+msgstr ""
+
+msgid "New Company Name"
+msgstr ""
+
+msgid "New Job"
+msgstr ""
+
+msgid "New Job Submitted: %s"
+msgstr ""
+
+msgid "No applications found for this job."
+msgstr ""
+
+msgid "No custom fields defined."
+msgstr ""
+
+msgid "No file was uploaded."
+msgstr ""
+
+msgid "No job items found in XML feed."
+msgstr ""
+
+msgid "No jobs found."
+msgstr ""
+
+msgid "No profile fields provided."
+msgstr ""
+
+msgid "No resume uploaded yet."
+msgstr ""
+
+msgid "Not found"
+msgstr ""
+
+msgid "Not found in Trash"
+msgstr ""
+
+msgid "Notification Email"
+msgstr ""
+
+msgid "Number"
+msgstr ""
+
+msgid "Number of days this pass grants access to all CVs."
+msgstr ""
+
+msgid "Number of job listings this package grants."
+msgstr ""
+
+msgid "Open Setup Wizard"
+msgstr ""
+
+msgid "Options (for Select)"
+msgstr ""
+
+msgid "Page"
+msgstr ""
+
+msgid "Paid CV Access"
+msgstr ""
+
+msgid "Parent Application:"
+msgstr ""
+
+msgid "Parent Job:"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Phone Number"
+msgstr ""
+
+msgid "Please <a href=\"%s\">login</a> to view your dashboard."
+msgstr ""
+
+msgid "Please complete the reCAPTCHA verification."
+msgstr ""
+
+msgid "Please fill in all required fields."
+msgstr ""
+
+msgid "Please provide a valid feed URL."
+msgstr ""
+
+msgid "Please select a valid company or enter a new company name."
+msgstr ""
+
+msgid "Please upload a valid resume (PDF, DOC, or DOCX)."
+msgstr ""
+
+msgid "Post a Job"
+msgstr ""
+
+msgid "Professional Headline"
+msgstr ""
+
+msgid "Profile Details"
+msgstr ""
+
+msgid "Profile updated successfully."
+msgstr ""
+
+msgid "Protect the job application form from automated spam. A honeypot field is always active; reCAPTCHA v2 is optional."
+msgstr ""
+
+msgid "Quick Actions"
+msgstr ""
+
+msgid "Ready"
+msgstr ""
+
+msgid "Register as Candidate"
+msgstr ""
+
+msgid "Register as Employer"
+msgstr ""
+
+msgid "Registration failed. Please try again."
+msgstr ""
+
+msgid "Registration successful! Welcome to your dashboard."
+msgstr ""
+
+msgid "Registration successful! Welcome."
+msgstr ""
+
+msgid "Rejected"
+msgstr ""
+
+msgid "Remote Feed URL"
+msgstr ""
+
+msgid "Remove featured image"
+msgstr ""
+
+msgid "Require Google reCAPTCHA v2 on internal application forms."
+msgstr ""
+
+msgid "Require Payment"
+msgstr ""
+
+msgid "Require payment before employers can view candidate details and resumes."
+msgstr ""
+
+msgid "Required Columns:"
+msgstr ""
+
+msgid "Required?"
+msgstr ""
+
+msgid "Resume"
+msgstr ""
+
+msgid "Resume file is too large. Maximum size is 5 MB."
+msgstr ""
+
+msgid "Resume file not found."
+msgstr ""
+
+msgid "Resume upload failed. Please try again."
+msgstr ""
+
+msgid "Resume uploaded successfully."
+msgstr ""
+
+msgid "Resumes"
+msgstr ""
+
+msgid "Review candidate applications and download resumes."
+msgstr ""
+
+msgid "Reviewed"
+msgstr ""
+
+msgid "Save Settings"
+msgstr ""
+
+msgid "Search"
+msgstr ""
+
+msgid "Search Application"
+msgstr ""
+
+msgid "Search Job"
+msgstr ""
+
+msgid "Security check failed. Please try again."
+msgstr ""
+
+msgid "Select"
+msgstr ""
+
+msgid "Set featured image"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Settings → Permalinks"
+msgstr ""
+
+msgid "Setup"
+msgstr ""
+
+msgid "Shortcode"
+msgstr ""
+
+msgid "Shortlisted"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Submission Product ID"
+msgstr ""
+
+msgid "Submit Job"
+msgstr ""
+
+msgid "Supported fields:"
+msgstr ""
+
+msgid "Text"
+msgstr ""
+
+msgid "Textarea"
+msgstr ""
+
+msgid "Thanks for applying for \"%s\". Your application has been received and forwarded to the employer."
+msgstr ""
+
+msgid "That email address is already registered."
+msgstr ""
+
+msgid "That username is already taken."
+msgstr ""
+
+msgid "This dashboard is for candidates only."
+msgstr ""
+
+msgid "This dashboard is for employer accounts only."
+msgstr ""
+
+msgid "This form is for employer accounts only."
+msgstr ""
+
+msgid "This job is no longer available."
+msgstr ""
+
+msgid "Title"
+msgstr ""
+
+msgid "Too many applications submitted. Please try again later."
+msgstr ""
+
+msgid "Too many registration attempts. Please try again later."
+msgstr ""
+
+msgid "Tools"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "URL"
+msgstr ""
+
+msgid "Unable to fetch XML feed."
+msgstr ""
+
+msgid "Unable to parse XML feed."
+msgstr ""
+
+msgid "Unable to update application status."
+msgstr ""
+
+msgid "Unknown job"
+msgstr ""
+
+msgid "Unlock"
+msgstr ""
+
+msgid "Update"
+msgstr ""
+
+msgid "Update Application"
+msgstr ""
+
+msgid "Update Job"
+msgstr ""
+
+msgid "Update Profile"
+msgstr ""
+
+msgid "Upload Resume"
+msgstr ""
+
+msgid "Upload Resume (PDF/Docx)"
+msgstr ""
+
+msgid "Upload a CSV file to bulk import job listings."
+msgstr ""
+
+msgid "Uploaded to this job"
+msgstr ""
+
+msgid "Use as featured image"
+msgstr ""
+
+msgid "Username"
+msgstr ""
+
+msgid "View"
+msgstr ""
+
+msgid "View Application"
+msgstr ""
+
+msgid "View Applications"
+msgstr ""
+
+msgid "View Job"
+msgstr ""
+
+msgid "View Jobs"
+msgstr ""
+
+msgid "View Resume"
+msgstr ""
+
+msgid "View applications: %s"
+msgstr ""
+
+msgid "View the job: %s"
+msgstr ""
+
+msgid "View, edit, and moderate job listings. manage expiration dates and featured status."
+msgstr ""
+
+msgid "Website"
+msgstr ""
+
+msgid "XML / RSS Import"
+msgstr ""
+
+msgid "XML feed is empty."
+msgstr ""
+
+msgid "You are already logged in."
+msgstr ""
+
+msgid "You do not have access to this job."
+msgstr ""
+
+msgid "You do not have permission to download this resume."
+msgstr ""
+
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+msgid "You have already applied for this job."
+msgstr ""
+
+msgid "You have not applied for any jobs yet."
+msgstr ""
+
+msgid "You have not posted any jobs yet."
+msgstr ""
+
+msgid "You have received a new application for \"%s\"."
+msgstr ""
+
+msgid "You must be <a href=\"%s\">logged in as an employer</a> to post jobs."
+msgstr ""
+
+msgid "You must be logged in as an employer to post jobs."
+msgstr ""
+
+msgid "You must be logged in to edit a job."
+msgstr ""
+
+msgid "You must be logged in to view the dashboard."
+msgstr ""
+
+msgid "Your Jobs"
+msgstr ""
+
+msgid "Your application could not be submitted. Please try again."
+msgstr ""
+
+msgid "Your dashboard: %s"
+msgstr ""
+
+msgid "days"
+msgstr ""
+
+msgid "e.g. Senior Web Developer"
+msgstr ""
+
+msgid "reCAPTCHA Secret Key"
+msgstr ""
+
+msgid "reCAPTCHA Site Key"
+msgstr ""
+

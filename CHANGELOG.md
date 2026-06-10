@@ -2,6 +2,19 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.8.0] - 2026-06-10
+### Added
+- **Application workflow statuses**: Employers can track applications as New, Reviewed, Shortlisted, Rejected, or Hired from the dashboard.
+- **REST API v2 (authenticated)**: Employer endpoints for listing/updating applications; candidate endpoints for reading/updating profile.
+- **POST delete job**: Employer dashboard deletes jobs via POST form with nonce (GET delete removed).
+- **Extensibility hooks**: Filters/actions across resumes, WooCommerce, emails, employer dashboard, and application status updates.
+- **PHPCS in CI**: SQL safety checks via `composer phpcs` in GitHub Actions (expandable ruleset in `phpcs.xml.dist`).
+- **i18n baseline**: `languages/modern-job-board.pot` generated via `composer make-pot`.
+
+### Improved
+- **Candidate dashboard**: Application status column shows workflow labels instead of WordPress post status.
+- **New applications**: Default workflow status is `new` on submission.
+
 ## [1.7.2] - 2026-06-10
 ### Added
 - **XML / RSS job import**: Bulk import from MJB feed XML, compatible RSS files, or remote feed URLs (Tools → Import).

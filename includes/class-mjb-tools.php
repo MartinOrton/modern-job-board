@@ -318,7 +318,7 @@ class MJB_Tools
 
                 fclose($handle);
 
-                wp_redirect(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import&imported=' . $count));
+                wp_safe_redirect(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import&imported=' . $count));
                 exit;
             }
         }
@@ -394,7 +394,7 @@ class MJB_Tools
      */
     private function redirect_with_xml_result($result)
     {
-        wp_redirect(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import&xml_imported=' . intval($result['imported']) . '&xml_skipped=' . intval($result['skipped'])));
+        wp_safe_redirect(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import&xml_imported=' . intval($result['imported']) . '&xml_skipped=' . intval($result['skipped'])));
         exit;
     }
 
@@ -405,7 +405,7 @@ class MJB_Tools
      */
     private function redirect_with_xml_error($message)
     {
-        wp_redirect(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import&xml_error=' . rawurlencode($message)));
+        wp_safe_redirect(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import&xml_error=' . rawurlencode($message)));
         exit;
     }
 }

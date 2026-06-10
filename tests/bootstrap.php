@@ -30,6 +30,9 @@ $GLOBALS['mjb_test_inserted_posts'] = array();
 $GLOBALS['mjb_test_object_terms'] = array();
 $GLOBALS['mjb_test_companies_by_title'] = array();
 $GLOBALS['mjb_test_next_post_id'] = 1000;
+$GLOBALS['mjb_test_user_roles'] = array();
+$GLOBALS['mjb_test_user_emails'] = array();
+$GLOBALS['mjb_test_status_updates'] = array();
 
 if (!function_exists('__')) {
     function __($text, $domain = null)
@@ -42,6 +45,15 @@ if (!function_exists('apply_filters')) {
     function apply_filters($hook, $value)
     {
         return $value;
+    }
+}
+
+if (!function_exists('do_action')) {
+    function do_action($hook, ...$args)
+    {
+        if ($hook === 'mjb_application_status_updated' && count($args) === 3) {
+            $GLOBALS['mjb_test_status_updates'][] = $args;
+        }
     }
 }
 
@@ -208,16 +220,6 @@ if (!function_exists('get_post_type')) {
     }
 }
 
-if (!function_exists('get_post_field')) {
-    function get_post_field($field, $post_id)
-    {
-        if ($field === 'post_author') {
-            return $GLOBALS['mjb_test_post_authors'][intval($post_id)] ?? 0;
-        }
-        return '';
-    }
-}
-
 if (!function_exists('wp_is_post_autosave')) {
     function wp_is_post_autosave($post_id)
     {
@@ -249,7 +251,59 @@ if (!function_exists('get_current_user_id')) {
 if (!function_exists('user_can')) {
     function user_can($user_id, $capability)
     {
+        if ($capability === 'manage_options') {
+            return !empty($GLOBALS['mjb_test_user_caps'][$user_id]['manage_options']);
+        }
+
         return !empty($GLOBALS['mjb_test_user_caps'][$user_id][$capability]);
+    }
+}
+
+if (!function_exists('wp_get_current_user')) {
+    function wp_get_current_user()
+    {
+        $user_id = intval($GLOBALS['mjb_test_current_user_id']);
+        return (object) array(
+            'ID' => $user_id,
+            'roles' => $GLOBALS['mjb_test_user_roles'][$user_id] ?? array(),
+            'user_email' => $GLOBALS['mjb_test_user_emails'][$user_id] ?? 'user@example.test',
+        );
+    }
+}
+
+if (!function_exists('get_userdata')) {
+    function get_userdata($user_id)
+    {
+        $user_id = intval($user_id);
+        if (!$user_id) {
+            return false;
+        }
+
+        return (object) array(
+            'ID' => $user_id,
+            'user_email' => $GLOBALS['mjb_test_user_emails'][$user_id] ?? 'user@example.test',
+            'display_name' => 'Test User',
+        );
+    }
+}
+
+if (!function_exists('get_post_field')) {
+    function get_post_field($field, $post_id)
+    {
+        if ($field === 'post_author') {
+            return $GLOBALS['mjb_test_post_authors'][intval($post_id)] ?? 0;
+        }
+        if ($field === 'post_content') {
+            return $GLOBALS['mjb_test_post_content'][intval($post_id)] ?? '';
+        }
+        return '';
+    }
+}
+
+if (!function_exists('wp_strip_all_tags')) {
+    function wp_strip_all_tags($string)
+    {
+        return strip_tags((string) $string);
     }
 }
 
@@ -354,6 +408,13 @@ if (!function_exists('sanitize_title')) {
     {
         $title = strtolower(trim((string) $title));
         return preg_replace('/[^a-z0-9\\s-]/', '', str_replace(' ', '-', $title));
+    }
+}
+
+if (!function_exists('sanitize_key')) {
+    function sanitize_key($key)
+    {
+        return strtolower(preg_replace('/[^a-z0-9_\\-]/', '', (string) $key));
     }
 }
 
@@ -581,3 +642,5 @@ require_once dirname(__DIR__) . '/includes/class-mjb-feeds.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-job-importer.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-xml-importer.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-page-wizard.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-application-status.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-rest-api-v2.php';

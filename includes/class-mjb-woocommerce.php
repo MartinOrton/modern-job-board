@@ -33,19 +33,19 @@ class MJB_WooCommerce
     {
         if (isset($_GET['mjb_job_id'])) {
             $job_id = intval($_GET['mjb_job_id']);
-            if (self::user_can_purchase_job($job_id)) {
+            if (apply_filters('mjb_wc_user_can_purchase_job', self::user_can_purchase_job($job_id), $job_id)) {
                 $cart_item_data['mjb_job_id'] = $job_id;
             }
         }
 
         if (isset($_GET['mjb_unlock_application_id'])) {
             $application_id = intval($_GET['mjb_unlock_application_id']);
-            if (self::user_can_unlock_application($application_id)) {
+            if (apply_filters('mjb_wc_user_can_unlock_application', self::user_can_unlock_application($application_id), $application_id)) {
                 $cart_item_data['mjb_unlock_application_id'] = $application_id;
             }
         }
 
-        return $cart_item_data;
+        return apply_filters('mjb_wc_cart_item_data', $cart_item_data, $product_id);
     }
 
     /**
@@ -124,6 +124,8 @@ class MJB_WooCommerce
             return;
         }
 
+        do_action('mjb_before_activate_paid_job', $order_id);
+
         $user_id = $order->get_user_id();
 
         foreach ($order->get_items() as $item) {
@@ -173,6 +175,8 @@ class MJB_WooCommerce
         }
 
         $this->mark_order_processed($order_id);
+
+        do_action('mjb_after_activate_paid_job', $order_id);
     }
 
     /**

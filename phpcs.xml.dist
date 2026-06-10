@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<ruleset name="Modern Job Board">
+    <description>Incremental PHPCS rules for Modern Job Board (expandable to full WPCS).</description>
+
+    <file>modern-job-board.php</file>
+    <file>includes</file>
+
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+
+    <rule ref="WordPress.DB.PreparedSQL"/>
+
+    <config name="minimum_supported_wp_version" value="5.8"/>
+</ruleset>

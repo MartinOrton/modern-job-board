@@ -31,13 +31,17 @@ class MJB_Emails
 
         $to = get_option('admin_email');
         $subject = sprintf(__('New Job Submitted: %s', 'modern-job-board'), $job->post_title);
+        $subject = apply_filters('mjb_email_new_job_subject', $subject, $job_id);
 
         $message = sprintf(__('A new job has been submitted to your board.', 'modern-job-board')) . "\n\n";
         $message .= sprintf(__('Job Title: %s', 'modern-job-board'), $job->post_title) . "\n";
         $message .= sprintf(__('Company: %s', 'modern-job-board'), get_post_meta($job_id, '_company_name', true)) . "\n";
         $message .= sprintf(__('Edit Job: %s', 'modern-job-board'), get_edit_post_link($job_id)) . "\n";
+        $message = apply_filters('mjb_email_new_job_message', $message, $job_id);
 
+        do_action('mjb_before_send_email', 'new_job', $to, $subject, $message, $job_id);
         wp_mail($to, $subject, $message);
+        do_action('mjb_after_send_email', 'new_job', $to, $subject, $message, $job_id);
     }
 
     /**
@@ -68,6 +72,7 @@ class MJB_Emails
         $candidate_name = get_post_meta($application_id, '_candidate_name', true);
 
         $subject = sprintf(__('New Application for %s', 'modern-job-board'), $job->post_title);
+        $subject = apply_filters('mjb_email_application_subject', $subject, $application_id);
 
         $message = sprintf(__('You have received a new application for "%s".', 'modern-job-board'), $job->post_title) . "\n\n";
         $message .= sprintf(__('Candidate Name: %s', 'modern-job-board'), $candidate_name) . "\n";
@@ -81,8 +86,11 @@ class MJB_Emails
 
         $message .= "\n" . sprintf(__('Message:', 'modern-job-board')) . "\n";
         $message .= get_post_field('post_content', $application_id) . "\n";
+        $message = apply_filters('mjb_email_application_message', $message, $application_id);
 
+        do_action('mjb_before_send_email', 'application', $to, $subject, $message, $application_id);
         wp_mail($to, $subject, $message);
+        do_action('mjb_after_send_email', 'application', $to, $subject, $message, $application_id);
 
         do_action('mjb_application_notification_sent', $application_id, $to);
     }
@@ -109,6 +117,7 @@ class MJB_Emails
 
         $candidate_name = get_post_meta($application_id, '_candidate_name', true);
         $subject = sprintf(__('Application received: %s', 'modern-job-board'), $job->post_title);
+        $subject = apply_filters('mjb_email_candidate_confirmation_subject', $subject, $application_id);
 
         $message = sprintf(__('Hi %s,', 'modern-job-board'), $candidate_name) . "\n\n";
         $message .= sprintf(
@@ -121,7 +130,11 @@ class MJB_Emails
             $message .= sprintf(__('Your dashboard: %s', 'modern-job-board'), MJB_Candidate_Dashboard::get_page_url()) . "\n";
         }
 
+        $message = apply_filters('mjb_email_candidate_confirmation_message', $message, $application_id);
+
+        do_action('mjb_before_send_email', 'candidate_confirmation', $candidate_email, $subject, $message, $application_id);
         wp_mail($candidate_email, $subject, $message);
+        do_action('mjb_after_send_email', 'candidate_confirmation', $candidate_email, $subject, $message, $application_id);
 
         do_action('mjb_candidate_application_confirmation_sent', $application_id, $candidate_email);
     }

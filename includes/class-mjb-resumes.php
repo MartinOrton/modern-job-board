@@ -143,8 +143,10 @@ class MJB_Resumes
      * @param array $file
      * @return array|WP_Error Keys: file, url
      */
-    public static function upload_file($file)
+    public static function upload_file($file, $context = 'application')
     {
+        $file = apply_filters('mjb_resume_upload_file', $file, $context);
+
         $validation = self::validate_file($file);
         if (is_wp_error($validation)) {
             return $validation;
@@ -166,6 +168,8 @@ class MJB_Resumes
         if (isset($uploaded['error'])) {
             return new WP_Error('upload_error', $uploaded['error']);
         }
+
+        do_action('mjb_resume_uploaded', $uploaded, $context);
 
         return $uploaded;
     }
@@ -325,7 +329,8 @@ class MJB_Resumes
                 wp_die(esc_html__('Invalid download link.', 'modern-job-board'), 403);
             }
 
-            if (!self::user_can_download_application($id)) {
+            $allowed = apply_filters('mjb_resume_download_allowed', self::user_can_download_application($id), 'application', $id);
+            if (!$allowed) {
                 wp_die(esc_html__('You do not have permission to download this resume.', 'modern-job-board'), 403);
             }
 
@@ -335,7 +340,8 @@ class MJB_Resumes
                 wp_die(esc_html__('Invalid download link.', 'modern-job-board'), 403);
             }
 
-            if (!self::user_can_download_resume_post($id)) {
+            $allowed = apply_filters('mjb_resume_download_allowed', self::user_can_download_resume_post($id), 'resume', $id);
+            if (!$allowed) {
                 wp_die(esc_html__('You do not have permission to download this resume.', 'modern-job-board'), 403);
             }
 
@@ -351,6 +357,8 @@ class MJB_Resumes
         $filename = basename($file_path);
         $mime = wp_check_filetype($filename);
         $content_type = !empty($mime['type']) ? $mime['type'] : 'application/octet-stream';
+
+        do_action('mjb_resume_downloaded', $type, $id, get_current_user_id());
 
         nocache_headers();
         header('Content-Type: ' . $content_type);

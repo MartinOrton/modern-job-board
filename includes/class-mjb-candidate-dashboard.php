@@ -57,6 +57,12 @@ class MJB_Candidate_Dashboard
 
         update_user_meta($user_id, '_candidate_headline', $headline);
 
+        do_action('mjb_candidate_profile_updated', $user_id, array(
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'headline' => $headline,
+        ));
+
         MJB_Notices::redirect($redirect_url, 'success_profile');
     }
 
@@ -83,7 +89,7 @@ class MJB_Candidate_Dashboard
             MJB_Notices::redirect($redirect_url, 'error_resume_required');
         }
 
-        $uploaded = MJB_Resumes::upload_file($_FILES['mjb_resume']);
+        $uploaded = MJB_Resumes::upload_file($_FILES['mjb_resume'], 'candidate_profile');
         if (is_wp_error($uploaded)) {
             $code = $uploaded->get_error_code() === 'invalid_type' ? 'error_invalid_resume' : 'error_resume_upload';
             MJB_Notices::redirect($redirect_url, $code);
@@ -253,7 +259,7 @@ class MJB_Candidate_Dashboard
             }
             echo '</td>';
             echo '<td>' . esc_html(get_the_date('', $application->ID)) . '</td>';
-            echo '<td>' . esc_html(ucfirst($application->post_status)) . '</td>';
+            echo '<td>' . esc_html(MJB_Application_Status::get_label(MJB_Application_Status::get_status($application->ID))) . '</td>';
             echo '</tr>';
         }
 

@@ -17,28 +17,77 @@ class MJB_Dashboard
     public function init()
     {
         add_shortcode('mjb_dashboard', array($this, 'output_dashboard'));
-        add_action('init', array($this, 'handle_delete_action'));
+        add_action('init', array($this, 'handle_post_actions'));
     }
 
     /**
-     * Handle Delete Action.
+     * Handle dashboard POST actions (delete job, update application status).
      */
-    public function handle_delete_action()
+    public function handle_post_actions()
     {
-        if (isset($_GET['action']) && $_GET['action'] == 'delete_job' && isset($_GET['job_id']) && isset($_GET['_wpnonce'])) {
-            if (!wp_verify_nonce($_GET['_wpnonce'], 'mjb_delete_job_' . $_GET['job_id'])) {
-                return;
-            }
-
-            $job_id = intval($_GET['job_id']);
-            $job = get_post($job_id);
-
-            if ($job && $job->post_type === 'job_listing' && intval($job->post_author) === get_current_user_id()) {
-                wp_trash_post($job_id);
-                wp_safe_redirect(remove_query_arg(array('action', 'job_id', '_wpnonce')));
-                exit;
-            }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['mjb_dashboard_action'])) {
+            return;
         }
+
+        $action = sanitize_key(wp_unslash($_POST['mjb_dashboard_action']));
+
+        if ($action === 'delete_job') {
+            $this->handle_delete_job_post();
+            return;
+        }
+
+        if ($action === 'update_application_status') {
+            $this->handle_update_application_status_post();
+        }
+    }
+
+    /**
+     * Trash a job via POST with nonce verification.
+     */
+    private function handle_delete_job_post()
+    {
+        $job_id = isset($_POST['job_id']) ? intval($_POST['job_id']) : 0;
+        if (!$job_id || !isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'mjb_delete_job_' . $job_id)) {
+            return;
+        }
+
+        $job = get_post($job_id);
+        $user_id = get_current_user_id();
+
+        if ($job && $job->post_type === 'job_listing' && (intval($job->post_author) === $user_id || user_can($user_id, 'manage_options'))) {
+            do_action('mjb_before_delete_job', $job_id, $user_id);
+            wp_trash_post($job_id);
+            do_action('mjb_job_deleted', $job_id, $user_id);
+            wp_safe_redirect(self::get_page_url());
+            exit;
+        }
+    }
+
+    /**
+     * Update an application workflow status via POST.
+     */
+    private function handle_update_application_status_post()
+    {
+        $application_id = isset($_POST['application_id']) ? intval($_POST['application_id']) : 0;
+        $status = isset($_POST['application_status']) ? sanitize_key(wp_unslash($_POST['application_status'])) : '';
+        $job_id = isset($_POST['job_id']) ? intval($_POST['job_id']) : 0;
+
+        if (!$application_id || !$job_id || !isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'mjb_update_application_' . $application_id)) {
+            return;
+        }
+
+        if (!MJB_Application_Status::user_can_manage($application_id) || !MJB_Application_Status::is_valid($status)) {
+            return;
+        }
+
+        MJB_Application_Status::update_status($application_id, $status);
+
+        wp_safe_redirect(self::get_page_url(array(
+            'action' => 'view_applications',
+            'job_id' => $job_id,
+            'mjb_notice' => 'success_application_status',
+        )));
+        exit;
     }
 
     /**
@@ -56,6 +105,8 @@ class MJB_Dashboard
         }
 
         ob_start();
+
+        do_action('mjb_before_employer_dashboard', get_current_user_id());
 
         // Check for View Applications Action
         if (isset($_GET['action']) && $_GET['action'] == 'view_applications' && isset($_GET['job_id'])) {
@@ -99,7 +150,6 @@ class MJB_Dashboard
                     'action' => 'edit',
                     'job_id' => $job_id,
                 ));
-                $delete_link = wp_nonce_url(add_query_arg(array('action' => 'delete_job', 'job_id' => $job_id)), 'mjb_delete_job_' . $job_id);
                 $view_apps_link = self::get_page_url(array(
                     'action' => 'view_applications',
                     'job_id' => $job_id,
@@ -115,7 +165,12 @@ class MJB_Dashboard
                 echo '<td>';
                 echo '<a href="' . esc_url($edit_link) . '" class="button">' . __('Edit', 'modern-job-board') . '</a> ';
                 echo '<a href="' . esc_url($view_apps_link) . '" class="button">' . __('Applications', 'modern-job-board') . '</a> ';
-                echo '<a href="' . esc_url($delete_link) . '" class="button" onclick="return confirm(\'' . __('Are you sure?', 'modern-job-board') . '\');">' . __('Delete', 'modern-job-board') . '</a>';
+                echo '<form method="post" action="" class="mjb-inline-delete-form" style="display:inline;" onsubmit="return confirm(\'' . esc_js(__('Are you sure you want to delete this job?', 'modern-job-board')) . '\');">';
+                wp_nonce_field('mjb_delete_job_' . $job_id);
+                echo '<input type="hidden" name="mjb_dashboard_action" value="delete_job">';
+                echo '<input type="hidden" name="job_id" value="' . esc_attr((string) $job_id) . '">';
+                echo '<button type="submit" class="button">' . esc_html__('Delete', 'modern-job-board') . '</button>';
+                echo '</form>';
                 echo '</td>';
                 echo '</tr>';
             }
@@ -126,6 +181,8 @@ class MJB_Dashboard
         } else {
             echo '<p>' . __('You have not posted any jobs yet.', 'modern-job-board') . '</p>';
         }
+
+        do_action('mjb_after_employer_dashboard', get_current_user_id());
 
         return ob_get_clean();
     }
@@ -145,7 +202,11 @@ class MJB_Dashboard
         }
 
         echo '<h3>' . sprintf(__('Applications for "%s"', 'modern-job-board'), get_the_title($job_id)) . '</h3>';
-        echo '<p><a href="' . remove_query_arg(array('action', 'job_id')) . '">' . __('&larr; Back to Dashboard', 'modern-job-board') . '</a></p>';
+        echo '<p><a href="' . remove_query_arg(array('action', 'job_id', 'mjb_notice')) . '">' . __('&larr; Back to Dashboard', 'modern-job-board') . '</a></p>';
+
+        if (!empty($_GET['mjb_notice']) && $_GET['mjb_notice'] === 'success_application_status') {
+            echo '<div class="mjb-message success">' . esc_html__('Application status updated.', 'modern-job-board') . '</div>';
+        }
 
         $args = array(
             'post_type' => 'job_application',
@@ -171,6 +232,7 @@ class MJB_Dashboard
             foreach ($application_fields as $field) {
                 echo '<th>' . esc_html($field['label']) . '</th>';
             }
+            echo '<th>' . __('Status', 'modern-job-board') . '</th>';
             echo '<th>' . __('Message', 'modern-job-board') . '</th>';
             echo '</tr></thead>';
             echo '<tbody>';
@@ -181,6 +243,7 @@ class MJB_Dashboard
                 $name = get_post_meta($app_id, '_candidate_name', true);
                 $email = get_post_meta($app_id, '_candidate_email', true);
                 $resume = MJB_Resumes::get_application_download_url($app_id);
+                $current_status = MJB_Application_Status::get_status($app_id);
 
                 $can_view = true;
                 if (get_option('mjb_paid_cv_access')) {
@@ -244,6 +307,29 @@ class MJB_Dashboard
                     echo '</td>';
                 }
 
+                // Column: Status
+                echo '<td>';
+                echo '<form method="post" action="" class="mjb-status-form">';
+                wp_nonce_field('mjb_update_application_' . $app_id);
+                echo '<input type="hidden" name="mjb_dashboard_action" value="update_application_status">';
+                echo '<input type="hidden" name="application_id" value="' . esc_attr((string) $app_id) . '">';
+                echo '<input type="hidden" name="job_id" value="' . esc_attr((string) $job_id) . '">';
+                echo '<select name="application_status">';
+                foreach (MJB_Application_Status::get_statuses() as $status_key => $status_label) {
+                    echo '<option value="' . esc_attr($status_key) . '" ' . selected($current_status, $status_key, false) . '>' . esc_html($status_label) . '</option>';
+                }
+                echo '</select> ';
+                echo '<button type="submit" class="button button-small">' . esc_html__('Update', 'modern-job-board') . '</button>';
+                echo '</form>';
+                echo '</td>';
+
+                $row_data = apply_filters('mjb_dashboard_application_row', array(
+                    'id' => $app_id,
+                    'name' => $name,
+                    'email' => $email,
+                    'status' => $current_status,
+                ), $app_id, $job_id);
+
                 // Column: Message
                 echo '<td>' . wp_trim_words(get_the_content(), 10) . '</td>';
                 echo '</tr>';
@@ -305,6 +391,7 @@ class MJB_Dashboard
             GROUP BY pm.meta_value
         ";
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Placeholders are built from intval IDs and passed to prepare().
         $rows = $wpdb->get_results($wpdb->prepare($sql, $job_ids), ARRAY_A);
         $counts = array();
 

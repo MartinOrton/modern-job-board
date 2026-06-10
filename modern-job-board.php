@@ -3,7 +3,7 @@
  * Plugin Name: Modern Job Board
  * Plugin URI: https://github.com/MartinOrton/modern-job-board
  * Description: A lightweight job board plugin for WordPress.
- * Version: 1.7.2
+ * Version: 1.8.0
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
  * Text Domain: modern-job-board
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '1.7.2');
+define('MJB_VERSION', '1.8.0');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
 
@@ -28,6 +28,8 @@ require_once MJB_PATH . 'includes/class-mjb-recaptcha.php';
 require_once MJB_PATH . 'includes/class-mjb-job-importer.php';
 require_once MJB_PATH . 'includes/class-mjb-xml-importer.php';
 require_once MJB_PATH . 'includes/class-mjb-page-wizard.php';
+require_once MJB_PATH . 'includes/class-mjb-application-status.php';
+require_once MJB_PATH . 'includes/class-mjb-rest-api-v2.php';
 
 register_activation_hook(__FILE__, array('MJB_Activator', 'activate'));
 register_deactivation_hook(__FILE__, array('MJB_Activator', 'deactivate'));
@@ -170,6 +172,9 @@ class Modern_Job_Board
         require_once MJB_PATH . 'includes/class-mjb-rest-api.php';
         $mjb_api = new MJB_REST_API();
         $mjb_api->init();
+
+        $mjb_api_v2 = new MJB_REST_API_V2();
+        $mjb_api_v2->init();
 
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
