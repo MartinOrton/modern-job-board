@@ -18,6 +18,8 @@ class MJB_Tools
         add_action('admin_init', array($this, 'handle_export_jobs'));
         add_action('admin_init', array($this, 'handle_export_applications'));
         add_action('admin_init', array($this, 'handle_import_jobs'));
+        add_action('admin_init', array($this, 'handle_import_jobs_xml'));
+        add_action('admin_init', array($this, 'handle_import_jobs_xml_url'));
     }
 
     /**
@@ -96,8 +98,22 @@ class MJB_Tools
                     if (isset($_GET['imported'])) {
                         echo '<div class="notice notice-success is-dismissible"><p>' . sprintf(__('%d jobs imported successfully!', 'modern-job-board'), intval($_GET['imported'])) . '</p></div>';
                     }
+                    if (isset($_GET['xml_imported'])) {
+                        $skipped = intval($_GET['xml_skipped'] ?? 0);
+                        echo '<div class="notice notice-success is-dismissible"><p>' .
+                            esc_html(sprintf(
+                                __('%1$d jobs imported from XML. %2$d items skipped (duplicates or invalid rows).', 'modern-job-board'),
+                                intval($_GET['xml_imported']),
+                                $skipped
+                            )) .
+                            '</p></div>';
+                    }
+                    if (isset($_GET['xml_error'])) {
+                        echo '<div class="notice notice-error is-dismissible"><p>' . esc_html(sanitize_text_field(wp_unslash($_GET['xml_error']))) . '</p></div>';
+                    }
                     ?>
 
+                    <h3><?php _e('CSV Import', 'modern-job-board'); ?></h3>
                     <form method="post" action="" enctype="multipart/form-data">
                         <?php wp_nonce_field('mjb_import_jobs_nonce'); ?>
                         <input type="hidden" name="mjb_action" value="import_jobs">
@@ -106,7 +122,43 @@ class MJB_Tools
                         </p>
                         <p>
                             <input type="submit" class="button button-primary"
-                                value="<?php _e('Import Jobs', 'modern-job-board'); ?>">
+                                value="<?php _e('Import Jobs from CSV', 'modern-job-board'); ?>">
+                        </p>
+                    </form>
+
+                    <hr>
+
+                    <h3><?php _e('XML / RSS Import', 'modern-job-board'); ?></h3>
+                    <p><?php _e('Import jobs from an MJB XML feed or compatible RSS feed. Duplicate items (matched by GUID or link) are skipped.', 'modern-job-board'); ?></p>
+                    <p>
+                        <strong><?php _e('Supported fields:', 'modern-job-board'); ?></strong>
+                        <code>title</code>, <code>description</code>, <code>content:encoded</code>,
+                        <code>mjb:company</code>, <code>mjb:location</code>, <code>mjb:jobType</code>, <code>mjb:featured</code>
+                    </p>
+
+                    <form method="post" action="" enctype="multipart/form-data" style="margin-bottom: 20px;">
+                        <?php wp_nonce_field('mjb_import_jobs_xml_nonce'); ?>
+                        <input type="hidden" name="mjb_action" value="import_jobs_xml">
+                        <p>
+                            <input type="file" name="import_xml_file" accept=".xml,.rss,application/xml,text/xml" required>
+                        </p>
+                        <p>
+                            <input type="submit" class="button button-secondary"
+                                value="<?php _e('Import Jobs from XML File', 'modern-job-board'); ?>">
+                        </p>
+                    </form>
+
+                    <form method="post" action="">
+                        <?php wp_nonce_field('mjb_import_jobs_xml_url_nonce'); ?>
+                        <input type="hidden" name="mjb_action" value="import_jobs_xml_url">
+                        <p>
+                            <label for="mjb_import_feed_url"><strong><?php _e('Remote Feed URL', 'modern-job-board'); ?></strong></label><br>
+                            <input type="url" class="regular-text" id="mjb_import_feed_url" name="import_feed_url"
+                                placeholder="https://example.com/feed/job-listings/" required>
+                        </p>
+                        <p>
+                            <input type="submit" class="button button-secondary"
+                                value="<?php _e('Import Jobs from Feed URL', 'modern-job-board'); ?>">
                         </p>
                     </form>
                 </div>
@@ -247,66 +299,19 @@ class MJB_Tools
                 // Title, Description, Location, Type, Company
 
                 while (($row = fgetcsv($handle)) !== false) {
-                    // Mapping based on assumption: 
-                    // 0=Title, 1=Description, 2=Location, 3=Type, 4=Company
-                    if (count($row) < 2)
+                    if (count($row) < 2) {
                         continue;
+                    }
 
-                    $title = isset($row[0]) ? sanitize_text_field($row[0]) : '';
-                    $desc = isset($row[1]) ? wp_kses_post($row[1]) : '';
-                    $location = isset($row[2]) ? sanitize_text_field($row[2]) : '';
-                    $type = isset($row[3]) ? sanitize_text_field($row[3]) : '';
-                    $company_name = isset($row[4]) ? sanitize_text_field($row[4]) : '';
+                    $post_id = MJB_Job_Importer::import_job(array(
+                        'title' => $row[0] ?? '',
+                        'description' => $row[1] ?? '',
+                        'location' => $row[2] ?? '',
+                        'type' => $row[3] ?? '',
+                        'company' => $row[4] ?? '',
+                    ));
 
-                    if (!$title)
-                        continue;
-
-                    // Create Job Post
-                    $post_data = array(
-                        'post_title' => $title,
-                        'post_content' => $desc,
-                        'post_type' => 'job_listing',
-                        'post_status' => 'publish',
-                        'post_author' => get_current_user_id()
-                    );
-
-                    $post_id = wp_insert_post($post_data);
-
-                    if ($post_id && !is_wp_error($post_id)) {
-                        // Set Taxonomies
-                        if ($location) {
-                            wp_set_object_terms($post_id, $location, 'job_location', true);
-                            // Note: 'true' appends. But here we probably want to set it fresh if string is comma separated?
-                            // Let's assume single term for simplicity or handle comma split
-                            if (strpos($location, ',') !== false) {
-                                wp_set_object_terms($post_id, explode(',', $location), 'job_location');
-                            } else {
-                                wp_set_object_terms($post_id, $location, 'job_location');
-                            }
-                        }
-
-                        if ($type) {
-                            wp_set_object_terms($post_id, $type, 'job_type');
-                        }
-
-                        // Handle Company (Simple string create or find not implemented robustly, just meta for now or use existing concept)
-                        // In MJB, Company is a CPT. We should ideally find or create a company.
-                        // For V1, let's just create a new company for every job or skip if complex.
-                        // Better: If company name is provided, check if exists, if not create.
-                        if ($company_name) {
-                            $company_post = get_page_by_title($company_name, OBJECT, 'company');
-                            if ($company_post) {
-                                $company_id = $company_post->ID;
-                            } else {
-                                $company_id = wp_insert_post(array(
-                                    'post_title' => $company_name,
-                                    'post_type' => 'company',
-                                    'post_status' => 'publish'
-                                ));
-                            }
-                            update_post_meta($post_id, '_company_id', $company_id);
-                        }
-
+                    if ($post_id) {
                         $count++;
                     }
                 }
@@ -317,5 +322,90 @@ class MJB_Tools
                 exit;
             }
         }
+    }
+
+    /**
+     * Handle XML file import.
+     */
+    public function handle_import_jobs_xml()
+    {
+        if (!isset($_POST['mjb_action']) || $_POST['mjb_action'] !== 'import_jobs_xml') {
+            return;
+        }
+
+        if (!check_admin_referer('mjb_import_jobs_xml_nonce') || !current_user_can('manage_options')) {
+            return;
+        }
+
+        if (empty($_FILES['import_xml_file']['tmp_name'])) {
+            return;
+        }
+
+        $xml = file_get_contents($_FILES['import_xml_file']['tmp_name']);
+        $this->redirect_after_xml_import($xml);
+    }
+
+    /**
+     * Handle remote XML feed URL import.
+     */
+    public function handle_import_jobs_xml_url()
+    {
+        if (!isset($_POST['mjb_action']) || $_POST['mjb_action'] !== 'import_jobs_xml_url') {
+            return;
+        }
+
+        if (!check_admin_referer('mjb_import_jobs_xml_url_nonce') || !current_user_can('manage_options')) {
+            return;
+        }
+
+        $url = isset($_POST['import_feed_url']) ? esc_url_raw(wp_unslash($_POST['import_feed_url'])) : '';
+        if ($url === '') {
+            return;
+        }
+
+        $result = MJB_Xml_Importer::import_from_url($url);
+        if (is_wp_error($result)) {
+            $this->redirect_with_xml_error($result->get_error_message());
+        }
+
+        $this->redirect_with_xml_result($result);
+    }
+
+    /**
+     * Parse XML string and redirect with import results.
+     *
+     * @param string $xml
+     */
+    private function redirect_after_xml_import($xml)
+    {
+        $parsed = MJB_Xml_Importer::parse_xml_string($xml);
+        if (is_wp_error($parsed)) {
+            $this->redirect_with_xml_error($parsed->get_error_message());
+        }
+
+        $result = MJB_Xml_Importer::import_jobs($parsed);
+        $this->redirect_with_xml_result($result);
+    }
+
+    /**
+     * Redirect to import tab with XML success counts.
+     *
+     * @param array $result
+     */
+    private function redirect_with_xml_result($result)
+    {
+        wp_redirect(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import&xml_imported=' . intval($result['imported']) . '&xml_skipped=' . intval($result['skipped'])));
+        exit;
+    }
+
+    /**
+     * Redirect to import tab with XML error message.
+     *
+     * @param string $message
+     */
+    private function redirect_with_xml_error($message)
+    {
+        wp_redirect(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import&xml_error=' . rawurlencode($message)));
+        exit;
     }
 }

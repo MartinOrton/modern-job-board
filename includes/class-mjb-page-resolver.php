@@ -27,6 +27,7 @@ class MJB_Page_Resolver
     public static function get_option_map()
     {
         return array(
+            'mjb_jobs' => 'mjb_jobs_page_id',
             'mjb_dashboard' => 'mjb_employer_dashboard_page_id',
             'mjb_job_form' => 'mjb_job_form_page_id',
             'mjb_candidate_dashboard' => 'mjb_candidate_dashboard_page_id',

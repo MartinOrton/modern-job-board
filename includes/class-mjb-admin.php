@@ -173,6 +173,15 @@ class MJB_Admin
                         <h3><?php _e('Settings', 'modern-job-board'); ?></h3>
                         <p><?php _e('Configure listings, Google Maps API, and monetization options.', 'modern-job-board'); ?></p>
                     </a>
+
+                    <!-- Setup -->
+                    <a href="<?php echo admin_url('admin.php?page=mjb-setup'); ?>" class="mjb-feature-card">
+                        <div class="mjb-feature-icon">
+                            <span class="dashicons dashicons-admin-page" style="font-size: 1.5rem; width: auto; height: auto;"></span>
+                        </div>
+                        <h3><?php _e('Setup', 'modern-job-board'); ?></h3>
+                        <p><?php _e('Create frontend pages for job search, dashboards, and registration shortcodes.', 'modern-job-board'); ?></p>
+                    </a>
                 </div>
             </div>
         </div>

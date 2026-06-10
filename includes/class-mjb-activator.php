@@ -23,6 +23,10 @@ class MJB_Activator
         require_once dirname(__FILE__) . '/class-mjb-job-routes.php';
         MJB_Job_Routes::register_rewrites();
 
+        require_once dirname(__FILE__) . '/class-mjb-page-resolver.php';
+        require_once dirname(__FILE__) . '/class-mjb-page-wizard.php';
+        MJB_Page_Wizard::create_missing_pages();
+
         flush_rewrite_rules();
     }
 

@@ -3,7 +3,7 @@
  * Plugin Name: Modern Job Board
  * Plugin URI: https://github.com/MartinOrton/modern-job-board
  * Description: A lightweight job board plugin for WordPress.
- * Version: 1.7.1
+ * Version: 1.7.2
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
  * Text Domain: modern-job-board
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '1.7.1');
+define('MJB_VERSION', '1.7.2');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
 
@@ -25,6 +25,9 @@ require_once MJB_PATH . 'includes/class-mjb-page-resolver.php';
 require_once MJB_PATH . 'includes/class-mjb-job-routes.php';
 require_once MJB_PATH . 'includes/class-mjb-application-guard.php';
 require_once MJB_PATH . 'includes/class-mjb-recaptcha.php';
+require_once MJB_PATH . 'includes/class-mjb-job-importer.php';
+require_once MJB_PATH . 'includes/class-mjb-xml-importer.php';
+require_once MJB_PATH . 'includes/class-mjb-page-wizard.php';
 
 register_activation_hook(__FILE__, array('MJB_Activator', 'activate'));
 register_deactivation_hook(__FILE__, array('MJB_Activator', 'deactivate'));
@@ -72,6 +75,7 @@ class Modern_Job_Board
     {
         MJB_Page_Resolver::init();
         MJB_Job_Routes::init();
+        MJB_Page_Wizard::init();
         $this->init_hooks();
     }
 

@@ -2,6 +2,18 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.7.2] - 2026-06-10
+### Added
+- **XML / RSS job import**: Bulk import from MJB feed XML, compatible RSS files, or remote feed URLs (Tools → Import).
+- **Duplicate-safe imports**: XML items matched by GUID or link are skipped on re-import.
+- **Setup page wizard**: Admin **Setup** screen creates missing pages for all six frontend shortcodes.
+- **Activation bootstrap**: Plugin activation auto-creates any missing shortcode pages.
+- **Shared job importer**: CSV and XML imports share `MJB_Job_Importer` for consistent company and taxonomy handling.
+
+### Improved
+- **Page resolver**: `[mjb_jobs]` page is now tracked via `mjb_jobs_page_id`.
+- **Admin dashboard**: Quick link to the Setup wizard.
+
 ## [1.7.1] - 2026-06-10
 ### Added
 - **Pretty search URLs**: Path-based job search routes instead of exposed query strings.

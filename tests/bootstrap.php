@@ -3,6 +3,7 @@
 define('ABSPATH', dirname(__DIR__) . '/');
 define('HOUR_IN_SECONDS', 3600);
 define('MJB_VERSION', 'test');
+define('OBJECT', 'OBJECT');
 
 $GLOBALS['mjb_test_transients'] = array();
 $GLOBALS['mjb_test_post_meta'] = array();
@@ -25,6 +26,10 @@ $GLOBALS['mjb_test_excerpts'] = array();
 $GLOBALS['mjb_test_terms'] = array();
 $GLOBALS['mjb_test_dates'] = array();
 $GLOBALS['mjb_test_query_vars'] = array();
+$GLOBALS['mjb_test_inserted_posts'] = array();
+$GLOBALS['mjb_test_object_terms'] = array();
+$GLOBALS['mjb_test_companies_by_title'] = array();
+$GLOBALS['mjb_test_next_post_id'] = 1000;
 
 if (!function_exists('__')) {
     function __($text, $domain = null)
@@ -195,7 +200,11 @@ if (!function_exists('get_post_type')) {
     function get_post_type($post)
     {
         $post_id = is_object($post) ? $post->ID : intval($post);
-        return $GLOBALS['mjb_test_post_types'][$post_id] ?? false;
+        if (!isset($GLOBALS['mjb_test_post_status'][$post_id])) {
+            return false;
+        }
+
+        return $GLOBALS['mjb_test_post_types'][$post_id] ?? 'page';
     }
 }
 
@@ -391,7 +400,144 @@ if (!function_exists('wp_remote_retrieve_body')) {
 if (!function_exists('get_posts')) {
     function get_posts($args = array())
     {
-        return $GLOBALS['mjb_test_posts'] ?? array();
+        $posts = $GLOBALS['mjb_test_posts'] ?? array();
+
+        if (!empty($args['meta_key']) && !empty($args['meta_value'])) {
+            $posts = array_values(array_filter($posts, static function ($post_id) use ($args) {
+                $meta_value = get_post_meta(intval($post_id), $args['meta_key'], true);
+                return (string) $meta_value === (string) $args['meta_value'];
+            }));
+        }
+
+        if (!empty($args['post_type'])) {
+            $posts = array_values(array_filter($posts, static function ($post_id) use ($args) {
+                return get_post_type($post_id) === $args['post_type'];
+            }));
+        }
+
+        if (!empty($args['fields']) && $args['fields'] === 'ids') {
+            return $posts;
+        }
+
+        return $posts;
+    }
+}
+
+if (!function_exists('wp_insert_post')) {
+    function wp_insert_post($postarr, $wp_error = false)
+    {
+        $post_id = $GLOBALS['mjb_test_next_post_id']++;
+        $postarr = is_array($postarr) ? $postarr : array();
+
+        $GLOBALS['mjb_test_inserted_posts'][$post_id] = $postarr;
+        $GLOBALS['mjb_test_post_status'][$post_id] = $postarr['post_status'] ?? 'publish';
+        $GLOBALS['mjb_test_post_types'][$post_id] = $postarr['post_type'] ?? 'post';
+        $GLOBALS['mjb_test_post_content'][$post_id] = $postarr['post_content'] ?? '';
+        $GLOBALS['mjb_test_post_authors'][$post_id] = $postarr['post_author'] ?? 0;
+        $GLOBALS['mjb_test_titles'][$post_id] = $postarr['post_title'] ?? '';
+
+        if (($postarr['post_type'] ?? '') === 'company' && !empty($postarr['post_title'])) {
+            $GLOBALS['mjb_test_companies_by_title'][$postarr['post_title']] = $post_id;
+        }
+
+        if (($postarr['post_type'] ?? '') === 'job_listing') {
+            $GLOBALS['mjb_test_posts'][] = $post_id;
+        }
+
+        return $post_id;
+    }
+}
+
+if (!function_exists('wp_set_object_terms')) {
+    function wp_set_object_terms($post_id, $terms, $taxonomy)
+    {
+        if (!is_array($terms)) {
+            $terms = array($terms);
+        }
+
+        $GLOBALS['mjb_test_terms'][intval($post_id)][$taxonomy] = array_map('strval', $terms);
+        return true;
+    }
+}
+
+if (!function_exists('get_page_by_title')) {
+    function get_page_by_title($title, $output = OBJECT, $post_type = 'page')
+    {
+        if ($post_type === 'company' && isset($GLOBALS['mjb_test_companies_by_title'][$title])) {
+            $post_id = $GLOBALS['mjb_test_companies_by_title'][$title];
+            return (object) array('ID' => $post_id);
+        }
+
+        return null;
+    }
+}
+
+if (!function_exists('wp_kses_post')) {
+    function wp_kses_post($data)
+    {
+        return (string) $data;
+    }
+}
+
+if (!function_exists('esc_url_raw')) {
+    function esc_url_raw($url)
+    {
+        return filter_var($url, FILTER_VALIDATE_URL) ? $url : '';
+    }
+}
+
+if (!function_exists('wp_remote_get')) {
+    function wp_remote_get($url, $args = array())
+    {
+        if (!empty($GLOBALS['mjb_test_remote_get_responses'][$url])) {
+            return $GLOBALS['mjb_test_remote_get_responses'][$url];
+        }
+
+        return array('response' => array('code' => 404), 'body' => '');
+    }
+}
+
+if (!function_exists('wp_remote_retrieve_response_code')) {
+    function wp_remote_retrieve_response_code($response)
+    {
+        return is_array($response) && isset($response['response']['code']) ? $response['response']['code'] : 0;
+    }
+}
+
+if (!function_exists('wp_http_validate_url')) {
+    function wp_http_validate_url($url)
+    {
+        return (bool) filter_var($url, FILTER_VALIDATE_URL);
+    }
+}
+
+if (!function_exists('get_edit_post_link')) {
+    function get_edit_post_link($post_id, $context = 'display')
+    {
+        return 'https://example.test/wp-admin/post.php?post=' . intval($post_id) . '&action=edit';
+    }
+}
+
+if (!class_exists('WP_Error')) {
+    class WP_Error
+    {
+        public $errors = array();
+
+        public function __construct($code = '', $message = '', $data = '')
+        {
+            if ($code !== '') {
+                $this->errors[$code][] = $message;
+            }
+        }
+
+        public function get_error_message()
+        {
+            foreach ($this->errors as $messages) {
+                return $messages[0] ?? '';
+            }
+
+            return '';
+        }
     }
 }
 
@@ -432,3 +578,6 @@ require_once dirname(__DIR__) . '/includes/class-mjb-recaptcha.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-woocommerce.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-rest-api.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-feeds.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-job-importer.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-xml-importer.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-page-wizard.php';
