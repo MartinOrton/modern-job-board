@@ -10,3 +10,6 @@ wp-content/debug.log
 # OS
 .DS_Store
 Thumbs.db
+
+# PHP dependencies
+/vendor/

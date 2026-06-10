@@ -2,6 +2,23 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.4.0] - 2026-06-09
+### Added
+- **Centralized search builder**: Shared `MJB_Search::build_query_args()` used by shortcodes, AJAX, archives, and main query filtering.
+- **Application abuse prevention**: Duplicate-application checks and IP-based rate limiting (5 submissions per hour).
+- **PHPUnit test suite**: Initial unit tests for search query building, application guard, and WooCommerce order processing.
+- **Dashboard URL resolver**: Auto-detects the page containing `[mjb_dashboard]` for durable email links.
+
+### Fixed
+- **Location filter in `[mjb_jobs]`**: Replaced free-text location input with a taxonomy dropdown so filtering works correctly.
+- **Application email links**: Notifications now link to the employer dashboard instead of expiring nonce download URLs.
+- **SEO filter redirects**: `redirect_to_clean_url()` is now hooked to `template_redirect`.
+- **WooCommerce payment timing**: `woocommerce_payment_complete` is handled again, with the existing processed-order guard preventing duplicates.
+
+### Improved
+- **Archive location filter**: Reuses the shared location dropdown renderer.
+- **Employer registration redirect**: Uses resolved dashboard page URL instead of a hardcoded path.
+
 ## [1.3.0] - 2026-06-09
 ### Security
 - **Protected resume downloads**: Resumes are blocked from direct public access via `.htaccess` and served through authenticated, nonce-protected download endpoints.

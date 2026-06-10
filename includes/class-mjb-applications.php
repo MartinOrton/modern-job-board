@@ -98,6 +98,14 @@ class MJB_Applications
             MJB_Notices::redirect($redirect_url, 'error_missing_fields');
         }
 
+        if (MJB_Application_Guard::is_rate_limited()) {
+            MJB_Notices::redirect($redirect_url, 'error_rate_limited');
+        }
+
+        if (MJB_Application_Guard::has_duplicate_application($job_id, $candidate_email)) {
+            MJB_Notices::redirect($redirect_url, 'error_duplicate_application');
+        }
+
         $resume_path = '';
         $resume_post_id = 0;
 
@@ -183,6 +191,8 @@ class MJB_Applications
         }
 
         do_action('mjb_application_submitted', $application_id);
+
+        MJB_Application_Guard::record_submission();
 
         MJB_Notices::redirect($redirect_url, 'success_application');
     }

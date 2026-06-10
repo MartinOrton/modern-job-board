@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) {
 
 class MJB_Dashboard
 {
+    const PAGE_OPTION = 'mjb_employer_dashboard_page_id';
 
     /**
      * Initialize Dashboard.
@@ -89,7 +90,10 @@ class MJB_Dashboard
                 $job_id = get_the_ID();
                 $edit_link = add_query_arg(array('action' => 'edit', 'job_id' => $job_id), home_url('/post-job/'));
                 $delete_link = wp_nonce_url(add_query_arg(array('action' => 'delete_job', 'job_id' => $job_id)), 'mjb_delete_job_' . $job_id);
-                $view_apps_link = add_query_arg(array('action' => 'view_applications', 'job_id' => $job_id));
+                $view_apps_link = self::get_page_url(array(
+                    'action' => 'view_applications',
+                    'job_id' => $job_id,
+                ));
 
                 // Get Application Count
                 $app_count = 0;
@@ -230,5 +234,53 @@ class MJB_Dashboard
         } else {
             echo '<p>' . __('No applications found for this job.', 'modern-job-board') . '</p>';
         }
+    }
+
+    /**
+     * Build a dashboard URL with optional query arguments.
+     *
+     * @param array $query_args
+     * @return string
+     */
+    public static function get_page_url($query_args = array())
+    {
+        $page_id = self::resolve_page_id();
+        $url = $page_id ? get_permalink($page_id) : home_url('/job-dashboard/');
+
+        if (!empty($query_args)) {
+            $url = add_query_arg($query_args, $url);
+        }
+
+        return $url;
+    }
+
+    /**
+     * Resolve the page ID that contains the employer dashboard shortcode.
+     *
+     * @return int
+     */
+    public static function resolve_page_id()
+    {
+        $cached = intval(get_option(self::PAGE_OPTION));
+        if ($cached && get_post_status($cached)) {
+            return $cached;
+        }
+
+        $pages = get_posts(array(
+            'post_type' => 'page',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+        ));
+
+        foreach ($pages as $page_id) {
+            $post = get_post($page_id);
+            if ($post && has_shortcode($post->post_content, 'mjb_dashboard')) {
+                update_option(self::PAGE_OPTION, $page_id, false);
+                return intval($page_id);
+            }
+        }
+
+        return 0;
     }
 }

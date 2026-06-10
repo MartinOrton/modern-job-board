@@ -67,7 +67,7 @@ class MJB_Employer_Registration
         wp_set_current_user($user_id);
         wp_set_auth_cookie($user_id);
 
-        MJB_Notices::redirect(home_url('/job-dashboard/'), 'success_employer_registered');
+        MJB_Notices::redirect(MJB_Dashboard::get_page_url(), 'success_employer_registered');
     }
 
     /**

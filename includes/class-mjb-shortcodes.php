@@ -28,10 +28,11 @@ class MJB_Shortcodes
 
         // Search Form
         ?>
+        <?php $filter_params = MJB_Search::get_request_filter_params(); ?>
         <form id="mjb-job-filter" class="mjb-job-filter" method="GET" action="">
             <div class="mjb-filter-row">
-                <input type="text" name="search_keywords" placeholder="<?php _e('Keywords...', 'modern-job-board'); ?>" value="<?php echo isset($_GET['search_keywords']) ? esc_attr($_GET['search_keywords']) : ''; ?>">
-                <input type="text" name="search_location" placeholder="<?php _e('Location...', 'modern-job-board'); ?>" value="<?php echo isset($_GET['search_location']) ? esc_attr($_GET['search_location']) : ''; ?>">
+                <input type="text" name="search_keywords" placeholder="<?php _e('Keywords...', 'modern-job-board'); ?>" value="<?php echo esc_attr($filter_params['search_keywords']); ?>">
+                <?php echo MJB_Search::render_location_dropdown($filter_params['search_location']); ?>
                 
                 <?php
                 wp_dropdown_categories(array(
@@ -39,7 +40,7 @@ class MJB_Shortcodes
                     'name' => 'search_category',
                     'show_option_all' => __('All Categories', 'modern-job-board'),
                     'value_field' => 'slug',
-                    'selected' => isset($_GET['search_category']) ? $_GET['search_category'] : '',
+                    'selected' => $filter_params['search_category'],
                     'hierarchical' => true,
                 ));
 
@@ -48,7 +49,7 @@ class MJB_Shortcodes
                     'name' => 'search_type',
                     'show_option_all' => __('All Job Types', 'modern-job-board'),
                     'value_field' => 'slug',
-                    'selected' => isset($_GET['search_type']) ? $_GET['search_type'] : '',
+                    'selected' => $filter_params['search_type'],
                 ));
                 ?>
                 <input type="submit" value="<?php _e('Search', 'modern-job-board'); ?>">
@@ -57,54 +58,8 @@ class MJB_Shortcodes
         </form>
         <?php
 
-        // Query jobs
-        $args = array(
-            'post_type' => 'job_listing',
-            'post_status' => 'publish',
-            'posts_per_page' => 10,
-        );
-
-        // Filter args
+        $args = MJB_Search::build_query_args($filter_params);
         $args = apply_filters('mjb_job_listing_query_args', $args, $atts);
-
-        // Apply Search Filters Manual (Shortcode context)
-        // Note: Ideally we'd use MJB_Search logic here, but for consistency with inline args:
-        if (!empty($_GET['search_keywords'])) {
-            $args['s'] = sanitize_text_field($_GET['search_keywords']);
-        }
-
-        $tax_query = array();
-        if (!empty($_GET['search_location'])) {
-            $tax_query[] = array(
-                'taxonomy' => 'job_location',
-                'field' => 'slug',
-                'terms' => sanitize_text_field($_GET['search_location']),
-                'operator' => 'IN' // Location is usually strictly matched or 'LIKE' if text? WP Tax query is strict terms. 
-                // If using text input for location, user might type "New York" but slug is "new-york". 
-                // Real implementation needs smart matching. For now, we assume slug or strict match for simplicity or improve MJB_Search later.
-                // Let's rely on basic term match for now.
-            );
-        }
-        if (!empty($_GET['search_category'])) {
-            $tax_query[] = array(
-                'taxonomy' => 'job_category',
-                'field' => 'slug',
-                'terms' => sanitize_text_field($_GET['search_category']),
-            );
-        }
-        if (!empty($_GET['search_type'])) {
-            $tax_query[] = array(
-                'taxonomy' => 'job_type',
-                'field' => 'slug',
-                'terms' => sanitize_text_field($_GET['search_type']),
-            );
-        }
-
-        if (!empty($tax_query)) {
-            $tax_query['relation'] = 'AND';
-            $args['tax_query'] = $tax_query;
-        }
-
         $jobs = new WP_Query($args);
 
         do_action('mjb_before_job_listings', $jobs);

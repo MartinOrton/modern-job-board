@@ -1,0 +1,45 @@
+<?php
+
+use PHPUnit\Framework\TestCase;
+
+class ApplicationGuardTest extends TestCase
+{
+    protected function setUp(): void
+    {
+        $GLOBALS['mjb_test_transients'] = array();
+        $GLOBALS['mjb_test_posts'] = array();
+    }
+
+    public function test_rate_limit_key_is_stable_for_ip()
+    {
+        $key_one = MJB_Application_Guard::get_rate_limit_key('203.0.113.10');
+        $key_two = MJB_Application_Guard::get_rate_limit_key('203.0.113.10');
+
+        $this->assertSame($key_one, $key_two);
+        $this->assertStringStartsWith('mjb_app_rate_', $key_one);
+    }
+
+    public function test_rate_limit_blocks_after_max_submissions()
+    {
+        $ip = '203.0.113.55';
+
+        for ($i = 0; $i < MJB_Application_Guard::RATE_LIMIT_MAX; $i++) {
+            MJB_Application_Guard::record_submission($ip);
+        }
+
+        $this->assertTrue(MJB_Application_Guard::is_rate_limited($ip));
+        $this->assertSame(MJB_Application_Guard::RATE_LIMIT_MAX, MJB_Application_Guard::get_rate_limit_count($ip));
+    }
+
+    public function test_duplicate_application_detects_existing_post()
+    {
+        $GLOBALS['mjb_test_posts'] = array(101);
+
+        $this->assertTrue(MJB_Application_Guard::has_duplicate_application(42, 'candidate@example.com'));
+    }
+
+    public function test_duplicate_application_returns_false_without_email()
+    {
+        $this->assertFalse(MJB_Application_Guard::has_duplicate_application(42, ''));
+    }
+}

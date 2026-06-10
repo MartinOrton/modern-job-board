@@ -24,16 +24,10 @@ get_header(); ?>
 
                 <p>
                     <label for="search_location"><?php _e('Location', 'modern-job-board'); ?></label>
-                    <select name="search_location" id="search_location">
-                        <option value=""><?php _e('All Locations', 'modern-job-board'); ?></option>
-                        <?php
-                        $locations = get_terms(array('taxonomy' => 'job_location', 'hide_empty' => false));
-                        foreach ($locations as $location) {
-                            $selected = isset($_GET['search_location']) && $_GET['search_location'] == $location->slug ? 'selected' : '';
-                            echo '<option value="' . esc_attr($location->slug) . '" ' . $selected . '>' . esc_html($location->name) . '</option>';
-                        }
-                        ?>
-                    </select>
+                    <?php
+                    $archive_filters = MJB_Search::get_request_filter_params();
+                    echo MJB_Search::render_location_dropdown($archive_filters['search_location']);
+                    ?>
                 </p>
 
                 <p>

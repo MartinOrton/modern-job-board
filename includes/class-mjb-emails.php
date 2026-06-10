@@ -73,10 +73,11 @@ class MJB_Emails
         $message .= sprintf(__('Candidate Name: %s', 'modern-job-board'), $candidate_name) . "\n";
         $message .= sprintf(__('Candidate Email: %s', 'modern-job-board'), get_post_meta($application_id, '_candidate_email', true)) . "\n";
 
-        $resume_url = MJB_Resumes::get_application_download_url($application_id);
-        if ($resume_url) {
-            $message .= sprintf(__('Resume: %s', 'modern-job-board'), $resume_url) . "\n";
-        }
+        $dashboard_url = MJB_Dashboard::get_page_url(array(
+            'action' => 'view_applications',
+            'job_id' => intval($job_id),
+        ));
+        $message .= sprintf(__('View applications: %s', 'modern-job-board'), $dashboard_url) . "\n";
 
         $message .= "\n" . sprintf(__('Message:', 'modern-job-board')) . "\n";
         $message .= get_post_field('post_content', $application_id) . "\n";

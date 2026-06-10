@@ -74,6 +74,8 @@ class MJB_Notices
             'error_permission' => __('You do not have permission to perform this action.', 'modern-job-board'),
             'error_invalid_company' => __('Please select a valid company or enter a new company name.', 'modern-job-board'),
             'error_login_required' => __('You must be logged in as an employer to post jobs.', 'modern-job-board'),
+            'error_duplicate_application' => __('You have already applied for this job.', 'modern-job-board'),
+            'error_rate_limited' => __('Too many applications submitted. Please try again later.', 'modern-job-board'),
         );
     }
 }

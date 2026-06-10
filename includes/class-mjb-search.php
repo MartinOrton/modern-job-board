@@ -17,8 +17,120 @@ class MJB_Search
     {
         add_action('pre_get_posts', array($this, 'filter_jobs_query'));
         add_filter('query_vars', array($this, 'register_query_vars'));
+        add_action('template_redirect', array($this, 'redirect_to_clean_url'));
         add_action('wp_ajax_mjb_filter_jobs', array($this, 'ajax_filter_jobs'));
         add_action('wp_ajax_nopriv_mjb_filter_jobs', array($this, 'ajax_filter_jobs'));
+    }
+
+    /**
+     * Sanitize raw filter parameters.
+     *
+     * @param array $raw
+     * @return array
+     */
+    public static function sanitize_filter_params($raw)
+    {
+        return array(
+            'search_keywords' => !empty($raw['search_keywords']) ? sanitize_text_field($raw['search_keywords']) : '',
+            'search_location' => !empty($raw['search_location']) ? sanitize_text_field($raw['search_location']) : '',
+            'search_category' => !empty($raw['search_category']) ? sanitize_text_field($raw['search_category']) : '',
+            'search_type' => !empty($raw['search_type']) ? sanitize_text_field($raw['search_type']) : '',
+        );
+    }
+
+    /**
+     * Read filter parameters from the current GET request.
+     *
+     * @return array
+     */
+    public static function get_request_filter_params()
+    {
+        return self::sanitize_filter_params(wp_unslash($_GET));
+    }
+
+    /**
+     * Build a WP_Query args array from filter parameters.
+     *
+     * @param array $params
+     * @param array $base_args
+     * @return array
+     */
+    public static function build_query_args($params = array(), $base_args = array())
+    {
+        $defaults = array(
+            'post_type' => 'job_listing',
+            'post_status' => 'publish',
+            'posts_per_page' => 10,
+        );
+
+        $args = wp_parse_args($base_args, $defaults);
+
+        if (!empty($params['search_keywords'])) {
+            $args['s'] = $params['search_keywords'];
+        }
+
+        $tax_map = array(
+            'search_location' => 'job_location',
+            'search_category' => 'job_category',
+            'search_type' => 'job_type',
+        );
+
+        $tax_query = array();
+        foreach ($tax_map as $param => $taxonomy) {
+            if (!empty($params[$param])) {
+                $tax_query[] = array(
+                    'taxonomy' => $taxonomy,
+                    'field' => 'slug',
+                    'terms' => $params[$param],
+                );
+            }
+        }
+
+        if (!empty($tax_query)) {
+            $tax_query['relation'] = 'AND';
+            $args['tax_query'] = $tax_query;
+        }
+
+        return $args;
+    }
+
+    /**
+     * Render a location taxonomy dropdown.
+     *
+     * @param string $selected_slug
+     * @param array  $args
+     * @return string
+     */
+    public static function render_location_dropdown($selected_slug = '', $args = array())
+    {
+        $defaults = array(
+            'name' => 'search_location',
+            'id' => 'search_location',
+            'show_option_all' => __('All Locations', 'modern-job-board'),
+        );
+        $args = wp_parse_args($args, $defaults);
+
+        $locations = get_terms(array(
+            'taxonomy' => 'job_location',
+            'hide_empty' => false,
+        ));
+
+        if (is_wp_error($locations)) {
+            $locations = array();
+        }
+
+        $html = '<select name="' . esc_attr($args['name']) . '" id="' . esc_attr($args['id']) . '">';
+        $html .= '<option value="">' . esc_html($args['show_option_all']) . '</option>';
+
+        foreach ($locations as $location) {
+            $html .= '<option value="' . esc_attr($location->slug) . '" ' . selected($selected_slug, $location->slug, false) . '>';
+            $html .= esc_html($location->name);
+            $html .= '</option>';
+        }
+
+        $html .= '</select>';
+
+        return $html;
     }
 
     /**
@@ -28,51 +140,14 @@ class MJB_Search
     {
         check_ajax_referer('mjb_search_nonce', 'security');
 
-        $args = array(
-            'post_type' => 'job_listing',
-            'post_status' => 'publish',
-            'posts_per_page' => 10,
-        );
-
-        if (!empty($_POST['search_keywords'])) {
-            $args['s'] = sanitize_text_field($_POST['search_keywords']);
-        }
-
-        $tax_query = array();
-        if (!empty($_POST['search_location'])) {
-            $tax_query[] = array(
-                'taxonomy' => 'job_location',
-                'field' => 'slug', // Assuming text input matches slug... better to use term ID or name search, but stick to slug/term match for now.
-                'terms' => sanitize_text_field($_POST['search_location']),
-            );
-        }
-        if (!empty($_POST['search_category'])) {
-            $tax_query[] = array(
-                'taxonomy' => 'job_category',
-                'field' => 'slug',
-                'terms' => sanitize_text_field($_POST['search_category']),
-            );
-        }
-        if (!empty($_POST['search_type'])) {
-            $tax_query[] = array(
-                'taxonomy' => 'job_type',
-                'field' => 'slug',
-                'terms' => sanitize_text_field($_POST['search_type']),
-            );
-        }
-
-        if (!empty($tax_query)) {
-            $tax_query['relation'] = 'AND';
-            $args['tax_query'] = $tax_query;
-        }
-
+        $params = self::sanitize_filter_params(wp_unslash($_POST));
+        $args = self::build_query_args($params);
         $query = new WP_Query($args);
 
-        // Include MJB_Shortcodes if not available (should be)
         if (class_exists('MJB_Shortcodes')) {
             MJB_Shortcodes::render_job_loop($query);
         } else {
-            echo 'Error: Shortcodes class not found.';
+            echo esc_html__('Error: Shortcodes class not found.', 'modern-job-board');
         }
 
         wp_die();
@@ -108,105 +183,81 @@ class MJB_Search
 
     /**
      * Apply Search Criteria to Query.
-     * Can be used by main query or shortcodes.
      *
      * @param WP_Query $query
+     * @param array    $params Optional explicit params instead of $_GET.
      */
-    public function apply_search_criteria($query)
+    public function apply_search_criteria($query, $params = null)
     {
-        // Keyword Search
-        if (!empty($_GET['search_keywords'])) {
-            $keywords = sanitize_text_field($_GET['search_keywords']);
-            $query->set('s', $keywords);
+        if ($params === null) {
+            $params = self::get_request_filter_params();
         }
 
-        $tax_query = array();
+        $args = self::build_query_args($params);
 
-        // Location
-        if (!empty($_GET['search_location'])) {
-            $tax_query[] = array(
-                'taxonomy' => 'job_location',
-                'field' => 'slug',
-                'terms' => sanitize_text_field($_GET['search_location']),
-            );
+        if (isset($args['s'])) {
+            $query->set('s', $args['s']);
         }
 
-        // Category
-        if (!empty($_GET['search_category'])) {
-            $tax_query[] = array(
-                'taxonomy' => 'job_category',
-                'field' => 'slug',
-                'terms' => sanitize_text_field($_GET['search_category']),
-            );
-        }
-
-        // Type
-        if (!empty($_GET['search_type'])) {
-            $tax_query[] = array(
-                'taxonomy' => 'job_type',
-                'field' => 'slug',
-                'terms' => sanitize_text_field($_GET['search_type']),
-            );
-        }
-
-        if (!empty($tax_query)) {
-            $tax_query['relation'] = 'AND';
-            $query->set('tax_query', $tax_query);
+        if (isset($args['tax_query'])) {
+            $query->set('tax_query', $args['tax_query']);
         }
     }
 
     /**
-     * Redirect to SEO friendly URLs.
+     * Redirect to SEO friendly URLs when a single taxonomy filter is active.
      */
     public function redirect_to_clean_url()
     {
         if (!is_post_type_archive('job_listing') && !is_home()) {
-            // Only redirect from job archive (or home if used there)
             return;
         }
 
-        // Check if Keywords are empty
         if (!empty($_GET['search_keywords'])) {
             return;
         }
 
-        $location = !empty($_GET['search_location']) ? sanitize_text_field($_GET['search_location']) : '';
-        $category = !empty($_GET['search_category']) ? sanitize_text_field($_GET['search_category']) : '';
-        $type = !empty($_GET['search_type']) ? sanitize_text_field($_GET['search_type']) : '';
+        $params = self::get_request_filter_params();
+        $location = $params['search_location'];
+        $category = $params['search_category'];
+        $type = $params['search_type'];
 
-        // Count how many filters are active
         $active_filters = 0;
-        if ($location)
+        if ($location) {
             $active_filters++;
-        if ($category)
+        }
+        if ($category) {
             $active_filters++;
-        if ($type)
+        }
+        if ($type) {
             $active_filters++;
+        }
 
-        // Only redirect if EXACTLY ONE filter is active
-        if ($active_filters === 1) {
-            $redirect_url = '';
-            if ($location) {
-                $term = get_term_by('slug', $location, 'job_location');
-                if ($term && !is_wp_error($term)) {
-                    $redirect_url = get_term_link($term);
-                }
-            } elseif ($category) {
-                $term = get_term_by('slug', $category, 'job_category');
-                if ($term && !is_wp_error($term)) {
-                    $redirect_url = get_term_link($term);
-                }
-            } elseif ($type) {
-                $term = get_term_by('slug', $type, 'job_type');
-                if ($term && !is_wp_error($term)) {
-                    $redirect_url = get_term_link($term);
-                }
-            }
+        if ($active_filters !== 1) {
+            return;
+        }
 
-            if ($redirect_url && !is_wp_error($redirect_url)) {
-                wp_redirect($redirect_url, 301);
-                exit;
+        $redirect_url = '';
+        if ($location) {
+            $term = get_term_by('slug', $location, 'job_location');
+            if ($term && !is_wp_error($term)) {
+                $redirect_url = get_term_link($term);
             }
+        } elseif ($category) {
+            $term = get_term_by('slug', $category, 'job_category');
+            if ($term && !is_wp_error($term)) {
+                $redirect_url = get_term_link($term);
+            }
+        } elseif ($type) {
+            $term = get_term_by('slug', $type, 'job_type');
+            if ($term && !is_wp_error($term)) {
+                $redirect_url = get_term_link($term);
+            }
+        }
+
+        if ($redirect_url && !is_wp_error($redirect_url)) {
+            wp_safe_redirect($redirect_url, 301);
+            exit;
         }
     }
 }

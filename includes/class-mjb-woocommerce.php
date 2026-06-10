@@ -19,6 +19,7 @@ class MJB_WooCommerce
         add_action('woocommerce_process_product_meta', array($this, 'save_product_fields'));
         add_filter('woocommerce_add_cart_item_data', array($this, 'add_job_id_to_cart'), 10, 2);
         add_action('woocommerce_checkout_create_order_line_item', array($this, 'save_job_id_to_order'), 10, 4);
+        add_action('woocommerce_payment_complete', array($this, 'activate_paid_job'));
         add_action('woocommerce_order_status_completed', array($this, 'activate_paid_job'));
         add_action('woocommerce_order_status_refunded', array($this, 'handle_order_status_change'));
         add_action('woocommerce_order_status_cancelled', array($this, 'handle_order_status_change'));
@@ -183,9 +184,20 @@ class MJB_WooCommerce
      * @param int $order_id
      * @return bool
      */
-    private function order_already_processed($order_id)
+    public static function is_order_processed($order_id)
     {
         return get_post_meta($order_id, '_mjb_benefits_processed', true) === 'yes';
+    }
+
+    /**
+     * Instance wrapper for order processed check.
+     *
+     * @param int $order_id
+     * @return bool
+     */
+    private function order_already_processed($order_id)
+    {
+        return self::is_order_processed($order_id);
     }
 
     /**
