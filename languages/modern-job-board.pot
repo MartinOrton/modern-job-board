@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Modern Job Board\n"
 "Report-Msgid-Bugs-To: https://github.com/MartinOrton/modern-job-board\n"
-"POT-Creation-Date: 2026-06-10 18:35+0000\n"
+"POT-Creation-Date: 2026-06-10 18:42+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -301,6 +301,9 @@ msgstr ""
 msgid "Events: application.submitted, application.status_updated, job.submitted"
 msgstr ""
 
+msgid "Every Five Minutes"
+msgstr ""
+
 msgid "Exp: %s"
 msgstr ""
 
@@ -433,6 +436,9 @@ msgstr ""
 msgid "Job Type"
 msgstr ""
 
+msgid "Job Views"
+msgstr ""
+
 msgid "Job credits:"
 msgstr ""
 
@@ -547,6 +553,9 @@ msgstr ""
 msgid "No job items found in XML feed."
 msgstr ""
 
+msgid "No job performance data yet. Views are tracked when job detail pages are visited."
+msgstr ""
+
 msgid "No jobs found."
 msgstr ""
 
@@ -596,6 +605,9 @@ msgid "Parent Job:"
 msgstr ""
 
 msgid "Password"
+msgstr ""
+
+msgid "Performance Charts"
 msgstr ""
 
 msgid "Performance Overview"
@@ -796,6 +808,12 @@ msgstr ""
 msgid "Tools"
 msgstr ""
 
+msgid "Top Jobs by Applications"
+msgstr ""
+
+msgid "Top Jobs by Views"
+msgstr ""
+
 msgid "Type"
 msgstr ""
 
@@ -871,7 +889,7 @@ msgstr ""
 msgid "View the job: %s"
 msgstr ""
 
-msgid "View, edit, and moderate job listings. manage expiration dates and featured status."
+msgid "View, edit, and moderate job listings. Manage expiration dates and featured status."
 msgstr ""
 
 msgid "Views"

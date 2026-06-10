@@ -35,6 +35,7 @@ $GLOBALS['mjb_test_user_emails'] = array();
 $GLOBALS['mjb_test_status_updates'] = array();
 $GLOBALS['mjb_test_referer'] = false;
 $GLOBALS['mjb_test_remote_posts'] = array();
+$GLOBALS['mjb_test_remote_response_code'] = 204;
 
 if (!function_exists('__')) {
     function __($text, $domain = null)
@@ -486,7 +487,10 @@ if (!function_exists('wp_remote_post')) {
             return array_shift($GLOBALS['mjb_test_remote_responses']);
         }
 
-        return array('body' => json_encode(array('success' => false)));
+        return array(
+            'response' => array('code' => $GLOBALS['mjb_test_remote_response_code'] ?? 204),
+            'body' => '',
+        );
     }
 }
 
@@ -705,4 +709,5 @@ require_once dirname(__DIR__) . '/includes/class-mjb-application-status.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-rest-api-v2.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-dashboard.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-analytics.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-webhook-queue.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-webhooks.php';

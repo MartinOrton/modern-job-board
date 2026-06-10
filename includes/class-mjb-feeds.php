@@ -47,6 +47,7 @@ class MJB_Feeds
     {
         header('Content-Type: application/xml; charset=UTF-8');
         echo '<?xml version="1.0" encoding="UTF-8"?>';
+        // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- RSS feed renderer; dynamic values use esc_xml() or WordPress RSS helpers.
         ?>
         <rss version="2.0"
             xmlns:content="http://purl.org/rss/1.0/modules/content/"
@@ -54,11 +55,11 @@ class MJB_Feeds
             xmlns:atom="http://www.w3.org/2005/Atom"
             xmlns:mjb="https://github.com/MartinOrton/modern-job-board/ns/feed/1.0">
             <channel>
-                <title><?php echo get_bloginfo_rss('name'); ?> - Job Listings</title>
+                <title><?php echo esc_xml(get_bloginfo_rss('name')); ?> - Job Listings</title>
                 <atom:link href="<?php self_link(); ?>" rel="self" type="application/rss+xml" />
                 <link><?php bloginfo_rss('url'); ?></link>
                 <description><?php bloginfo_rss('description'); ?></description>
-                <lastBuildDate><?php echo mysql2date('D, d M Y H:i:s +0000', get_lastpostmodified('GMT'), false); ?>
+                <lastBuildDate><?php echo esc_xml(mysql2date('D, d M Y H:i:s +0000', get_lastpostmodified('GMT'), false)); ?>
                 </lastBuildDate>
                 <language><?php bloginfo_rss('language'); ?></language>
                 <?php
@@ -79,7 +80,7 @@ class MJB_Feeds
                             <title><?php the_title_rss(); ?></title>
                             <link><?php the_permalink_rss(); ?></link>
                             <guid isPermaLink="true"><?php the_permalink_rss(); ?></guid>
-                            <pubDate><?php echo mysql2date('D, d M Y H:i:s +0000', get_post_time('Y-m-d H:i:s', true), false); ?>
+                            <pubDate><?php echo esc_xml(mysql2date('D, d M Y H:i:s +0000', get_post_time('Y-m-d H:i:s', true), false)); ?>
                             </pubDate>
                             <dc:creator><![CDATA[<?php the_author(); ?>]]></dc:creator>
                             <description><![CDATA[<?php the_excerpt_rss(); ?>]]></description>
@@ -98,5 +99,6 @@ class MJB_Feeds
             </channel>
         </rss>
         <?php
+        // phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
     }
 }

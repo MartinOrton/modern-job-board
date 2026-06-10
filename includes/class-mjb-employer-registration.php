@@ -97,36 +97,39 @@ class MJB_Employer_Registration
         ob_start();
         ?>
         <div class="mjb-registration-form-container">
-            <?php echo MJB_Notices::render(); ?>
+            <?php
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is escaped in MJB_Notices::render().
+            echo MJB_Notices::render();
+            ?>
             <form method="post" action="" class="mjb-form">
                 <?php wp_nonce_field('mjb_register_action', 'mjb_registration_nonce'); ?>
                 <div class="mjb-hp-field" aria-hidden="true">
-                    <label for="mjb_hp_website_employer"><?php _e('Website', 'modern-job-board'); ?></label>
+                    <label for="mjb_hp_website_employer"><?php esc_html_e('Website', 'modern-job-board'); ?></label>
                     <input type="text" name="<?php echo esc_attr(MJB_Application_Guard::HONEYPOT_FIELD); ?>" id="mjb_hp_website_employer" tabindex="-1" autocomplete="off">
                 </div>
 
                 <p>
-                    <label for="mjb_username"><?php _e('Username', 'modern-job-board'); ?></label>
+                    <label for="mjb_username"><?php esc_html_e('Username', 'modern-job-board'); ?></label>
                     <input type="text" name="mjb_username" id="mjb_username" required>
                 </p>
 
                 <p>
-                    <label for="mjb_email"><?php _e('Email Address', 'modern-job-board'); ?></label>
+                    <label for="mjb_email"><?php esc_html_e('Email Address', 'modern-job-board'); ?></label>
                     <input type="email" name="mjb_email" id="mjb_email" required>
                 </p>
 
                 <p>
-                    <label for="mjb_password"><?php _e('Password', 'modern-job-board'); ?></label>
+                    <label for="mjb_password"><?php esc_html_e('Password', 'modern-job-board'); ?></label>
                     <input type="password" name="mjb_password" id="mjb_password" required>
                 </p>
 
                 <p>
-                    <label for="mjb_company_name"><?php _e('Company Name', 'modern-job-board'); ?></label>
+                    <label for="mjb_company_name"><?php esc_html_e('Company Name', 'modern-job-board'); ?></label>
                     <input type="text" name="mjb_company_name" id="mjb_company_name">
                 </p>
 
                 <p>
-                    <label for="mjb_phone"><?php _e('Phone Number', 'modern-job-board'); ?></label>
+                    <label for="mjb_phone"><?php esc_html_e('Phone Number', 'modern-job-board'); ?></label>
                     <input type="text" name="mjb_phone" id="mjb_phone">
                 </p>
 
@@ -138,7 +141,7 @@ class MJB_Employer_Registration
 
                 <p>
                     <input type="submit" name="mjb_register_employer"
-                        value="<?php _e('Register as Employer', 'modern-job-board'); ?>">
+                        value="<?php esc_attr_e('Register as Employer', 'modern-job-board'); ?>">
                 </p>
             </form>
         </div>

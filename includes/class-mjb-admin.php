@@ -112,75 +112,94 @@ class MJB_Admin
         $job_count = wp_count_posts('job_listing')->publish;
         $app_count = wp_count_posts('job_application')->publish;
         $company_count = wp_count_posts('company')->publish;
-        $resume_count = wp_count_posts('mjb_resume')->publish; 
+        $resume_count = wp_count_posts('mjb_resume')->publish;
+        $performance = MJB_Analytics::summarize_job_stats(MJB_Analytics::get_admin_job_stats());
+        $top_jobs = MJB_Analytics::get_top_jobs_for_charts(5);
+        $pending_webhooks = MJB_Webhook_Queue::get_pending_count();
 
-        // Logo SVG
-        $logo_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>';
-        
         ?>
         <div class="wrap mjb-dashboard-page">
             <div class="mjb-dashboard-wrap">
                 <header style="margin-bottom: 3rem;">
-                    <h1>Modern Job Board <span class="mjb-badge">v<?php echo esc_html(MJB_VERSION); ?></span></h1>
-                    <p class="subtitle"><?php _e('Manage your job board with complete control.', 'modern-job-board'); ?></p>
+                    <h1><?php esc_html_e('Modern Job Board', 'modern-job-board'); ?> <span class="mjb-badge">v<?php echo esc_html(MJB_VERSION); ?></span></h1>
+                    <p class="subtitle"><?php esc_html_e('Manage your job board with complete control.', 'modern-job-board'); ?></p>
                 </header>
-                
+
                 <div class="mjb-stats-grid">
                     <div class="mjb-stat-card">
-                        <div class="mjb-stat-val"><?php echo intval($job_count); ?></div>
-                        <div class="mjb-stat-lbl"><?php _e('Active Jobs', 'modern-job-board'); ?></div>
+                        <div class="mjb-stat-val"><?php echo esc_html((string) intval($job_count)); ?></div>
+                        <div class="mjb-stat-lbl"><?php esc_html_e('Active Jobs', 'modern-job-board'); ?></div>
                     </div>
                     <div class="mjb-stat-card">
-                        <div class="mjb-stat-val"><?php echo intval($app_count); ?></div>
-                        <div class="mjb-stat-lbl"><?php _e('Applications', 'modern-job-board'); ?></div>
+                        <div class="mjb-stat-val"><?php echo esc_html((string) intval($app_count)); ?></div>
+                        <div class="mjb-stat-lbl"><?php esc_html_e('Applications', 'modern-job-board'); ?></div>
                     </div>
                     <div class="mjb-stat-card">
-                        <div class="mjb-stat-val"><?php echo intval($company_count); ?></div>
-                        <div class="mjb-stat-lbl"><?php _e('Companies', 'modern-job-board'); ?></div>
+                        <div class="mjb-stat-val"><?php echo esc_html((string) intval($performance['views'])); ?></div>
+                        <div class="mjb-stat-lbl"><?php esc_html_e('Job Views', 'modern-job-board'); ?></div>
                     </div>
                     <div class="mjb-stat-card">
-                        <div class="mjb-stat-val"><?php echo intval($resume_count); ?></div>
-                        <div class="mjb-stat-lbl"><?php _e('Resumes', 'modern-job-board'); ?></div>
+                        <div class="mjb-stat-val"><?php echo esc_html($performance['conversion_rate'] . '%'); ?></div>
+                        <div class="mjb-stat-lbl"><?php esc_html_e('Conversion', 'modern-job-board'); ?></div>
+                    </div>
+                    <div class="mjb-stat-card">
+                        <div class="mjb-stat-val"><?php echo esc_html((string) intval($company_count)); ?></div>
+                        <div class="mjb-stat-lbl"><?php esc_html_e('Companies', 'modern-job-board'); ?></div>
+                    </div>
+                    <div class="mjb-stat-card">
+                        <div class="mjb-stat-val"><?php echo esc_html((string) intval($resume_count)); ?></div>
+                        <div class="mjb-stat-lbl"><?php esc_html_e('Resumes', 'modern-job-board'); ?></div>
                     </div>
                 </div>
-                
-                <h2 style="font-family: var(--mjb-font-sans); font-size: 1.25rem; margin-bottom: 1.5rem; font-weight: 700;"><?php _e('Quick Actions', 'modern-job-board'); ?></h2>
-                
+
+                <h2 class="mjb-section-title"><?php esc_html_e('Performance Charts', 'modern-job-board'); ?></h2>
+                <?php
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is escaped in MJB_Analytics::render_admin_charts_html().
+                echo MJB_Analytics::render_admin_charts_html($top_jobs);
+                ?>
+
+                <?php if ($pending_webhooks > 0) : ?>
+                    <div class="notice notice-warning" style="margin: 1.5rem 0;">
+                        <p><?php echo esc_html(sprintf(
+                            _n('%d webhook delivery is queued for retry.', '%d webhook deliveries are queued for retry.', $pending_webhooks, 'modern-job-board'),
+                            $pending_webhooks
+                        )); ?></p>
+                    </div>
+                <?php endif; ?>
+
+                <h2 class="mjb-section-title"><?php esc_html_e('Quick Actions', 'modern-job-board'); ?></h2>
+
                 <div class="mjb-features-grid">
-                    <!-- Manage Jobs -->
-                    <a href="<?php echo admin_url('edit.php?post_type=job_listing'); ?>" class="mjb-feature-card">
+                    <a href="<?php echo esc_url(admin_url('edit.php?post_type=job_listing')); ?>" class="mjb-feature-card">
                         <div class="mjb-feature-icon">
                             <span class="dashicons dashicons-businessman" style="font-size: 1.5rem; width: auto; height: auto;"></span>
                         </div>
-                        <h3><?php _e('Manage Jobs', 'modern-job-board'); ?></h3>
-                        <p><?php _e('View, edit, and moderate job listings. manage expiration dates and featured status.', 'modern-job-board'); ?></p>
+                        <h3><?php esc_html_e('Manage Jobs', 'modern-job-board'); ?></h3>
+                        <p><?php esc_html_e('View, edit, and moderate job listings. Manage expiration dates and featured status.', 'modern-job-board'); ?></p>
                     </a>
 
-                    <!-- Manage Applications -->
-                    <a href="<?php echo admin_url('edit.php?post_type=job_application'); ?>" class="mjb-feature-card">
+                    <a href="<?php echo esc_url(admin_url('edit.php?post_type=job_application')); ?>" class="mjb-feature-card">
                         <div class="mjb-feature-icon">
                             <span class="dashicons dashicons-email" style="font-size: 1.5rem; width: auto; height: auto;"></span>
                         </div>
-                        <h3><?php _e('Applications', 'modern-job-board'); ?></h3>
-                        <p><?php _e('Review candidate applications and download resumes.', 'modern-job-board'); ?></p>
+                        <h3><?php esc_html_e('Applications', 'modern-job-board'); ?></h3>
+                        <p><?php esc_html_e('Review candidate applications and download resumes.', 'modern-job-board'); ?></p>
                     </a>
 
-                    <!-- Settings -->
-                    <a href="<?php echo admin_url('admin.php?page=mjb-settings'); ?>" class="mjb-feature-card">
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=mjb-settings')); ?>" class="mjb-feature-card">
                         <div class="mjb-feature-icon">
                             <span class="dashicons dashicons-admin-settings" style="font-size: 1.5rem; width: auto; height: auto;"></span>
                         </div>
-                        <h3><?php _e('Settings', 'modern-job-board'); ?></h3>
-                        <p><?php _e('Configure listings, Google Maps API, and monetization options.', 'modern-job-board'); ?></p>
+                        <h3><?php esc_html_e('Settings', 'modern-job-board'); ?></h3>
+                        <p><?php esc_html_e('Configure listings, Google Maps API, and monetization options.', 'modern-job-board'); ?></p>
                     </a>
 
-                    <!-- Setup -->
-                    <a href="<?php echo admin_url('admin.php?page=mjb-setup'); ?>" class="mjb-feature-card">
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=mjb-setup')); ?>" class="mjb-feature-card">
                         <div class="mjb-feature-icon">
                             <span class="dashicons dashicons-admin-page" style="font-size: 1.5rem; width: auto; height: auto;"></span>
                         </div>
-                        <h3><?php _e('Setup', 'modern-job-board'); ?></h3>
-                        <p><?php _e('Create frontend pages for job search, dashboards, and registration shortcodes.', 'modern-job-board'); ?></p>
+                        <h3><?php esc_html_e('Setup', 'modern-job-board'); ?></h3>
+                        <p><?php esc_html_e('Create frontend pages for job search, dashboards, and registration shortcodes.', 'modern-job-board'); ?></p>
                     </a>
                 </div>
             </div>
@@ -313,7 +332,7 @@ class MJB_Admin
     public function listing_duration_callback()
     {
         $value = get_option('mjb_listing_duration', 30);
-        echo '<input type="number" name="mjb_listing_duration" value="' . esc_attr($value) . '" class="small-text"> ' . __('days', 'modern-job-board');
+        echo '<input type="number" name="mjb_listing_duration" value="' . esc_attr($value) . '" class="small-text"> ' . esc_html__('days', 'modern-job-board');
     }
 
     public function google_maps_api_key_callback()
@@ -325,21 +344,21 @@ class MJB_Admin
     public function payment_required_callback()
     {
         $required = get_option('mjb_payment_required');
-        echo '<input type="checkbox" name="mjb_payment_required" value="1" ' . checked(1, $required, false) . '> ' . __('Enable Pay-Per-Post', 'modern-job-board');
+        echo '<input type="checkbox" name="mjb_payment_required" value="1" ' . checked(1, $required, false) . '> ' . esc_html__('Enable Pay-Per-Post', 'modern-job-board');
     }
 
     public function submission_product_id_callback()
     {
         $id = get_option('mjb_submission_product_id');
         echo '<input type="number" name="mjb_submission_product_id" value="' . esc_attr($id) . '" class="small-text">';
-        echo '<p class="description">' . __('Enter the WooCommerce Product ID for the job listing fee.', 'modern-job-board') . '</p>';
+        echo '<p class="description">' . esc_html__('Enter the WooCommerce Product ID for the job listing fee.', 'modern-job-board') . '</p>';
     }
 
     public function cv_unlock_product_id_callback()
     {
         $id = get_option('mjb_cv_unlock_product_id');
         echo '<input type="number" name="mjb_cv_unlock_product_id" value="' . esc_attr($id) . '" class="small-text">';
-        echo '<p class="description">' . __('Enter the WooCommerce Product ID for unlocking a single application.', 'modern-job-board') . '</p>';
+        echo '<p class="description">' . esc_html__('Enter the WooCommerce Product ID for unlocking a single application.', 'modern-job-board') . '</p>';
     }
 
     public function paid_cv_access_callback()
@@ -359,6 +378,13 @@ class MJB_Admin
         $value = get_option('mjb_webhook_urls', '');
         echo '<textarea name="mjb_webhook_urls" rows="4" class="large-text code">' . esc_textarea($value) . '</textarea>';
         echo '<p class="description">' . esc_html__('Events: application.submitted, application.status_updated, job.submitted', 'modern-job-board') . '</p>';
+        $pending = MJB_Webhook_Queue::get_pending_count();
+        if ($pending > 0) {
+            echo '<p class="description">' . esc_html(sprintf(
+                _n('%d delivery is currently queued for retry.', '%d deliveries are currently queued for retry.', $pending, 'modern-job-board'),
+                $pending
+            )) . '</p>';
+        }
     }
 
     public function webhook_secret_callback()
@@ -420,7 +446,7 @@ class MJB_Admin
             case 'job_applied_for':
                 $job_id = get_post_meta($post_id, '_job_applied_for', true);
                 if ($job_id) {
-                    echo '<a href="' . get_edit_post_link($job_id) . '">' . get_the_title($job_id) . '</a>';
+                    echo '<a href="' . esc_url(get_edit_post_link($job_id)) . '">' . esc_html(get_the_title($job_id)) . '</a>';
                 } else {
                     echo '-';
                 }
@@ -428,7 +454,7 @@ class MJB_Admin
             case 'resume':
                 $resume_url = MJB_Resumes::get_application_download_url($post_id);
                 if ($resume_url) {
-                    echo '<a href="' . esc_url($resume_url) . '" target="_blank">' . __('Download Resume', 'modern-job-board') . '</a>';
+                    echo '<a href="' . esc_url($resume_url) . '" target="_blank">' . esc_html__('Download Resume', 'modern-job-board') . '</a>';
                 } else {
                     echo '-';
                 }
@@ -460,7 +486,7 @@ class MJB_Admin
             case 'job_expires':
                 $expires = get_post_meta($post_id, '_job_expires', true);
                 if ($expires) {
-                    echo date_i18n(get_option('date_format'), strtotime($expires));
+                    echo esc_html(date_i18n(get_option('date_format'), strtotime($expires)));
                 } else {
                     echo '-';
                 }
@@ -501,14 +527,14 @@ class MJB_Admin
         $featured = get_post_meta($post->ID, '_featured', true);
         ?>
         <p>
-            <label for="mjb_job_expires"><?php _e('Expiration Date:', 'modern-job-board'); ?></label>
+            <label for="mjb_job_expires"><?php esc_html_e('Expiration Date:', 'modern-job-board'); ?></label>
             <input type="date" name="mjb_job_expires" id="mjb_job_expires" value="<?php echo esc_attr($expires); ?>"
                 style="width:100%;">
         </p>
         <p>
             <label>
                 <input type="checkbox" name="mjb_featured" id="mjb_featured" value="1" <?php checked($featured, 1); ?>>
-                <?php _e('Featured Job', 'modern-job-board'); ?>
+                <?php esc_html_e('Featured Job', 'modern-job-board'); ?>
             </label>
         </p>
         <?php
@@ -516,24 +542,24 @@ class MJB_Admin
         $app_email = get_post_meta($post->ID, '_application_email', true);
         $app_url = get_post_meta($post->ID, '_application_url', true);
         ?>
-        <p><strong><?php _e('Application Method', 'modern-job-board'); ?></strong></p>
+        <p><strong><?php esc_html_e('Application Method', 'modern-job-board'); ?></strong></p>
         <p>
             <label>
                 <input type="radio" name="mjb_application_method" value="internal" <?php checked($method, 'internal'); ?>         <?php checked($method, ''); ?>>
-                <?php _e('Internal (Email)', 'modern-job-board'); ?>
+                <?php esc_html_e('Internal (Email)', 'modern-job-board'); ?>
             </label><br>
             <label>
                 <input type="radio" name="mjb_application_method" value="external" <?php checked($method, 'external'); ?>>
-                <?php _e('External URL', 'modern-job-board'); ?>
+                <?php esc_html_e('External URL', 'modern-job-board'); ?>
             </label>
         </p>
         <p>
-            <label for="mjb_application_email"><?php _e('Notification Email', 'modern-job-board'); ?></label><br>
+            <label for="mjb_application_email"><?php esc_html_e('Notification Email', 'modern-job-board'); ?></label><br>
             <input type="email" name="mjb_application_email" id="mjb_application_email"
                 value="<?php echo esc_attr($app_email); ?>" class="widefat">
         </p>
         <p>
-            <label for="mjb_application_url"><?php _e('External URL', 'modern-job-board'); ?></label><br>
+            <label for="mjb_application_url"><?php esc_html_e('External URL', 'modern-job-board'); ?></label><br>
             <input type="url" name="mjb_application_url" id="mjb_application_url" value="<?php echo esc_attr($app_url); ?>"
                 class="widefat">
         </p>

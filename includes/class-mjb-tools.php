@@ -45,42 +45,42 @@ class MJB_Tools
         $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'export';
         ?>
         <div class="wrap">
-            <h1><?php _e('Modern Job Board Tools', 'modern-job-board'); ?></h1>
+            <h1><?php esc_html_e('Modern Job Board Tools', 'modern-job-board'); ?></h1>
 
             <h2 class="nav-tab-wrapper">
-                <a href="<?php echo admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=export'); ?>"
-                    class="nav-tab <?php echo $active_tab == 'export' ? 'nav-tab-active' : ''; ?>"><?php _e('Export', 'modern-job-board'); ?></a>
-                <a href="<?php echo admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import'); ?>"
-                    class="nav-tab <?php echo $active_tab == 'import' ? 'nav-tab-active' : ''; ?>"><?php _e('Import', 'modern-job-board'); ?></a>
+                <a href="<?php echo esc_url(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=export')); ?>"
+                    class="nav-tab <?php echo $active_tab == 'export' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Export', 'modern-job-board'); ?></a>
+                <a href="<?php echo esc_url(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import')); ?>"
+                    class="nav-tab <?php echo $active_tab == 'import' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Import', 'modern-job-board'); ?></a>
             </h2>
 
             <!-- Export Tab -->
             <?php if ($active_tab == 'export'): ?>
                 <div class="card" style="max-width: 600px; margin-top: 20px; padding: 20px;">
-                    <h2><?php _e('Export Data', 'modern-job-board'); ?></h2>
-                    <p><?php _e('Download your data in CSV format.', 'modern-job-board'); ?></p>
+                    <h2><?php esc_html_e('Export Data', 'modern-job-board'); ?></h2>
+                    <p><?php esc_html_e('Download your data in CSV format.', 'modern-job-board'); ?></p>
 
                     <hr>
 
-                    <h3><?php _e('Job Listings', 'modern-job-board'); ?></h3>
+                    <h3><?php esc_html_e('Job Listings', 'modern-job-board'); ?></h3>
                     <form method="post" action="">
                         <?php wp_nonce_field('mjb_export_jobs_nonce'); ?>
                         <input type="hidden" name="mjb_action" value="export_jobs">
                         <p>
                             <input type="submit" class="button button-primary"
-                                value="<?php _e('Export All Jobs to CSV', 'modern-job-board'); ?>">
+                                value="<?php esc_attr_e('Export All Jobs to CSV', 'modern-job-board'); ?>">
                         </p>
                     </form>
 
                     <hr>
 
-                    <h3><?php _e('Applications', 'modern-job-board'); ?></h3>
+                    <h3><?php esc_html_e('Applications', 'modern-job-board'); ?></h3>
                     <form method="post" action="">
                         <?php wp_nonce_field('mjb_export_applications_nonce'); ?>
                         <input type="hidden" name="mjb_action" value="export_applications">
                         <p>
                             <input type="submit" class="button button-secondary"
-                                value="<?php _e('Export All Applications to CSV', 'modern-job-board'); ?>">
+                                value="<?php esc_attr_e('Export All Applications to CSV', 'modern-job-board'); ?>">
                         </p>
                     </form>
                 </div>
@@ -89,14 +89,14 @@ class MJB_Tools
             <!-- Import Tab -->
             <?php if ($active_tab == 'import'): ?>
                 <div class="card" style="max-width: 600px; margin-top: 20px; padding: 20px;">
-                    <h2><?php _e('Import Jobs', 'modern-job-board'); ?></h2>
-                    <p><?php _e('Upload a CSV file to bulk import job listings.', 'modern-job-board'); ?></p>
-                    <p><strong><?php _e('Required Columns:', 'modern-job-board'); ?></strong>
+                    <h2><?php esc_html_e('Import Jobs', 'modern-job-board'); ?></h2>
+                    <p><?php esc_html_e('Upload a CSV file to bulk import job listings.', 'modern-job-board'); ?></p>
+                    <p><strong><?php esc_html_e('Required Columns:', 'modern-job-board'); ?></strong>
                         <code>Title, Description, Location, Type, Company</code></p>
 
                     <?php
                     if (isset($_GET['imported'])) {
-                        echo '<div class="notice notice-success is-dismissible"><p>' . sprintf(__('%d jobs imported successfully!', 'modern-job-board'), intval($_GET['imported'])) . '</p></div>';
+                        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html(sprintf(__('%d jobs imported successfully!', 'modern-job-board'), intval($_GET['imported']))) . '</p></div>';
                     }
                     if (isset($_GET['xml_imported'])) {
                         $skipped = intval($_GET['xml_skipped'] ?? 0);
@@ -113,7 +113,7 @@ class MJB_Tools
                     }
                     ?>
 
-                    <h3><?php _e('CSV Import', 'modern-job-board'); ?></h3>
+                    <h3><?php esc_html_e('CSV Import', 'modern-job-board'); ?></h3>
                     <form method="post" action="" enctype="multipart/form-data">
                         <?php wp_nonce_field('mjb_import_jobs_nonce'); ?>
                         <input type="hidden" name="mjb_action" value="import_jobs">
@@ -122,16 +122,16 @@ class MJB_Tools
                         </p>
                         <p>
                             <input type="submit" class="button button-primary"
-                                value="<?php _e('Import Jobs from CSV', 'modern-job-board'); ?>">
+                                value="<?php esc_attr_e('Import Jobs from CSV', 'modern-job-board'); ?>">
                         </p>
                     </form>
 
                     <hr>
 
-                    <h3><?php _e('XML / RSS Import', 'modern-job-board'); ?></h3>
-                    <p><?php _e('Import jobs from an MJB XML feed or compatible RSS feed. Duplicate items (matched by GUID or link) are skipped.', 'modern-job-board'); ?></p>
+                    <h3><?php esc_html_e('XML / RSS Import', 'modern-job-board'); ?></h3>
+                    <p><?php esc_html_e('Import jobs from an MJB XML feed or compatible RSS feed. Duplicate items (matched by GUID or link) are skipped.', 'modern-job-board'); ?></p>
                     <p>
-                        <strong><?php _e('Supported fields:', 'modern-job-board'); ?></strong>
+                        <strong><?php esc_html_e('Supported fields:', 'modern-job-board'); ?></strong>
                         <code>title</code>, <code>description</code>, <code>content:encoded</code>,
                         <code>mjb:company</code>, <code>mjb:location</code>, <code>mjb:jobType</code>, <code>mjb:featured</code>
                     </p>
@@ -144,7 +144,7 @@ class MJB_Tools
                         </p>
                         <p>
                             <input type="submit" class="button button-secondary"
-                                value="<?php _e('Import Jobs from XML File', 'modern-job-board'); ?>">
+                                value="<?php esc_attr_e('Import Jobs from XML File', 'modern-job-board'); ?>">
                         </p>
                     </form>
 
@@ -152,13 +152,13 @@ class MJB_Tools
                         <?php wp_nonce_field('mjb_import_jobs_xml_url_nonce'); ?>
                         <input type="hidden" name="mjb_action" value="import_jobs_xml_url">
                         <p>
-                            <label for="mjb_import_feed_url"><strong><?php _e('Remote Feed URL', 'modern-job-board'); ?></strong></label><br>
+                            <label for="mjb_import_feed_url"><strong><?php esc_html_e('Remote Feed URL', 'modern-job-board'); ?></strong></label><br>
                             <input type="url" class="regular-text" id="mjb_import_feed_url" name="import_feed_url"
                                 placeholder="https://example.com/feed/job-listings/" required>
                         </p>
                         <p>
                             <input type="submit" class="button button-secondary"
-                                value="<?php _e('Import Jobs from Feed URL', 'modern-job-board'); ?>">
+                                value="<?php esc_attr_e('Import Jobs from Feed URL', 'modern-job-board'); ?>">
                         </p>
                     </form>
                 </div>

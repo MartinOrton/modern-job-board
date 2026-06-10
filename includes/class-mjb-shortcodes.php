@@ -37,14 +37,17 @@ class MJB_Shortcodes
         <?php $filter_params = MJB_Search::get_request_filter_params(); ?>
         <form id="mjb-job-filter" class="mjb-job-filter" method="GET" action="<?php echo esc_url(MJB_Job_Routes::build_url()); ?>">
             <div class="mjb-filter-row">
-                <input type="text" name="search_keywords" placeholder="<?php _e('Keywords...', 'modern-job-board'); ?>" value="<?php echo esc_attr($filter_params['search_keywords']); ?>">
-                <?php echo MJB_Search::render_location_dropdown($filter_params['search_location']); ?>
+                <input type="text" name="search_keywords" placeholder="<?php esc_attr_e('Keywords...', 'modern-job-board'); ?>" value="<?php echo esc_attr($filter_params['search_keywords']); ?>">
+                <?php
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is escaped in MJB_Search::render_location_dropdown().
+                echo MJB_Search::render_location_dropdown($filter_params['search_location']);
+                ?>
                 
                 <?php
                 wp_dropdown_categories(array(
                     'taxonomy' => 'job_category',
                     'name' => 'search_category',
-                    'show_option_all' => __('All Categories', 'modern-job-board'),
+                    'show_option_all' => esc_html__('All Categories', 'modern-job-board'),
                     'value_field' => 'slug',
                     'selected' => $filter_params['search_category'],
                     'hierarchical' => true,
@@ -53,14 +56,14 @@ class MJB_Shortcodes
                 wp_dropdown_categories(array(
                     'taxonomy' => 'job_type',
                     'name' => 'search_type',
-                    'show_option_all' => __('All Job Types', 'modern-job-board'),
+                    'show_option_all' => esc_html__('All Job Types', 'modern-job-board'),
                     'value_field' => 'slug',
                     'selected' => $filter_params['search_type'],
                 ));
                 ?>
-                <input type="submit" value="<?php _e('Search', 'modern-job-board'); ?>">
+                <input type="submit" value="<?php esc_attr_e('Search', 'modern-job-board'); ?>">
             </div>
-            <div class="mjb-loader" style="display:none;"><?php _e('Loading...', 'modern-job-board'); ?></div>
+            <div class="mjb-loader" style="display:none;"><?php esc_html_e('Loading...', 'modern-job-board'); ?></div>
         </form>
         <?php
 
@@ -97,10 +100,10 @@ class MJB_Shortcodes
                 $featured_class = $featured ? ' mjb-featured' : '';
                 
                 echo '<div class="mjb-job-item' . esc_attr($featured_class) . '">';
-                echo '<h3><a href="' . get_permalink() . '">' . get_the_title() . '</a></h3>';
+                echo '<h3><a href="' . esc_url(get_permalink()) . '">' . esc_html(get_the_title()) . '</a></h3>';
                 echo '<div class="mjb-job-meta">';
-                echo '<span>' . get_the_term_list(get_the_ID(), 'job_type', '', ', ') . '</span>';
-                echo '<span>' . get_the_term_list(get_the_ID(), 'job_location', '', ', ') . '</span>';
+                echo '<span>' . wp_kses_post(get_the_term_list(get_the_ID(), 'job_type', '', ', ')) . '</span>';
+                echo '<span>' . wp_kses_post(get_the_term_list(get_the_ID(), 'job_location', '', ', ')) . '</span>';
                 
                 // Show Company if available
                 $company_name = get_post_meta(get_the_ID(), '_company_name', true);
@@ -111,7 +114,7 @@ class MJB_Shortcodes
                 // Show Expiration Date? Optional.
                 $expires = get_post_meta(get_the_ID(), '_job_expires', true);
                 if ($expires) {
-                     echo '<span class="mjb-meta-right">' . sprintf(__('Exp: %s', 'modern-job-board'), date_i18n(get_option('date_format'), strtotime($expires))) . '</span>';
+                     echo '<span class="mjb-meta-right">' . esc_html(sprintf(__('Exp: %s', 'modern-job-board'), date_i18n(get_option('date_format'), strtotime($expires)))) . '</span>';
                 }
 
                 echo '</div>'; // .mjb-job-meta
@@ -119,7 +122,7 @@ class MJB_Shortcodes
             }
             echo '</div>'; // .mjb-job-list
         } else {
-            echo '<p>' . __('No jobs found.', 'modern-job-board') . '</p>';
+            echo '<p>' . esc_html__('No jobs found.', 'modern-job-board') . '</p>';
         }
     }
 
@@ -189,6 +192,7 @@ class MJB_Shortcodes
 
         ob_start();
 
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is escaped in MJB_Notices::render().
         echo MJB_Notices::render();
 
         // Check for Edit Actions
@@ -199,7 +203,7 @@ class MJB_Shortcodes
 
         if (isset($_GET['action']) && $_GET['action'] == 'edit' && isset($_GET['job_id'])) {
             if (!is_user_logged_in()) {
-                echo '<p>' . __('You must be logged in to edit a job.', 'modern-job-board') . '</p>';
+                echo '<p>' . esc_html__('You must be logged in to edit a job.', 'modern-job-board') . '</p>';
                 return ob_get_clean();
             }
 
@@ -208,7 +212,7 @@ class MJB_Shortcodes
 
             // Verify ownership
             if (!$job || $job->post_type !== 'job_listing' || intval($job->post_author) !== get_current_user_id()) {
-                echo '<p>' . __('Invalid job or permission denied.', 'modern-job-board') . '</p>';
+                echo '<p>' . esc_html__('Invalid job or permission denied.', 'modern-job-board') . '</p>';
                 return ob_get_clean();
             }
 
@@ -239,18 +243,18 @@ class MJB_Shortcodes
             <?php endif; ?>
 
             <p>
-                <label for="job_title"><?php _e('Job Title', 'modern-job-board'); ?></label>
+                <label for="job_title"><?php esc_html_e('Job Title', 'modern-job-board'); ?></label>
                 <input type="text" name="job_title" id="job_title" value="<?php echo esc_attr($job_title); ?>" required>
             </p>
             <p>
-                <label for="job_description"><?php _e('Description', 'modern-job-board'); ?></label>
+                <label for="job_description"><?php esc_html_e('Description', 'modern-job-board'); ?></label>
                 <textarea name="job_description" id="job_description"
                     required><?php echo esc_textarea($job_description); ?></textarea>
             </p>
             <p>
-                <label for="company_selection"><?php _e('Company', 'modern-job-board'); ?></label>
+                <label for="company_selection"><?php esc_html_e('Company', 'modern-job-board'); ?></label>
                 <select name="company_selection" id="company_selection" required onchange="toggleCompanyInput()">
-                    <option value="new"><?php _e('Create New Company', 'modern-job-board'); ?></option>
+                    <option value="new"><?php esc_html_e('Create New Company', 'modern-job-board'); ?></option>
                     <?php foreach ($user_companies as $company) : ?>
                         <option value="<?php echo esc_attr($company->ID); ?>" <?php selected($selected_company_id, $company->ID); ?>>
                             <?php echo esc_html($company->post_title); ?>
@@ -259,31 +263,31 @@ class MJB_Shortcodes
                 </select>
             </p>
             <p id="new-company-field" style="<?php echo $selected_company_id ? 'display:none;' : ''; ?>">
-                <label for="new_company_name"><?php _e('New Company Name', 'modern-job-board'); ?></label>
+                <label for="new_company_name"><?php esc_html_e('New Company Name', 'modern-job-board'); ?></label>
                 <input type="text" name="new_company_name" id="new_company_name" value="<?php echo empty($selected_company_id) ? esc_attr($company_name) : ''; ?>">
             </p>
             
             <!-- Application Method -->
             <p>
-                <label><?php _e('Application Method', 'modern-job-board'); ?></label><br>
+                <label><?php esc_html_e('Application Method', 'modern-job-board'); ?></label><br>
                 <label>
                     <input type="radio" name="application_method" value="internal" checked onclick="toggleApplicationMethod()"> 
-                    <?php _e('Email (Internal Form)', 'modern-job-board'); ?>
+                    <?php esc_html_e('Email (Internal Form)', 'modern-job-board'); ?>
                 </label>
                 <br>
                 <label>
                     <input type="radio" name="application_method" value="external" onclick="toggleApplicationMethod()"> 
-                    <?php _e('External URL', 'modern-job-board'); ?>
+                    <?php esc_html_e('External URL', 'modern-job-board'); ?>
                 </label>
             </p>
 
             <p id="app-email-field">
-                <label for="application_email"><?php _e('Notification Email', 'modern-job-board'); ?></label>
+                <label for="application_email"><?php esc_html_e('Notification Email', 'modern-job-board'); ?></label>
                 <input type="email" name="application_email" id="application_email" value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>">
             </p>
 
             <p id="app-url-field" style="display:none;">
-                <label for="application_url"><?php _e('External Application URL', 'modern-job-board'); ?></label>
+                <label for="application_url"><?php esc_html_e('External Application URL', 'modern-job-board'); ?></label>
                 <input type="url" name="application_url" id="application_url" placeholder="https://...">
             </p>
 
@@ -357,7 +361,7 @@ class MJB_Shortcodes
 
             <p>
                 <input type="submit" name="mjb_submit_job"
-                    value="<?php echo $job_id ? __('Update Job', 'modern-job-board') : __('Submit Job', 'modern-job-board'); ?>">
+                    value="<?php echo esc_attr($job_id ? __('Update Job', 'modern-job-board') : __('Submit Job', 'modern-job-board')); ?>">
             </p>
             <?php do_action('mjb_job_submission_form_end'); ?>
         </form>

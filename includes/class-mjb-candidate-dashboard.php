@@ -141,35 +141,38 @@ class MJB_Candidate_Dashboard
         ob_start();
         ?>
         <div class="mjb-candidate-dashboard">
-            <h2><?php _e('Candidate Dashboard', 'modern-job-board'); ?></h2>
+            <h2><?php esc_html_e('Candidate Dashboard', 'modern-job-board'); ?></h2>
 
-            <?php echo MJB_Notices::render(); ?>
+            <?php
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is escaped in MJB_Notices::render().
+            echo MJB_Notices::render();
+            ?>
 
             <div class="mjb-dashboard-section">
-                <h3><?php _e('Profile Details', 'modern-job-board'); ?></h3>
+                <h3><?php esc_html_e('Profile Details', 'modern-job-board'); ?></h3>
                 <form method="post" action="" class="mjb-form">
                     <?php wp_nonce_field('mjb_profile_action', 'mjb_profile_nonce'); ?>
 
                     <p>
-                        <label for="mjb_first_name"><?php _e('First Name', 'modern-job-board'); ?></label>
+                        <label for="mjb_first_name"><?php esc_html_e('First Name', 'modern-job-board'); ?></label>
                         <input type="text" name="mjb_first_name" id="mjb_first_name"
                             value="<?php echo esc_attr($first_name); ?>" required>
                     </p>
 
                     <p>
-                        <label for="mjb_last_name"><?php _e('Last Name', 'modern-job-board'); ?></label>
+                        <label for="mjb_last_name"><?php esc_html_e('Last Name', 'modern-job-board'); ?></label>
                         <input type="text" name="mjb_last_name" id="mjb_last_name" value="<?php echo esc_attr($last_name); ?>"
                             required>
                     </p>
 
                     <p>
-                        <label for="mjb_headline"><?php _e('Professional Headline', 'modern-job-board'); ?></label>
+                        <label for="mjb_headline"><?php esc_html_e('Professional Headline', 'modern-job-board'); ?></label>
                         <input type="text" name="mjb_headline" id="mjb_headline" value="<?php echo esc_attr($headline); ?>">
                     </p>
 
                     <p>
                         <input type="submit" name="mjb_update_profile"
-                            value="<?php _e('Update Profile', 'modern-job-board'); ?>">
+                            value="<?php esc_attr_e('Update Profile', 'modern-job-board'); ?>">
                     </p>
                 </form>
             </div>
@@ -177,31 +180,31 @@ class MJB_Candidate_Dashboard
             <hr>
 
             <div class="mjb-dashboard-section">
-                <h3><?php _e('My Applications', 'modern-job-board'); ?></h3>
+                <h3><?php esc_html_e('My Applications', 'modern-job-board'); ?></h3>
                 <?php $this->output_my_applications($user); ?>
             </div>
 
             <hr>
 
             <div class="mjb-dashboard-section">
-                <h3><?php _e('My Resume', 'modern-job-board'); ?></h3>
+                <h3><?php esc_html_e('My Resume', 'modern-job-board'); ?></h3>
 
                 <?php if ($resume_url): ?>
-                    <p><strong><?php _e('Current Resume:', 'modern-job-board'); ?></strong> <a
+                    <p><strong><?php esc_html_e('Current Resume:', 'modern-job-board'); ?></strong> <a
                             href="<?php echo esc_url($resume_url); ?>"
-                            target="_blank"><?php _e('View Resume', 'modern-job-board'); ?></a></p>
+                            target="_blank"><?php esc_html_e('View Resume', 'modern-job-board'); ?></a></p>
                 <?php else: ?>
-                    <p><?php _e('No resume uploaded yet.', 'modern-job-board'); ?></p>
+                    <p><?php esc_html_e('No resume uploaded yet.', 'modern-job-board'); ?></p>
                 <?php endif; ?>
 
                 <form method="post" action="" enctype="multipart/form-data" class="mjb-form">
                     <?php wp_nonce_field('mjb_resume_action', 'mjb_resume_nonce'); ?>
                     <p>
-                        <label for="mjb_resume"><?php _e('Upload Resume (PDF/Docx)', 'modern-job-board'); ?></label>
+                        <label for="mjb_resume"><?php esc_html_e('Upload Resume (PDF/Docx)', 'modern-job-board'); ?></label>
                         <input type="file" name="mjb_resume" id="mjb_resume" accept=".pdf,.doc,.docx" required>
                     </p>
                     <p>
-                        <input type="submit" name="mjb_upload_resume" value="<?php _e('Upload Resume', 'modern-job-board'); ?>">
+                        <input type="submit" name="mjb_upload_resume" value="<?php esc_attr_e('Upload Resume', 'modern-job-board'); ?>">
                     </p>
                 </form>
             </div>

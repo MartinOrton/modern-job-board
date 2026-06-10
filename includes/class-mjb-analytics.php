@@ -178,4 +178,115 @@ class MJB_Analytics
 
         return $totals;
     }
+
+    /**
+     * Build analytics rows for all published job listings.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function get_admin_job_stats()
+    {
+        $job_ids = get_posts(array(
+            'post_type' => 'job_listing',
+            'post_status' => array('publish', 'pending', 'draft', 'expired'),
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+        ));
+
+        $app_counts = MJB_Dashboard::get_application_counts_for_jobs($job_ids);
+        $stats = array();
+
+        foreach ($job_ids as $job_id) {
+            $job_id = intval($job_id);
+            $views = intval(get_post_meta($job_id, self::VIEW_COUNT_META, true));
+            $applications = isset($app_counts[$job_id]) ? intval($app_counts[$job_id]) : 0;
+
+            $stats[] = array(
+                'job_id' => $job_id,
+                'title' => get_the_title($job_id),
+                'views' => $views,
+                'applications' => $applications,
+                'conversion_rate' => $views > 0 ? round(($applications / $views) * 100, 2) : 0.0,
+            );
+        }
+
+        usort($stats, static function ($left, $right) {
+            return intval($right['views']) <=> intval($left['views']);
+        });
+
+        return $stats;
+    }
+
+    /**
+     * Return the top-performing jobs for admin charts.
+     *
+     * @param int $limit
+     * @return array<int, array<string, mixed>>
+     */
+    public static function get_top_jobs_for_charts($limit = 5)
+    {
+        $stats = self::get_admin_job_stats();
+        return array_slice($stats, 0, max(1, intval($limit)));
+    }
+
+    /**
+     * Render simple admin bar charts for views and applications.
+     *
+     * @param array<int, array<string, mixed>> $jobs
+     * @return string
+     */
+    public static function render_admin_charts_html($jobs)
+    {
+        if (empty($jobs)) {
+            return '<p>' . esc_html__('No job performance data yet. Views are tracked when job detail pages are visited.', 'modern-job-board') . '</p>';
+        }
+
+        $max_views = max(1, max(array_map(static function ($job) {
+            return intval($job['views']);
+        }, $jobs)));
+
+        $max_apps = max(1, max(array_map(static function ($job) {
+            return intval($job['applications']);
+        }, $jobs)));
+
+        ob_start();
+        ?>
+        <div class="mjb-admin-charts">
+            <div class="mjb-chart-panel">
+                <h3><?php esc_html_e('Top Jobs by Views', 'modern-job-board'); ?></h3>
+                <?php foreach ($jobs as $job) :
+                    $width = round((intval($job['views']) / $max_views) * 100, 1);
+                    ?>
+                    <div class="mjb-chart-row">
+                        <div class="mjb-chart-label"><?php echo esc_html($job['title']); ?></div>
+                        <div class="mjb-chart-track">
+                            <div class="mjb-chart-bar mjb-chart-bar-views" style="width: <?php echo esc_attr((string) $width); ?>%;"></div>
+                        </div>
+                        <div class="mjb-chart-value"><?php echo esc_html((string) intval($job['views'])); ?></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <div class="mjb-chart-panel">
+                <h3><?php esc_html_e('Top Jobs by Applications', 'modern-job-board'); ?></h3>
+                <?php
+                $apps_sorted = $jobs;
+                usort($apps_sorted, static function ($left, $right) {
+                    return intval($right['applications']) <=> intval($left['applications']);
+                });
+                foreach ($apps_sorted as $job) :
+                    $width = round((intval($job['applications']) / $max_apps) * 100, 1);
+                    ?>
+                    <div class="mjb-chart-row">
+                        <div class="mjb-chart-label"><?php echo esc_html($job['title']); ?></div>
+                        <div class="mjb-chart-track">
+                            <div class="mjb-chart-bar mjb-chart-bar-apps" style="width: <?php echo esc_attr((string) $width); ?>%;"></div>
+                        </div>
+                        <div class="mjb-chart-value"><?php echo esc_html((string) intval($job['applications'])); ?></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
 }

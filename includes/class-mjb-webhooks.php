@@ -71,13 +71,7 @@ class MJB_Webhooks
 
         foreach ($urls as $url) {
             do_action('mjb_before_webhook_dispatch', $event, $url, $payload);
-
-            wp_remote_post($url, array(
-                'timeout' => 5,
-                'blocking' => false,
-                'headers' => $headers,
-                'body' => $body,
-            ));
+            MJB_Webhook_Queue::deliver($event, $url, $body, $headers, 0);
         }
     }
 

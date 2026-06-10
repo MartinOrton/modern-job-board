@@ -2,6 +2,16 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.8.2] - 2026-06-10
+### Added
+- **Webhook retry queue**: Failed deliveries retry up to 5 times with exponential backoff (cron every 5 minutes).
+- **Admin performance charts**: Bar charts for top jobs by views and applications on the Modern Job Board dashboard.
+- **Queue visibility**: Admin dashboard and Integrations settings show pending webhook retry counts.
+
+### Improved
+- **WPCS escaping pass**: Output escaping fixes across admin, dashboard, shortcodes, tools, feeds, and registration templates.
+- **PHPCS ruleset**: Added `WordPress.Security.EscapeOutput` alongside SQL and safe-redirect checks.
+
 ## [1.8.1] - 2026-06-10
 ### Added
 - **Candidate status emails**: Applicants receive an email when employers change application workflow status.

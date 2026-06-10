@@ -11,6 +11,7 @@ class AnalyticsTest extends TestCase
         $GLOBALS['mjb_test_post_status'] = array();
         $GLOBALS['mjb_test_titles'] = array();
         $GLOBALS['mjb_test_posts'] = array();
+        $GLOBALS['mjb_test_post_types'] = array();
         $GLOBALS['mjb_test_is_logged_in'] = false;
         $GLOBALS['mjb_test_current_user_id'] = 0;
         $GLOBALS['mjb_test_db_results'] = array();
@@ -52,5 +53,29 @@ class AnalyticsTest extends TestCase
         $this->assertSame(100, $summary['views']);
         $this->assertSame(10, $summary['applications']);
         $this->assertSame(10.0, $summary['conversion_rate']);
+    }
+
+    public function test_get_top_jobs_for_charts_sorts_by_views()
+    {
+        $GLOBALS['mjb_test_posts'] = array(1, 2, 3);
+        $GLOBALS['mjb_test_post_types'][1] = 'job_listing';
+        $GLOBALS['mjb_test_post_types'][2] = 'job_listing';
+        $GLOBALS['mjb_test_post_types'][3] = 'job_listing';
+        $GLOBALS['mjb_test_post_status'][1] = 'publish';
+        $GLOBALS['mjb_test_post_status'][2] = 'publish';
+        $GLOBALS['mjb_test_post_status'][3] = 'publish';
+        $GLOBALS['mjb_test_titles'][1] = 'Low';
+        $GLOBALS['mjb_test_titles'][2] = 'High';
+        $GLOBALS['mjb_test_titles'][3] = 'Mid';
+        $GLOBALS['mjb_test_post_meta'][1][MJB_Analytics::VIEW_COUNT_META] = 1;
+        $GLOBALS['mjb_test_post_meta'][2][MJB_Analytics::VIEW_COUNT_META] = 30;
+        $GLOBALS['mjb_test_post_meta'][3][MJB_Analytics::VIEW_COUNT_META] = 10;
+        $GLOBALS['mjb_test_db_results'] = array();
+
+        $top = MJB_Analytics::get_top_jobs_for_charts(2);
+
+        $this->assertCount(2, $top);
+        $this->assertSame('High', $top[0]['title']);
+        $this->assertSame(30, $top[0]['views']);
     }
 }

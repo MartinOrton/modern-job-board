@@ -99,7 +99,7 @@ class MJB_Custom_Fields
         $fields = $this->get_fields();
         ?>
         <div class="wrap">
-            <h1><?php _e('Custom Fields Builder', 'modern-job-board'); ?></h1>
+            <h1><?php esc_html_e('Custom Fields Builder', 'modern-job-board'); ?></h1>
 
             <div style="display:flex; gap:20px;">
                 <!-- List -->
@@ -107,17 +107,17 @@ class MJB_Custom_Fields
                     <table class="widefat fixed striped">
                         <thead>
                             <tr>
-                                <th><?php _e('Label', 'modern-job-board'); ?></th>
-                                <th><?php _e('Key', 'modern-job-board'); ?></th>
-                                <th><?php _e('Type', 'modern-job-board'); ?></th>
-                                <th><?php _e('Location', 'modern-job-board'); ?></th>
-                                <th><?php _e('Actions', 'modern-job-board'); ?></th>
+                                <th><?php esc_html_e('Label', 'modern-job-board'); ?></th>
+                                <th><?php esc_html_e('Key', 'modern-job-board'); ?></th>
+                                <th><?php esc_html_e('Type', 'modern-job-board'); ?></th>
+                                <th><?php esc_html_e('Location', 'modern-job-board'); ?></th>
+                                <th><?php esc_html_e('Actions', 'modern-job-board'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($fields)): ?>
                                 <tr>
-                                    <td colspan="5"><?php _e('No custom fields defined.', 'modern-job-board'); ?></td>
+                                    <td colspan="5"><?php esc_html_e('No custom fields defined.', 'modern-job-board'); ?></td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($fields as $index => $field): ?>
@@ -127,9 +127,9 @@ class MJB_Custom_Fields
                                         <td><?php echo esc_html($field['type']); ?></td>
                                         <td><?php echo esc_html(ucfirst($field['location'])); ?></td>
                                         <td>
-                                            <a href="<?php echo wp_nonce_url(add_query_arg(array('action' => 'delete_field', 'index' => $index)), 'delete_field_' . $index); ?>"
-                                                onclick="return confirm('<?php _e('Delete this field?', 'modern-job-board'); ?>');"
-                                                class="button button-small delete"><?php _e('Delete', 'modern-job-board'); ?></a>
+                                            <a href="<?php echo esc_url(wp_nonce_url(add_query_arg(array('action' => 'delete_field', 'index' => $index)), 'delete_field_' . $index)); ?>"
+                                                onclick="return confirm('<?php echo esc_js(__('Delete this field?', 'modern-job-board')); ?>');"
+                                                class="button button-small delete"><?php esc_html_e('Delete', 'modern-job-board'); ?></a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -141,47 +141,47 @@ class MJB_Custom_Fields
                 <!-- Add Form -->
                 <div
                     style="flex:0 0 300px; background:#fff; padding:15px; border:1px solid #ccd0d4; box-shadow:0 1px 1px rgba(0,0,0,.04);">
-                    <h3><?php _e('Add New Field', 'modern-job-board'); ?></h3>
+                    <h3><?php esc_html_e('Add New Field', 'modern-job-board'); ?></h3>
                     <form method="post" action="">
                         <?php wp_nonce_field('mjb_save_custom_field_nonce'); ?>
                         <input type="hidden" name="mjb_save_custom_field" value="1">
 
                         <p>
-                            <label><?php _e('Label', 'modern-job-board'); ?></label>
+                            <label><?php esc_html_e('Label', 'modern-job-board'); ?></label>
                             <input type="text" name="field_label" class="widefat" required>
                         </p>
                         <p>
-                            <label><?php _e('Type', 'modern-job-board'); ?></label>
+                            <label><?php esc_html_e('Type', 'modern-job-board'); ?></label>
                             <select name="field_type" class="widefat">
-                                <option value="text"><?php _e('Text', 'modern-job-board'); ?></option>
-                                <option value="textarea"><?php _e('Textarea', 'modern-job-board'); ?></option>
-                                <option value="number"><?php _e('Number', 'modern-job-board'); ?></option>
-                                <option value="select"><?php _e('Select', 'modern-job-board'); ?></option>
-                                <option value="checkbox"><?php _e('Checkbox', 'modern-job-board'); ?></option>
+                                <option value="text"><?php esc_html_e('Text', 'modern-job-board'); ?></option>
+                                <option value="textarea"><?php esc_html_e('Textarea', 'modern-job-board'); ?></option>
+                                <option value="number"><?php esc_html_e('Number', 'modern-job-board'); ?></option>
+                                <option value="select"><?php esc_html_e('Select', 'modern-job-board'); ?></option>
+                                <option value="checkbox"><?php esc_html_e('Checkbox', 'modern-job-board'); ?></option>
                             </select>
                         </p>
                         <p>
-                            <label><?php _e('Location', 'modern-job-board'); ?></label>
+                            <label><?php esc_html_e('Location', 'modern-job-board'); ?></label>
                             <select name="field_location" class="widefat">
-                                <option value="job"><?php _e('Job Listing', 'modern-job-board'); ?></option>
-                                <option value="application"><?php _e('Application', 'modern-job-board'); ?></option>
+                                <option value="job"><?php esc_html_e('Job Listing', 'modern-job-board'); ?></option>
+                                <option value="application"><?php esc_html_e('Application', 'modern-job-board'); ?></option>
                             </select>
                         </p>
                         <p>
-                            <label><?php _e('Options (for Select)', 'modern-job-board'); ?></label>
+                            <label><?php esc_html_e('Options (for Select)', 'modern-job-board'); ?></label>
                             <textarea name="field_options" class="widefat"
                                 placeholder="Option 1, Option 2, Option 3"></textarea>
-                            <small><?php _e('Comma separated', 'modern-job-board'); ?></small>
+                            <small><?php esc_html_e('Comma separated', 'modern-job-board'); ?></small>
                         </p>
                         <p>
                             <label>
                                 <input type="checkbox" name="field_required" value="1">
-                                <?php _e('Required?', 'modern-job-board'); ?>
+                                <?php esc_html_e('Required?', 'modern-job-board'); ?>
                             </label>
                         </p>
                         <p>
                             <input type="submit" class="button button-primary"
-                                value="<?php _e('Add Field', 'modern-job-board'); ?>">
+                                value="<?php esc_attr_e('Add Field', 'modern-job-board'); ?>">
                         </p>
                     </form>
                 </div>
