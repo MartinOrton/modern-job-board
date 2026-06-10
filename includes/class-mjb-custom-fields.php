@@ -101,9 +101,9 @@ class MJB_Custom_Fields
         <div class="wrap">
             <h1><?php esc_html_e('Custom Fields Builder', 'modern-job-board'); ?></h1>
 
-            <div style="display:flex; gap:20px;">
+            <div class="mjb-custom-fields-layout">
                 <!-- List -->
-                <div style="flex:1;">
+                <div class="mjb-custom-fields-list">
                     <?php
                     $field_headers = array(
                         __('Label', 'modern-job-board'),
@@ -134,8 +134,7 @@ class MJB_Custom_Fields
                 </div>
 
                 <!-- Add Form -->
-                <div
-                    style="flex:0 0 300px; background:#fff; padding:15px; border:1px solid #ccd0d4; box-shadow:0 1px 1px rgba(0,0,0,.04);">
+                <div class="mjb-custom-fields-panel">
                     <h3><?php esc_html_e('Add New Field', 'modern-job-board'); ?></h3>
                     <form method="post" action="">
                         <?php wp_nonce_field('mjb_save_custom_field_nonce'); ?>

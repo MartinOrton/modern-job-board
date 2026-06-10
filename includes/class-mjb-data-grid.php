@@ -41,9 +41,9 @@ class MJB_Data_Grid
 
         if ($columns > 0) {
             printf(
-                '<div class="%s" role="table" style="%s">',
+                '<div class="%s" role="table" data-cols="%s">',
                 esc_attr($classes),
-                esc_attr('--mjb-grid-cols:' . $columns)
+                esc_attr((string) $columns)
             );
         } else {
             printf('<div class="%s" role="table">', esc_attr($classes));

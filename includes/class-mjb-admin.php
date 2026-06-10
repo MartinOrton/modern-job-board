@@ -51,9 +51,15 @@ class MJB_Admin
             strpos($screen->id, 'mjb_resume') !== false
         ) {
             wp_enqueue_style(
+                'mjb-shared',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/css/mjb-shared.css',
+                array(),
+                MJB_VERSION
+            );
+            wp_enqueue_style(
                 'mjb-admin-css',
                 plugin_dir_url(dirname(__FILE__)) . 'assets/css/mjb-admin.css',
-                array(),
+                array('mjb-shared'),
                 MJB_VERSION
             );
         }
@@ -120,7 +126,7 @@ class MJB_Admin
         ?>
         <div class="wrap mjb-dashboard-page">
             <div class="mjb-dashboard-wrap">
-                <header style="margin-bottom: 3rem;">
+                <header class="mjb-dashboard-header">
                     <h1><?php esc_html_e('Modern Job Board', 'modern-job-board'); ?> <span class="mjb-badge">v<?php echo esc_html(MJB_VERSION); ?></span></h1>
                     <p class="subtitle"><?php esc_html_e('Manage your job board with complete control.', 'modern-job-board'); ?></p>
                 </header>
@@ -159,7 +165,7 @@ class MJB_Admin
                 ?>
 
                 <?php if ($pending_webhooks > 0) : ?>
-                    <div class="notice notice-warning" style="margin: 1.5rem 0;">
+                    <div class="notice notice-warning mjb-notice-spaced">
                         <p><?php echo esc_html(sprintf(
                             _n('%d webhook delivery is queued for retry.', '%d webhook deliveries are queued for retry.', $pending_webhooks, 'modern-job-board'),
                             $pending_webhooks
@@ -172,7 +178,7 @@ class MJB_Admin
                 <div class="mjb-features-grid">
                     <a href="<?php echo esc_url(admin_url('edit.php?post_type=job_listing')); ?>" class="mjb-feature-card">
                         <div class="mjb-feature-icon">
-                            <span class="dashicons dashicons-businessman" style="font-size: 1.5rem; width: auto; height: auto;"></span>
+                            <span class="dashicons dashicons-businessman"></span>
                         </div>
                         <h3><?php esc_html_e('Manage Jobs', 'modern-job-board'); ?></h3>
                         <p><?php esc_html_e('View, edit, and moderate job listings. Manage expiration dates and featured status.', 'modern-job-board'); ?></p>
@@ -180,7 +186,7 @@ class MJB_Admin
 
                     <a href="<?php echo esc_url(admin_url('edit.php?post_type=job_application')); ?>" class="mjb-feature-card">
                         <div class="mjb-feature-icon">
-                            <span class="dashicons dashicons-email" style="font-size: 1.5rem; width: auto; height: auto;"></span>
+                            <span class="dashicons dashicons-email"></span>
                         </div>
                         <h3><?php esc_html_e('Applications', 'modern-job-board'); ?></h3>
                         <p><?php esc_html_e('Review candidate applications and download resumes.', 'modern-job-board'); ?></p>
@@ -188,7 +194,7 @@ class MJB_Admin
 
                     <a href="<?php echo esc_url(admin_url('admin.php?page=mjb-settings')); ?>" class="mjb-feature-card">
                         <div class="mjb-feature-icon">
-                            <span class="dashicons dashicons-admin-settings" style="font-size: 1.5rem; width: auto; height: auto;"></span>
+                            <span class="dashicons dashicons-admin-settings"></span>
                         </div>
                         <h3><?php esc_html_e('Settings', 'modern-job-board'); ?></h3>
                         <p><?php esc_html_e('Configure listings, Google Maps API, and monetization options.', 'modern-job-board'); ?></p>
@@ -196,7 +202,7 @@ class MJB_Admin
 
                     <a href="<?php echo esc_url(admin_url('admin.php?page=mjb-setup')); ?>" class="mjb-feature-card">
                         <div class="mjb-feature-icon">
-                            <span class="dashicons dashicons-admin-page" style="font-size: 1.5rem; width: auto; height: auto;"></span>
+                            <span class="dashicons dashicons-admin-page"></span>
                         </div>
                         <h3><?php esc_html_e('Setup', 'modern-job-board'); ?></h3>
                         <p><?php esc_html_e('Create frontend pages for job search, dashboards, and registration shortcodes.', 'modern-job-board'); ?></p>
@@ -494,9 +500,9 @@ class MJB_Admin
             case 'job_featured':
                 $featured = get_post_meta($post_id, '_featured', true);
                 if ($featured) {
-                    echo '<span class="dashicons dashicons-star-filled" style="color:#f0ad4e;"></span>';
+                    echo '<span class="dashicons dashicons-star-filled mjb-star-filled"></span>';
                 } else {
-                    echo '<span class="dashicons dashicons-star-empty" style="color:#ccc;"></span>';
+                    echo '<span class="dashicons dashicons-star-empty mjb-star-empty"></span>';
                 }
                 break;
         }
@@ -529,7 +535,7 @@ class MJB_Admin
         <p>
             <label for="mjb_job_expires"><?php esc_html_e('Expiration Date:', 'modern-job-board'); ?></label>
             <input type="date" name="mjb_job_expires" id="mjb_job_expires" value="<?php echo esc_attr($expires); ?>"
-                style="width:100%;">
+                class="mjb-input-full">
         </p>
         <p>
             <label>

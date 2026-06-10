@@ -2,6 +2,12 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.8.4] - 2026-06-10
+### Changed
+- **No inline CSS**: Removed all `style=""` attributes from templates and PHP output; styles moved to `mjb-style.css`, `mjb-admin.css`, and new `mjb-shared.css`.
+- **Class-based UI toggles**: Job form, application form, and AJAX search now show/hide elements via CSS classes instead of JavaScript `style` manipulation.
+- **Chart bar widths**: Admin chart bars use scoped stylesheet rules instead of per-element inline widths.
+
 ## [1.8.3] - 2026-06-10
 ### Changed
 - **Div-based data grids**: Replaced all HTML tables with accessible div grids across employer/candidate dashboards, custom fields admin, and setup wizard.

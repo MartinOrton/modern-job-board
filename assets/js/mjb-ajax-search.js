@@ -56,8 +56,8 @@ jQuery(document).ready(function ($) {
             posts_per_page: $jobsList.data('posts-per-page') || 10
         };
 
-        $loader.show();
-        $jobsList.css('opacity', '0.5');
+        $loader.removeClass('mjb-is-hidden');
+        $jobsList.addClass('mjb-is-loading');
 
         $.ajax({
             url: mjb_ajax.ajax_url,
@@ -65,8 +65,8 @@ jQuery(document).ready(function ($) {
             data: data,
             success: function (response) {
                 $jobsList.html(response);
-                $jobsList.css('opacity', '1');
-                $loader.hide();
+                $jobsList.removeClass('mjb-is-loading');
+                $loader.addClass('mjb-is-hidden');
 
                 if (pushHistory !== false && window.history && window.history.pushState) {
                     window.history.pushState(null, '', buildPrettyUrl(filters, page || 1));
@@ -74,8 +74,8 @@ jQuery(document).ready(function ($) {
             },
             error: function () {
                 console.log('Error fetching jobs');
-                $jobsList.css('opacity', '1');
-                $loader.hide();
+                $jobsList.removeClass('mjb-is-loading');
+                $loader.addClass('mjb-is-hidden');
             }
         });
     }

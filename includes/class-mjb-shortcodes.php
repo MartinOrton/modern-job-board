@@ -63,7 +63,7 @@ class MJB_Shortcodes
                 ?>
                 <input type="submit" value="<?php esc_attr_e('Search', 'modern-job-board'); ?>">
             </div>
-            <div class="mjb-loader" style="display:none;"><?php esc_html_e('Loading...', 'modern-job-board'); ?></div>
+            <div class="mjb-loader mjb-is-hidden"><?php esc_html_e('Loading...', 'modern-job-board'); ?></div>
         </form>
         <?php
 
@@ -262,7 +262,7 @@ class MJB_Shortcodes
                     <?php endforeach; ?>
                 </select>
             </p>
-            <p id="new-company-field" style="<?php echo $selected_company_id ? 'display:none;' : ''; ?>">
+            <p id="new-company-field" class="<?php echo $selected_company_id ? 'mjb-is-hidden' : ''; ?>">
                 <label for="new_company_name"><?php esc_html_e('New Company Name', 'modern-job-board'); ?></label>
                 <input type="text" name="new_company_name" id="new_company_name" value="<?php echo empty($selected_company_id) ? esc_attr($company_name) : ''; ?>">
             </p>
@@ -286,7 +286,7 @@ class MJB_Shortcodes
                 <input type="email" name="application_email" id="application_email" value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>">
             </p>
 
-            <p id="app-url-field" style="display:none;">
+            <p id="app-url-field" class="mjb-is-hidden">
                 <label for="application_url"><?php esc_html_e('External Application URL', 'modern-job-board'); ?></label>
                 <input type="url" name="application_url" id="application_url" placeholder="https://...">
             </p>
@@ -296,10 +296,10 @@ class MJB_Shortcodes
                     var select = document.getElementById('company_selection');
                     var input = document.getElementById('new-company-field');
                     if (select.value === 'new') {
-                        input.style.display = 'block';
+                        input.classList.remove('mjb-is-hidden');
                         document.getElementById('new_company_name').required = true;
                     } else {
-                        input.style.display = 'none';
+                        input.classList.add('mjb-is-hidden');
                         document.getElementById('new_company_name').required = false;
                     }
                 }
@@ -310,13 +310,13 @@ class MJB_Shortcodes
                     var urlField = document.getElementById('app-url-field');
                     
                     if (method === 'internal') {
-                        emailField.style.display = 'block';
-                        urlField.style.display = 'none';
+                        emailField.classList.remove('mjb-is-hidden');
+                        urlField.classList.add('mjb-is-hidden');
                         document.getElementById('application_email').required = true;
                         document.getElementById('application_url').required = false;
                     } else {
-                        emailField.style.display = 'none';
-                        urlField.style.display = 'block';
+                        emailField.classList.add('mjb-is-hidden');
+                        urlField.classList.remove('mjb-is-hidden');
                         document.getElementById('application_email').required = false;
                         document.getElementById('application_url').required = true;
                     }

@@ -1,0 +1,26 @@
+/* Shared utility classes used across admin and frontend */
+
+.mjb-is-hidden {
+    display: none !important;
+}
+
+.mjb-data-grid[data-cols="1"] { --mjb-grid-cols: 1; }
+.mjb-data-grid[data-cols="2"] { --mjb-grid-cols: 2; }
+.mjb-data-grid[data-cols="3"] { --mjb-grid-cols: 3; }
+.mjb-data-grid[data-cols="4"] { --mjb-grid-cols: 4; }
+.mjb-data-grid[data-cols="5"] { --mjb-grid-cols: 5; }
+.mjb-data-grid[data-cols="6"] { --mjb-grid-cols: 6; }
+.mjb-data-grid[data-cols="7"] { --mjb-grid-cols: 7; }
+.mjb-data-grid[data-cols="8"] { --mjb-grid-cols: 8; }
+.mjb-data-grid[data-cols="9"] { --mjb-grid-cols: 9; }
+.mjb-data-grid[data-cols="10"] { --mjb-grid-cols: 10; }
+.mjb-data-grid[data-cols="11"] { --mjb-grid-cols: 11; }
+.mjb-data-grid[data-cols="12"] { --mjb-grid-cols: 12; }
+.mjb-data-grid[data-cols="13"] { --mjb-grid-cols: 13; }
+.mjb-data-grid[data-cols="14"] { --mjb-grid-cols: 14; }
+.mjb-data-grid[data-cols="15"] { --mjb-grid-cols: 15; }
+.mjb-data-grid[data-cols="16"] { --mjb-grid-cols: 16; }
+.mjb-data-grid[data-cols="17"] { --mjb-grid-cols: 17; }
+.mjb-data-grid[data-cols="18"] { --mjb-grid-cols: 18; }
+.mjb-data-grid[data-cols="19"] { --mjb-grid-cols: 19; }
+.mjb-data-grid[data-cols="20"] { --mjb-grid-cols: 20; }

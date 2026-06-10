@@ -88,7 +88,7 @@ get_header(); ?>
                                     <p>
                                         <label for="candidate_resume"><?php _e('Resume (PDF/Doc)', 'modern-job-board'); ?></label>
                                         <?php if ($resume_label): ?>
-                                        <div class="mjb-profile-resume-option" style="margin-bottom: 10px;">
+                                        <div class="mjb-profile-resume-option">
                                             <label>
                                                 <input type="checkbox" name="mjb_use_profile_resume" id="mjb_use_profile_resume"
                                                     value="1">
@@ -98,8 +98,7 @@ get_header(); ?>
                                         <div id="mjb-upload-resume-container">
                                             <input type="file" name="candidate_resume" id="candidate_resume" accept=".pdf,.doc,.docx"
                                                 required>
-                                            <span class="description"
-                                                style="font-size: 0.9em; color: #666; display: block; margin-top: 5px;"><?php _e('Or upload a different one:', 'modern-job-board'); ?></span>
+                                            <span class="description mjb-upload-hint"><?php _e('Or upload a different one:', 'modern-job-board'); ?></span>
                                         </div>
                                         <script>
                                             document.getElementById('mjb_use_profile_resume').addEventListener('change', function () {
@@ -107,10 +106,10 @@ get_header(); ?>
                                                 var container = document.getElementById('mjb-upload-resume-container');
                                                 if (this.checked) {
                                                     uploadInput.removeAttribute('required');
-                                                    container.style.display = 'none';
+                                                    container.classList.add('mjb-is-hidden');
                                                 } else {
                                                     uploadInput.setAttribute('required', 'required');
-                                                    container.style.display = 'block';
+                                                    container.classList.remove('mjb-is-hidden');
                                                 }
                                             });
                                         </script>

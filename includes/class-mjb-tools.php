@@ -56,7 +56,7 @@ class MJB_Tools
 
             <!-- Export Tab -->
             <?php if ($active_tab == 'export'): ?>
-                <div class="card" style="max-width: 600px; margin-top: 20px; padding: 20px;">
+                <div class="card mjb-tools-card">
                     <h2><?php esc_html_e('Export Data', 'modern-job-board'); ?></h2>
                     <p><?php esc_html_e('Download your data in CSV format.', 'modern-job-board'); ?></p>
 
@@ -88,7 +88,7 @@ class MJB_Tools
 
             <!-- Import Tab -->
             <?php if ($active_tab == 'import'): ?>
-                <div class="card" style="max-width: 600px; margin-top: 20px; padding: 20px;">
+                <div class="card mjb-tools-card">
                     <h2><?php esc_html_e('Import Jobs', 'modern-job-board'); ?></h2>
                     <p><?php esc_html_e('Upload a CSV file to bulk import job listings.', 'modern-job-board'); ?></p>
                     <p><strong><?php esc_html_e('Required Columns:', 'modern-job-board'); ?></strong>
@@ -136,7 +136,7 @@ class MJB_Tools
                         <code>mjb:company</code>, <code>mjb:location</code>, <code>mjb:jobType</code>, <code>mjb:featured</code>
                     </p>
 
-                    <form method="post" action="" enctype="multipart/form-data" style="margin-bottom: 20px;">
+                    <form method="post" action="" enctype="multipart/form-data" class="mjb-tools-form-spaced">
                         <?php wp_nonce_field('mjb_import_jobs_xml_nonce'); ?>
                         <input type="hidden" name="mjb_action" value="import_jobs_xml">
                         <p>

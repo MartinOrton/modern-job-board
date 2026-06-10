@@ -368,3 +368,68 @@ body[class*="post-type-mjb_resume"] {
 .mjb-data-grid--admin .mjb-data-grid__row:not(.mjb-data-grid__row--head):hover {
     background: rgba(15, 118, 110, 0.03);
 }
+
+.mjb-dashboard-header {
+    margin-bottom: 3rem;
+}
+
+.mjb-notice-spaced {
+    margin: 1.5rem 0;
+}
+
+.mjb-feature-icon .dashicons {
+    font-size: 1.5rem;
+    width: auto;
+    height: auto;
+}
+
+.mjb-star-filled {
+    color: #f0ad4e;
+}
+
+.mjb-star-empty {
+    color: #ccc;
+}
+
+.mjb-input-full {
+    width: 100%;
+}
+
+.mjb-custom-fields-layout {
+    display: flex;
+    gap: 20px;
+}
+
+.mjb-custom-fields-list {
+    flex: 1;
+}
+
+.mjb-custom-fields-panel {
+    flex: 0 0 300px;
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.mjb-status-ready {
+    color: #008a20;
+}
+
+.mjb-status-missing {
+    color: #b32d2e;
+}
+
+.mjb-setup-form {
+    margin-top: 24px;
+}
+
+.mjb-tools-card {
+    max-width: 600px;
+    margin-top: 20px;
+    padding: 20px;
+}
+
+.mjb-tools-form-spaced {
+    margin-bottom: 20px;
+}

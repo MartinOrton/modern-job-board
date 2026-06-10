@@ -20,6 +20,8 @@ class DataGridTest extends TestCase
 
         $this->assertStringContainsString('mjb-data-grid', $html);
         $this->assertStringContainsString('role="table"', $html);
+        $this->assertStringContainsString('data-cols="2"', $html);
+        $this->assertStringNotContainsString('style=', $html);
         $this->assertStringContainsString('data-label="Name"', $html);
         $this->assertStringNotContainsString('<table', $html);
         $this->assertStringNotContainsString('<tr', $html);

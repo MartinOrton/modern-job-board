@@ -173,7 +173,7 @@ class MJB_Dashboard
 
                 $actions_html = '<a href="' . esc_url($edit_link) . '" class="button">' . esc_html__('Edit', 'modern-job-board') . '</a> ';
                 $actions_html .= '<a href="' . esc_url($view_apps_link) . '" class="button">' . esc_html__('Applications', 'modern-job-board') . '</a> ';
-                $actions_html .= '<form method="post" action="" class="mjb-inline-delete-form" style="display:inline;" onsubmit="return confirm(\'' . esc_js(__('Are you sure you want to delete this job?', 'modern-job-board')) . '\');">';
+                $actions_html .= '<form method="post" action="" class="mjb-inline-delete-form" onsubmit="return confirm(\'' . esc_js(__('Are you sure you want to delete this job?', 'modern-job-board')) . '\');">';
                 ob_start();
                 wp_nonce_field('mjb_delete_job_' . $job_id);
                 $actions_html .= ob_get_clean();
@@ -295,7 +295,7 @@ class MJB_Dashboard
                             'add-to-cart' => $unlock_product_id,
                             'mjb_unlock_application_id' => $app_id,
                         ), $cart_url);
-                        $resume_html .= '<div style="margin-top:5px;"><a href="' . esc_url($unlock_link) . '" class="button button-small mjb-unlock-btn" style="background:#f0ad4e;border-color:#eea236;color:#fff;">' . esc_html__('Unlock', 'modern-job-board') . '</a></div>';
+                        $resume_html .= '<div class="mjb-unlock-wrap"><a href="' . esc_url($unlock_link) . '" class="button button-small mjb-unlock-btn">' . esc_html__('Unlock', 'modern-job-board') . '</a></div>';
                     }
                 }
 

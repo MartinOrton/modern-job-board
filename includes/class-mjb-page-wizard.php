@@ -310,9 +310,9 @@ class MJB_Page_Wizard
             $wizard_grid->render_header($wizard_headers)->open_body();
             foreach ($rows as $row) {
                 if ($row['status'] === 'ready') {
-                    $status_html = '<span style="color:#008a20;">' . esc_html__('Ready', 'modern-job-board') . '</span>';
+                    $status_html = '<span class="mjb-status-ready">' . esc_html__('Ready', 'modern-job-board') . '</span>';
                 } else {
-                    $status_html = '<span style="color:#b32d2e;">' . esc_html__('Missing', 'modern-job-board') . '</span>';
+                    $status_html = '<span class="mjb-status-missing">' . esc_html__('Missing', 'modern-job-board') . '</span>';
                 }
 
                 if ($row['url']) {
@@ -334,7 +334,7 @@ class MJB_Page_Wizard
             $wizard_grid->close_body()->end();
             ?>
 
-            <form method="post" action="" style="margin-top: 24px;">
+            <form method="post" action="" class="mjb-setup-form">
                 <?php wp_nonce_field('mjb_create_setup_pages_nonce'); ?>
                 <input type="hidden" name="mjb_action" value="create_setup_pages">
                 <p>

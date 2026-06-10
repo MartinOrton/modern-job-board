@@ -252,9 +252,9 @@ class MJB_CPT
         $location = $terms[0]->name;
         $map_url = 'https://www.google.com/maps/embed/v1/place?key=' . esc_attr($api_key) . '&q=' . urlencode($location);
 
-        $map_html = '<div class="mjb-map-container" style="margin-top: 30px;">';
+        $map_html = '<div class="mjb-map-container">';
         $map_html .= '<h3>' . __('Job Location', 'modern-job-board') . '</h3>';
-        $map_html .= '<iframe width="100%" height="300" frameborder="0" style="border:0" src="' . esc_url($map_url) . '" allowfullscreen></iframe>';
+        $map_html .= '<iframe class="mjb-map-iframe" frameborder="0" src="' . esc_url($map_url) . '" allowfullscreen></iframe>';
         $map_html .= '</div>';
 
         return $content . $map_html;

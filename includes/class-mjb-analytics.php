@@ -249,18 +249,25 @@ class MJB_Analytics
             return intval($job['applications']);
         }, $jobs)));
 
+        $chart_styles = array();
+        $apps_sorted = $jobs;
+        usort($apps_sorted, static function ($left, $right) {
+            return intval($right['applications']) <=> intval($left['applications']);
+        });
+
         ob_start();
         ?>
         <div class="mjb-admin-charts">
             <div class="mjb-chart-panel">
                 <h3><?php esc_html_e('Top Jobs by Views', 'modern-job-board'); ?></h3>
-                <?php foreach ($jobs as $job) :
+                <?php foreach ($jobs as $index => $job) :
                     $width = round((intval($job['views']) / $max_views) * 100, 1);
+                    $bar_class = self::register_chart_bar_style('mjb-chart-bar-views', intval($index), $width, $chart_styles);
                     ?>
                     <div class="mjb-chart-row">
                         <div class="mjb-chart-label"><?php echo esc_html($job['title']); ?></div>
                         <div class="mjb-chart-track">
-                            <div class="mjb-chart-bar mjb-chart-bar-views" style="width: <?php echo esc_attr((string) $width); ?>%;"></div>
+                            <div class="mjb-chart-bar mjb-chart-bar-views <?php echo esc_attr($bar_class); ?>"></div>
                         </div>
                         <div class="mjb-chart-value"><?php echo esc_html((string) intval($job['views'])); ?></div>
                     </div>
@@ -268,18 +275,14 @@ class MJB_Analytics
             </div>
             <div class="mjb-chart-panel">
                 <h3><?php esc_html_e('Top Jobs by Applications', 'modern-job-board'); ?></h3>
-                <?php
-                $apps_sorted = $jobs;
-                usort($apps_sorted, static function ($left, $right) {
-                    return intval($right['applications']) <=> intval($left['applications']);
-                });
-                foreach ($apps_sorted as $job) :
+                <?php foreach ($apps_sorted as $index => $job) :
                     $width = round((intval($job['applications']) / $max_apps) * 100, 1);
+                    $bar_class = self::register_chart_bar_style('mjb-chart-bar-apps', intval($index), $width, $chart_styles);
                     ?>
                     <div class="mjb-chart-row">
                         <div class="mjb-chart-label"><?php echo esc_html($job['title']); ?></div>
                         <div class="mjb-chart-track">
-                            <div class="mjb-chart-bar mjb-chart-bar-apps" style="width: <?php echo esc_attr((string) $width); ?>%;"></div>
+                            <div class="mjb-chart-bar mjb-chart-bar-apps <?php echo esc_attr($bar_class); ?>"></div>
                         </div>
                         <div class="mjb-chart-value"><?php echo esc_html((string) intval($job['applications'])); ?></div>
                     </div>
@@ -287,6 +290,44 @@ class MJB_Analytics
             </div>
         </div>
         <?php
-        return ob_get_clean();
+        $html = ob_get_clean();
+
+        if (!empty($chart_styles)) {
+            $html = self::render_chart_styles($chart_styles) . $html;
+        }
+
+        return $html;
+    }
+
+    /**
+     * Register a scoped chart bar width rule and return its class name.
+     *
+     * @param string              $prefix
+     * @param int                 $index
+     * @param float               $width
+     * @param array<int, string>  $chart_styles
+     * @return string
+     */
+    private static function register_chart_bar_style($prefix, $index, $width, array &$chart_styles)
+    {
+        $safe_width = max(0, min(100, round(floatval($width), 1)));
+        $class_name = sanitize_html_class($prefix . '-' . $index);
+        $chart_styles[] = '.mjb-admin-charts .' . $class_name . '{width:' . $safe_width . '%;}';
+
+        return $class_name;
+    }
+
+    /**
+     * Render scoped stylesheet rules for chart bar widths.
+     *
+     * @param array<int, string> $chart_styles
+     * @return string
+     */
+    private static function render_chart_styles(array $chart_styles)
+    {
+        $css = implode('', $chart_styles);
+
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rules contain only sanitized class names and numeric widths.
+        return '<style class="mjb-chart-styles">' . $css . '</style>';
     }
 }
