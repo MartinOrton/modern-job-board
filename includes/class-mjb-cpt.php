@@ -293,8 +293,7 @@ class MJB_CPT
         $employment_type = '';
         $type_terms = get_the_terms($post->ID, 'job_type');
         if ($type_terms && !is_wp_error($type_terms)) {
-            // Map common types to Schema.org types if possible, else use name
-            $employment_type = $type_terms[0]->name;
+            $employment_type = MJB_Search::map_employment_type_for_schema($type_terms[0]->name);
         }
 
         $schema = array(
@@ -303,9 +302,15 @@ class MJB_CPT
             'title' => $job_title,
             'description' => $job_description,
             'datePosted' => $date_posted,
+            'identifier' => array(
+                '@type' => 'PropertyValue',
+                'name' => get_bloginfo('name'),
+                'value' => (string) $post->ID,
+            ),
             'hiringOrganization' => array(
                 '@type' => 'Organization',
                 'name' => $company_name,
+                'sameAs' => get_bloginfo('url'),
             ),
             'jobLocation' => array(
                 '@type' => 'Place',
@@ -314,6 +319,8 @@ class MJB_CPT
                     'addressLocality' => $location_name,
                 ),
             ),
+            'directApply' => true,
+            'url' => get_permalink($post->ID),
         );
 
         if ($expires) {
@@ -324,6 +331,6 @@ class MJB_CPT
             $schema['employmentType'] = $employment_type;
         }
 
-        echo '<script type="application/ld+json">' . json_encode($schema) . '</script>';
+        echo '<script type="application/ld+json">' . wp_json_encode($schema) . '</script>';
     }
 }

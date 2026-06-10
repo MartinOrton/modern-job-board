@@ -171,6 +171,13 @@ class MJB_Candidate_Dashboard
             <hr>
 
             <div class="mjb-dashboard-section">
+                <h3><?php _e('My Applications', 'modern-job-board'); ?></h3>
+                <?php $this->output_my_applications($user); ?>
+            </div>
+
+            <hr>
+
+            <div class="mjb-dashboard-section">
                 <h3><?php _e('My Resume', 'modern-job-board'); ?></h3>
 
                 <?php if ($resume_url): ?>
@@ -196,6 +203,61 @@ class MJB_Candidate_Dashboard
         </div>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * Output the candidate's submitted applications.
+     *
+     * @param WP_User $user
+     */
+    private function output_my_applications($user)
+    {
+        $applications = get_posts(array(
+            'post_type' => 'job_application',
+            'post_status' => array('publish', 'pending', 'draft'),
+            'posts_per_page' => -1,
+            'orderby' => 'date',
+            'order' => 'DESC',
+            'meta_query' => array(
+                array(
+                    'key' => '_candidate_email',
+                    'value' => $user->user_email,
+                ),
+            ),
+        ));
+
+        if (empty($applications)) {
+            echo '<p>' . esc_html__('You have not applied for any jobs yet.', 'modern-job-board') . '</p>';
+            return;
+        }
+
+        echo '<table class="mjb-dashboard-table">';
+        echo '<thead><tr>';
+        echo '<th>' . esc_html__('Job', 'modern-job-board') . '</th>';
+        echo '<th>' . esc_html__('Applied', 'modern-job-board') . '</th>';
+        echo '<th>' . esc_html__('Status', 'modern-job-board') . '</th>';
+        echo '</tr></thead><tbody>';
+
+        foreach ($applications as $application) {
+            $job_id = intval(get_post_meta($application->ID, '_job_applied_for', true));
+            $job = $job_id ? get_post($job_id) : null;
+            $job_title = $job ? get_the_title($job_id) : __('Unknown job', 'modern-job-board');
+            $job_link = $job && $job->post_status === 'publish' ? get_permalink($job_id) : '';
+
+            echo '<tr>';
+            echo '<td>';
+            if ($job_link) {
+                echo '<a href="' . esc_url($job_link) . '">' . esc_html($job_title) . '</a>';
+            } else {
+                echo esc_html($job_title);
+            }
+            echo '</td>';
+            echo '<td>' . esc_html(get_the_date('', $application->ID)) . '</td>';
+            echo '<td>' . esc_html(ucfirst($application->post_status)) . '</td>';
+            echo '</tr>';
+        }
+
+        echo '</tbody></table>';
     }
 
     /**

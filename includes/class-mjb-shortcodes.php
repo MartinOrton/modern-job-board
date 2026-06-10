@@ -25,6 +25,11 @@ class MJB_Shortcodes
      */
     public function output_jobs($atts)
     {
+        $atts = shortcode_atts(array(
+            'posts_per_page' => 10,
+        ), $atts, 'mjb_jobs');
+
+        $per_page = max(1, intval($atts['posts_per_page']));
         ob_start();
 
         // Search Form
@@ -59,14 +64,15 @@ class MJB_Shortcodes
         </form>
         <?php
 
-        $args = MJB_Search::build_query_args($filter_params);
+        $args = MJB_Search::build_query_args($filter_params, array('posts_per_page' => $per_page));
         $args = apply_filters('mjb_job_listing_query_args', $args, $atts);
         $jobs = new WP_Query($args);
 
         do_action('mjb_before_job_listings', $jobs);
 
-        echo '<div id="mjb-jobs-list">';
+        echo '<div id="mjb-jobs-list" data-posts-per-page="' . esc_attr($per_page) . '">';
         self::render_job_loop($jobs);
+        self::render_pagination($jobs, $filter_params);
         echo '</div>';
         
         do_action('mjb_after_job_listings', $jobs);
@@ -115,6 +121,35 @@ class MJB_Shortcodes
         } else {
             echo '<p>' . __('No jobs found.', 'modern-job-board') . '</p>';
         }
+    }
+
+    /**
+     * Render pagination controls for a job query.
+     *
+     * @param WP_Query $query
+     * @param array    $filter_params
+     */
+    public static function render_pagination($query, $filter_params = array())
+    {
+        if ($query->max_num_pages <= 1) {
+            return;
+        }
+
+        $current_page = max(1, intval($query->get('paged')));
+        if ($current_page < 1) {
+            $current_page = max(1, intval($filter_params['page'] ?? 1));
+        }
+
+        echo '<div class="mjb-pagination" data-current-page="' . esc_attr($current_page) . '">';
+
+        for ($page = 1; $page <= $query->max_num_pages; $page++) {
+            $class = ($page === $current_page) ? 'mjb-page-link is-active' : 'mjb-page-link';
+            echo '<button type="button" class="' . esc_attr($class) . '" data-page="' . esc_attr($page) . '">';
+            echo esc_html((string) $page);
+            echo '</button> ';
+        }
+
+        echo '</div>';
     }
 
     /**

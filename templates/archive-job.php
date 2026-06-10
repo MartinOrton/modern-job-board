@@ -54,18 +54,8 @@ get_header(); ?>
 
         <main class="site-main">
             <?php if (have_posts()): ?>
-                <div class="mjb-job-list">
-                    <?php while (have_posts()):
-                        the_post(); ?>
-                        <div class="mjb-job-item">
-                            <h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-                            <div class="mjb-job-meta">
-                                <span><?php echo get_the_term_list(get_the_ID(), 'job_type', '', ', '); ?></span>
-                                <span><?php echo get_the_term_list(get_the_ID(), 'job_location', '', ', '); ?></span>
-                                <span><?php echo get_post_meta(get_the_ID(), '_company_name', true); ?></span>
-                            </div>
-                        </div>
-                    <?php endwhile; ?>
+                <div id="mjb-jobs-list">
+                    <?php MJB_Shortcodes::render_job_loop($GLOBALS['wp_query']); ?>
                 </div>
                 <?php the_posts_pagination(); ?>
             <?php else: ?>

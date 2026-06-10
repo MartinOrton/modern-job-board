@@ -2,6 +2,23 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.7.0] - 2026-06-10
+### Added
+- **Candidate "My Applications"**: Application history table on the candidate dashboard matched by email.
+- **REST API filters**: `/wp-json/mjb/v1/jobs` supports keywords, location, category, type, `page`, and `per_page` via `MJB_Search`.
+- **REST pagination headers**: Responses include `X-WP-Total` and `X-WP-TotalPages`.
+- **Shortcode pagination**: `[mjb_jobs]` supports `posts_per_page` attribute with AJAX page controls.
+- **Candidate confirmation emails**: Applicants receive a confirmation message after successful submission.
+- **Tests**: REST API, feeds, and expanded search ordering/pagination coverage.
+
+### Improved
+- **Featured job ordering**: Featured listings sort first across search, shortcode, REST, feed, and archive queries.
+- **XML job feed**: Declares `xmlns:mjb`, uses stable item fields (`company`, `location`, `jobType`, `applyUrl`, `featured`).
+- **Schema.org JobPosting**: Adds `identifier`, `directApply`, `url`, and mapped `employmentType` values.
+- **Cron expiration**: Processes expired jobs in batches (50 per batch, 200 max per run).
+- **CSV application export**: Uses stable admin edit links instead of expiring resume nonce URLs.
+- **Archive template**: Reuses shared `MJB_Shortcodes::render_job_loop()` for consistent featured styling and expiry display.
+
 ## [1.6.0] - 2026-06-10
 ### Added
 - **GitHub Actions CI**: PHPUnit workflow runs on push and pull requests to `main`.

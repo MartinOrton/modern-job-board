@@ -83,5 +83,46 @@ class MJB_Emails
         $message .= get_post_field('post_content', $application_id) . "\n";
 
         wp_mail($to, $subject, $message);
+
+        do_action('mjb_application_notification_sent', $application_id, $to);
+    }
+
+    /**
+     * Send application confirmation to the candidate.
+     *
+     * @param int $application_id
+     */
+    public function send_application_confirmation_to_candidate($application_id)
+    {
+        $application_id = intval($application_id);
+        $job_id = intval(get_post_meta($application_id, '_job_applied_for', true));
+        $job = $job_id ? get_post($job_id) : null;
+
+        if (!$job) {
+            return;
+        }
+
+        $candidate_email = sanitize_email(get_post_meta($application_id, '_candidate_email', true));
+        if (!$candidate_email) {
+            return;
+        }
+
+        $candidate_name = get_post_meta($application_id, '_candidate_name', true);
+        $subject = sprintf(__('Application received: %s', 'modern-job-board'), $job->post_title);
+
+        $message = sprintf(__('Hi %s,', 'modern-job-board'), $candidate_name) . "\n\n";
+        $message .= sprintf(
+            __('Thanks for applying for "%s". Your application has been received and forwarded to the employer.', 'modern-job-board'),
+            $job->post_title
+        ) . "\n\n";
+        $message .= sprintf(__('View the job: %s', 'modern-job-board'), get_permalink($job_id)) . "\n";
+
+        if (class_exists('MJB_Candidate_Dashboard')) {
+            $message .= sprintf(__('Your dashboard: %s', 'modern-job-board'), MJB_Candidate_Dashboard::get_page_url()) . "\n";
+        }
+
+        wp_mail($candidate_email, $subject, $message);
+
+        do_action('mjb_candidate_application_confirmation_sent', $application_id, $candidate_email);
     }
 }

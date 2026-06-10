@@ -19,6 +19,10 @@ $GLOBALS['mjb_test_current_user_id'] = 0;
 $GLOBALS['mjb_test_is_logged_in'] = false;
 $GLOBALS['mjb_test_user_caps'] = array();
 $GLOBALS['mjb_test_timestamp'] = 1700000000;
+$GLOBALS['mjb_test_titles'] = array();
+$GLOBALS['mjb_test_excerpts'] = array();
+$GLOBALS['mjb_test_terms'] = array();
+$GLOBALS['mjb_test_dates'] = array();
 
 if (!function_exists('__')) {
     function __($text, $domain = null)
@@ -252,6 +256,39 @@ if (!function_exists('current_time')) {
     }
 }
 
+if (!function_exists('get_the_title')) {
+    function get_the_title($post_id = 0)
+    {
+        $post_id = $post_id ? intval($post_id) : 0;
+        return $GLOBALS['mjb_test_titles'][$post_id] ?? 'Test Post';
+    }
+}
+
+if (!function_exists('get_the_excerpt')) {
+    function get_the_excerpt($post_id = 0)
+    {
+        return $GLOBALS['mjb_test_excerpts'][intval($post_id)] ?? '';
+    }
+}
+
+if (!function_exists('get_the_date')) {
+    function get_the_date($format = '', $post_id = null)
+    {
+        return $GLOBALS['mjb_test_dates'][intval($post_id)] ?? '2026-06-10 12:00:00';
+    }
+}
+
+if (!function_exists('wp_get_post_terms')) {
+    function wp_get_post_terms($post_id, $taxonomy, $args = array())
+    {
+        $terms = $GLOBALS['mjb_test_terms'][intval($post_id)][$taxonomy] ?? array();
+        if (!empty($args['fields']) && $args['fields'] === 'names') {
+            return $terms;
+        }
+        return $terms;
+    }
+}
+
 if (!function_exists('has_shortcode')) {
     function has_shortcode($content, $tag)
     {
@@ -354,3 +391,5 @@ require_once dirname(__DIR__) . '/includes/class-mjb-application-guard.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-page-resolver.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-recaptcha.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-woocommerce.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-rest-api.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-feeds.php';

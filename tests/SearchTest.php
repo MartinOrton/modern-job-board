@@ -57,4 +57,26 @@ class SearchTest extends TestCase
         $this->assertSame(25, $args['posts_per_page']);
         $this->assertSame('designer', $args['s']);
     }
+
+    public function test_build_query_args_applies_featured_ordering()
+    {
+        $args = MJB_Search::build_query_args(array());
+
+        $this->assertSame('_featured', $args['meta_key']);
+        $this->assertSame('DESC', $args['orderby']['meta_value_num']);
+        $this->assertSame('DESC', $args['orderby']['date']);
+    }
+
+    public function test_build_query_args_supports_pagination()
+    {
+        $args = MJB_Search::build_query_args(array('page' => 3));
+
+        $this->assertSame(3, $args['paged']);
+    }
+
+    public function test_map_employment_type_for_schema()
+    {
+        $this->assertSame('FULL_TIME', MJB_Search::map_employment_type_for_schema('full-time'));
+        $this->assertSame('CONTRACTOR', MJB_Search::map_employment_type_for_schema('contract'));
+    }
 }

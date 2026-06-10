@@ -193,6 +193,7 @@ class MJB_Applications
         global $mjb_emails;
         if (isset($mjb_emails)) {
             $mjb_emails->send_new_application_notification($application_id);
+            $mjb_emails->send_application_confirmation_to_candidate($application_id);
         }
 
         do_action('mjb_application_submitted', $application_id);

@@ -193,7 +193,7 @@ class MJB_Tools
             $output = fopen('php://output', 'w');
 
             // Header
-            fputcsv($output, array('ID', 'Job ID', 'Job Title', 'Date', 'Candidate Name', 'Candidate Email', 'Message', 'Resume URL'));
+            fputcsv($output, array('ID', 'Job ID', 'Job Title', 'Date', 'Candidate Name', 'Candidate Email', 'Message', 'Admin Link'));
 
             $args = array(
                 'post_type' => 'job_application',
@@ -216,7 +216,7 @@ class MJB_Tools
                         get_post_meta($app_id, '_candidate_name', true),
                         get_post_meta($app_id, '_candidate_email', true),
                         wp_strip_all_tags(get_the_content()), // Message often in content
-                        MJB_Resumes::get_application_download_url($app_id)
+                        get_edit_post_link($app_id, 'raw')
                     ));
                 }
             }

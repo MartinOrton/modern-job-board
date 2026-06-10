@@ -30,11 +30,20 @@ class MJB_Search
      */
     public static function sanitize_filter_params($raw)
     {
+        $page = !empty($raw['page']) ? intval($raw['page']) : 0;
+        if ($page < 1 && !empty($raw['paged'])) {
+            $page = intval($raw['paged']);
+        }
+        if ($page < 1) {
+            $page = 0;
+        }
+
         return array(
             'search_keywords' => !empty($raw['search_keywords']) ? sanitize_text_field($raw['search_keywords']) : '',
             'search_location' => !empty($raw['search_location']) ? sanitize_text_field($raw['search_location']) : '',
             'search_category' => !empty($raw['search_category']) ? sanitize_text_field($raw['search_category']) : '',
             'search_type' => !empty($raw['search_type']) ? sanitize_text_field($raw['search_type']) : '',
+            'page' => $page,
         );
     }
 
@@ -91,7 +100,57 @@ class MJB_Search
             $args['tax_query'] = $tax_query;
         }
 
+        if (!empty($params['page'])) {
+            $args['paged'] = intval($params['page']);
+        }
+
+        $args = self::apply_featured_ordering($args);
+
         return $args;
+    }
+
+    /**
+     * Sort featured listings ahead of standard listings.
+     *
+     * @param array $args
+     * @return array
+     */
+    public static function apply_featured_ordering($args)
+    {
+        $args['meta_key'] = '_featured';
+        $args['orderby'] = array(
+            'meta_value_num' => 'DESC',
+            'date' => 'DESC',
+        );
+
+        return $args;
+    }
+
+    /**
+     * Map a job type slug/name to a Schema.org employmentType value.
+     *
+     * @param string $type
+     * @return string
+     */
+    public static function map_employment_type_for_schema($type)
+    {
+        $normalized = strtolower(trim($type));
+        $map = array(
+            'full-time' => 'FULL_TIME',
+            'full time' => 'FULL_TIME',
+            'part-time' => 'PART_TIME',
+            'part time' => 'PART_TIME',
+            'contract' => 'CONTRACTOR',
+            'contractor' => 'CONTRACTOR',
+            'temporary' => 'TEMPORARY',
+            'temp' => 'TEMPORARY',
+            'internship' => 'INTERN',
+            'intern' => 'INTERN',
+            'volunteer' => 'VOLUNTEER',
+            'per diem' => 'PER_DIEM',
+        );
+
+        return $map[$normalized] ?? strtoupper(str_replace(array(' ', '-'), '_', $normalized));
     }
 
     /**
@@ -141,11 +200,13 @@ class MJB_Search
         check_ajax_referer('mjb_search_nonce', 'security');
 
         $params = self::sanitize_filter_params(wp_unslash($_POST));
-        $args = self::build_query_args($params);
+        $per_page = isset($_POST['posts_per_page']) ? max(1, intval($_POST['posts_per_page'])) : 10;
+        $args = self::build_query_args($params, array('posts_per_page' => $per_page));
         $query = new WP_Query($args);
 
         if (class_exists('MJB_Shortcodes')) {
             MJB_Shortcodes::render_job_loop($query);
+            MJB_Shortcodes::render_pagination($query, $params);
         } else {
             echo esc_html__('Error: Shortcodes class not found.', 'modern-job-board');
         }
@@ -195,12 +256,10 @@ class MJB_Search
 
         $args = self::build_query_args($params);
 
-        if (isset($args['s'])) {
-            $query->set('s', $args['s']);
-        }
-
-        if (isset($args['tax_query'])) {
-            $query->set('tax_query', $args['tax_query']);
+        foreach (array('s', 'tax_query', 'paged', 'meta_key', 'orderby') as $key) {
+            if (isset($args[$key])) {
+                $query->set($key, $args[$key]);
+            }
         }
     }
 

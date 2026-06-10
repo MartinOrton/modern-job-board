@@ -9,6 +9,8 @@ if (!defined('ABSPATH')) {
 
 class MJB_Cron
 {
+    const BATCH_SIZE = 50;
+    const MAX_JOBS_PER_RUN = 200;
 
     /**
      * Initialize Cron.
@@ -34,31 +36,35 @@ class MJB_Cron
      */
     public function check_for_expired_jobs()
     {
-        $args = array(
-            'post_type' => 'job_listing',
-            'post_status' => 'publish',
-            'posts_per_page' => -1,
-            'meta_query' => array(
-                array(
-                    'key' => '_job_expires',
-                    'value' => date('Y-m-d'),
-                    'compare' => '<',
-                    'type' => 'DATE',
+        $processed = 0;
+
+        do {
+            $args = array(
+                'post_type' => 'job_listing',
+                'post_status' => 'publish',
+                'posts_per_page' => self::BATCH_SIZE,
+                'orderby' => 'ID',
+                'order' => 'ASC',
+                'meta_query' => array(
+                    array(
+                        'key' => '_job_expires',
+                        'value' => date('Y-m-d'),
+                        'compare' => '<',
+                        'type' => 'DATE',
+                    ),
                 ),
-            ),
-            'fields' => 'ids',
-        );
+                'fields' => 'ids',
+            );
 
-        $expired_jobs = get_posts($args);
+            $expired_jobs = get_posts($args);
 
-        if (!empty($expired_jobs)) {
             foreach ($expired_jobs as $job_id) {
-                $update_args = array(
+                wp_update_post(array(
                     'ID' => $job_id,
                     'post_status' => 'expired',
-                );
-                wp_update_post($update_args);
+                ));
+                $processed++;
             }
-        }
+        } while (!empty($expired_jobs) && count($expired_jobs) === self::BATCH_SIZE && $processed < self::MAX_JOBS_PER_RUN);
     }
 }

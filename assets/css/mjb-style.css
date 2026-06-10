@@ -89,3 +89,22 @@
     height: 1px;
     overflow: hidden;
 }
+
+.mjb-pagination {
+    margin-top: 20px;
+}
+
+.mjb-pagination .mjb-page-link {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+}
+
+.mjb-pagination .mjb-page-link.is-active {
+    background: #0073aa;
+    border-color: #0073aa;
+    color: #fff;
+}

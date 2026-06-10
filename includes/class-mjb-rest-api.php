@@ -25,50 +25,108 @@ class MJB_REST_API
         register_rest_route('mjb/v1', '/jobs', array(
             'methods' => 'GET',
             'callback' => array($this, 'get_jobs'),
-            'permission_callback' => '__return_true', // Public
+            'permission_callback' => '__return_true',
+            'args' => array(
+                'per_page' => array(
+                    'default' => 10,
+                    'sanitize_callback' => 'absint',
+                ),
+                'page' => array(
+                    'default' => 1,
+                    'sanitize_callback' => 'absint',
+                ),
+                'search_keywords' => array(
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'search_location' => array(
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'search_category' => array(
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'search_type' => array(
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
         ));
     }
 
     /**
-     * Get Jobs for API.
+     * Build query args from a REST request.
+     *
+     * @param WP_REST_Request $request
+     * @return array
      */
-    public function get_jobs($request)
+    public static function build_query_args_from_request($request)
     {
         $per_page = $request->get_param('per_page') ? intval($request->get_param('per_page')) : 10;
         $per_page = min(max($per_page, 1), 100);
 
-        $args = array(
-            'post_type' => 'job_listing',
-            'post_status' => 'publish',
-            'posts_per_page' => $per_page,
-        );
+        $params = MJB_Search::sanitize_filter_params(array(
+            'search_keywords' => $request->get_param('search_keywords'),
+            'search_location' => $request->get_param('search_location'),
+            'search_category' => $request->get_param('search_category'),
+            'search_type' => $request->get_param('search_type'),
+            'page' => $request->get_param('page'),
+        ));
 
+        return MJB_Search::build_query_args($params, array(
+            'posts_per_page' => $per_page,
+        ));
+    }
+
+    /**
+     * Format a job post for API output.
+     *
+     * @param int $post_id
+     * @return array
+     */
+    public static function format_job_for_api($post_id)
+    {
+        $post_id = intval($post_id);
+        $company_name = get_post_meta($post_id, '_company_name', true);
+        $locations = wp_get_post_terms($post_id, 'job_location', array('fields' => 'names'));
+        $types = wp_get_post_terms($post_id, 'job_type', array('fields' => 'names'));
+        $categories = wp_get_post_terms($post_id, 'job_category', array('fields' => 'names'));
+
+        return array(
+            'id' => $post_id,
+            'title' => get_the_title($post_id),
+            'link' => get_permalink($post_id),
+            'date' => get_the_date('Y-m-d H:i:s', $post_id),
+            'featured' => (bool) get_post_meta($post_id, '_featured', true),
+            'company' => $company_name,
+            'location' => !empty($locations) ? $locations[0] : '',
+            'type' => !empty($types) ? $types[0] : '',
+            'category' => !empty($categories) ? $categories[0] : '',
+            'excerpt' => get_the_excerpt($post_id),
+        );
+    }
+
+    /**
+     * Get Jobs for API.
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response
+     */
+    public function get_jobs($request)
+    {
+        $args = self::build_query_args_from_request($request);
         $query = new WP_Query($args);
         $jobs = array();
 
         if ($query->have_posts()) {
             while ($query->have_posts()) {
                 $query->the_post();
-                $post_id = get_the_ID();
-
-                $company_name = get_post_meta($post_id, '_company_name', true);
-                $locations = wp_get_post_terms($post_id, 'job_location', array('fields' => 'names'));
-                $types = wp_get_post_terms($post_id, 'job_type', array('fields' => 'names'));
-
-                $jobs[] = array(
-                    'id' => $post_id,
-                    'title' => get_the_title(),
-                    'link' => get_permalink(),
-                    'date' => get_the_date('Y-m-d H:i:s'),
-                    'company' => $company_name,
-                    'location' => !empty($locations) ? $locations[0] : '',
-                    'type' => !empty($types) ? $types[0] : '',
-                    'excerpt' => get_the_excerpt(),
-                );
+                $jobs[] = self::format_job_for_api(get_the_ID());
             }
         }
         wp_reset_postdata();
 
-        return new WP_REST_Response($jobs, 200);
+        $response = new WP_REST_Response($jobs, 200);
+        $response->header('X-WP-Total', (int) $query->found_posts);
+        $response->header('X-WP-TotalPages', (int) $query->max_num_pages);
+
+        return $response;
     }
 }
