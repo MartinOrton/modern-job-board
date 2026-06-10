@@ -2,6 +2,16 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.7.1] - 2026-06-10
+### Added
+- **Pretty search URLs**: Path-based job search routes instead of exposed query strings.
+- **REST search paths**: Canonical API endpoint at `/wp-json/mjb/v1/jobs/search/...`.
+- **Automatic 301 redirects**: Legacy `?search_keywords=` style URLs redirect to pretty paths.
+
+### Improved
+- **Job filter forms** submit to `/jobs/in/{location}/category/{category}/type/{type}/keyword/{keyword}/page/{n}/`.
+- **REST responses** include a `Link: rel="canonical"` header pointing at the pretty search URL.
+
 ## [1.7.0] - 2026-06-10
 ### Added
 - **Candidate "My Applications"**: Application history table on the candidate dashboard matched by email.

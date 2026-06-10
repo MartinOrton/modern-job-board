@@ -54,6 +54,15 @@ class MJB_Search
      */
     public static function get_request_filter_params()
     {
+        $path = get_query_var(MJB_Job_Routes::QUERY_VAR);
+        if (!empty($path)) {
+            return MJB_Job_Routes::parse_path($path);
+        }
+
+        if (MJB_Job_Routes::has_legacy_query_filters()) {
+            return self::sanitize_filter_params(MJB_Job_Routes::get_legacy_query_params());
+        }
+
         return self::sanitize_filter_params(wp_unslash($_GET));
     }
 
@@ -272,7 +281,11 @@ class MJB_Search
             return;
         }
 
-        if (!empty($_GET['search_keywords'])) {
+        if (get_query_var(MJB_Job_Routes::QUERY_VAR)) {
+            return;
+        }
+
+        if (MJB_Job_Routes::has_legacy_query_filters()) {
             return;
         }
 

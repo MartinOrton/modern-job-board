@@ -2,6 +2,7 @@
 
 define('ABSPATH', dirname(__DIR__) . '/');
 define('HOUR_IN_SECONDS', 3600);
+define('MJB_VERSION', 'test');
 
 $GLOBALS['mjb_test_transients'] = array();
 $GLOBALS['mjb_test_post_meta'] = array();
@@ -23,11 +24,19 @@ $GLOBALS['mjb_test_titles'] = array();
 $GLOBALS['mjb_test_excerpts'] = array();
 $GLOBALS['mjb_test_terms'] = array();
 $GLOBALS['mjb_test_dates'] = array();
+$GLOBALS['mjb_test_query_vars'] = array();
 
 if (!function_exists('__')) {
     function __($text, $domain = null)
     {
         return $text;
+    }
+}
+
+if (!function_exists('apply_filters')) {
+    function apply_filters($hook, $value)
+    {
+        return $value;
     }
 }
 
@@ -310,6 +319,35 @@ if (!function_exists('home_url')) {
     }
 }
 
+if (!function_exists('trailingslashit')) {
+    function trailingslashit($string)
+    {
+        return rtrim($string, '/\\') . '/';
+    }
+}
+
+if (!function_exists('rest_url')) {
+    function rest_url($path = '')
+    {
+        return 'https://example.test/wp-json/' . ltrim($path, '/');
+    }
+}
+
+if (!function_exists('get_query_var')) {
+    function get_query_var($key, $default = '')
+    {
+        return $GLOBALS['mjb_test_query_vars'][$key] ?? $default;
+    }
+}
+
+if (!function_exists('sanitize_title')) {
+    function sanitize_title($title)
+    {
+        $title = strtolower(trim((string) $title));
+        return preg_replace('/[^a-z0-9\\s-]/', '', str_replace(' ', '-', $title));
+    }
+}
+
 if (!function_exists('add_query_arg')) {
     function add_query_arg($key, $value = false, $url = false)
     {
@@ -385,6 +423,7 @@ if (!class_exists('MJB_Test_WPDB')) {
 
 $GLOBALS['wpdb'] = new MJB_Test_WPDB();
 
+require_once dirname(__DIR__) . '/includes/class-mjb-job-routes.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-search.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-resumes.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-application-guard.php';

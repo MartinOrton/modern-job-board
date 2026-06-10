@@ -3,7 +3,7 @@
  * Plugin Name: Modern Job Board
  * Plugin URI: https://github.com/MartinOrton/modern-job-board
  * Description: A lightweight job board plugin for WordPress.
- * Version: 1.7.0
+ * Version: 1.7.1
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
  * Text Domain: modern-job-board
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '1.7.0');
+define('MJB_VERSION', '1.7.1');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
 
@@ -22,6 +22,7 @@ require_once MJB_PATH . 'includes/class-mjb-resumes.php';
 require_once MJB_PATH . 'includes/class-mjb-activator.php';
 require_once MJB_PATH . 'includes/class-mjb-notices.php';
 require_once MJB_PATH . 'includes/class-mjb-page-resolver.php';
+require_once MJB_PATH . 'includes/class-mjb-job-routes.php';
 require_once MJB_PATH . 'includes/class-mjb-application-guard.php';
 require_once MJB_PATH . 'includes/class-mjb-recaptcha.php';
 
@@ -70,6 +71,7 @@ class Modern_Job_Board
     private function __construct()
     {
         MJB_Page_Resolver::init();
+        MJB_Job_Routes::init();
         $this->init_hooks();
     }
 
@@ -263,7 +265,9 @@ class Modern_Job_Board
         wp_enqueue_script('mjb-ajax-search', MJB_URL . 'assets/js/mjb-ajax-search.js', array('jquery'), MJB_VERSION, true);
         wp_localize_script('mjb-ajax-search', 'mjb_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('mjb_search_nonce')
+            'nonce' => wp_create_nonce('mjb_search_nonce'),
+            'jobs_search_base' => trailingslashit(MJB_Job_Routes::build_url()),
+            'jobs_api_search_base' => trailingslashit(MJB_Job_Routes::build_url(array(), array('rest' => true))),
         ));
     }
 }

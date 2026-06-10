@@ -12,7 +12,7 @@ get_header(); ?>
 
     <div class="mjb-content-area">
         <aside class="mjb-sidebar">
-            <form action="<?php echo get_post_type_archive_link('job_listing'); ?>" method="GET"
+            <form action="<?php echo esc_url(MJB_Job_Routes::build_url()); ?>" method="GET"
                 class="mjb-search-form">
                 <h3><?php _e('Filter Jobs', 'modern-job-board'); ?></h3>
 

@@ -3,14 +3,55 @@ jQuery(document).ready(function ($) {
     var $jobsList = $('#mjb-jobs-list');
     var $loader = $('.mjb-loader');
 
-    function fetchJobs(page) {
-        var data = {
-            action: 'mjb_filter_jobs',
-            security: mjb_ajax.nonce,
+    function slugifyKeyword(keyword) {
+        return $.trim(keyword)
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
+    }
+
+    function buildPrettyUrl(filters, page) {
+        var parts = [];
+        var base = (window.mjb_ajax && mjb_ajax.jobs_search_base) ? mjb_ajax.jobs_search_base : '/jobs/';
+
+        if (filters.search_location) {
+            parts.push('in', filters.search_location);
+        }
+        if (filters.search_category) {
+            parts.push('category', filters.search_category);
+        }
+        if (filters.search_type) {
+            parts.push('type', filters.search_type);
+        }
+        if (filters.search_keywords) {
+            parts.push('keyword', slugifyKeyword(filters.search_keywords));
+        }
+        if (page && parseInt(page, 10) > 1) {
+            parts.push('page', String(page));
+        }
+
+        return base + (parts.length ? parts.join('/') + '/' : '');
+    }
+
+    function getFilters() {
+        return {
             search_keywords: $filterForm.find('input[name="search_keywords"]').val(),
             search_location: $filterForm.find('[name="search_location"]').val(),
             search_category: $filterForm.find('select[name="search_category"]').val(),
-            search_type: $filterForm.find('select[name="search_type"]').val(),
+            search_type: $filterForm.find('select[name="search_type"]').val()
+        };
+    }
+
+    function fetchJobs(page, pushHistory) {
+        var filters = getFilters();
+        var data = {
+            action: 'mjb_filter_jobs',
+            security: mjb_ajax.nonce,
+            search_keywords: filters.search_keywords,
+            search_location: filters.search_location,
+            search_category: filters.search_category,
+            search_type: filters.search_type,
             page: page || 1,
             posts_per_page: $jobsList.data('posts-per-page') || 10
         };
@@ -26,6 +67,10 @@ jQuery(document).ready(function ($) {
                 $jobsList.html(response);
                 $jobsList.css('opacity', '1');
                 $loader.hide();
+
+                if (pushHistory !== false && window.history && window.history.pushState) {
+                    window.history.pushState(null, '', buildPrettyUrl(filters, page || 1));
+                }
             },
             error: function () {
                 console.log('Error fetching jobs');
@@ -38,16 +83,26 @@ jQuery(document).ready(function ($) {
     if ($filterForm.length) {
         $filterForm.on('submit', function (e) {
             e.preventDefault();
-            fetchJobs(1);
+            var filters = getFilters();
+            window.location.href = buildPrettyUrl(filters, 1);
         });
 
         $jobsList.on('click', '.mjb-page-link', function (e) {
             e.preventDefault();
+
             var page = parseInt($(this).data('page'), 10);
+            var targetUrl = $(this).data('url');
+
             if (!page || $(this).hasClass('is-active')) {
                 return;
             }
-            fetchJobs(page);
+
+            if (targetUrl && window.history && window.history.pushState) {
+                fetchJobs(page, false);
+                window.history.pushState(null, '', targetUrl);
+            } else {
+                fetchJobs(page, true);
+            }
         });
     }
 });

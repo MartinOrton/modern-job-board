@@ -51,8 +51,11 @@ A powerful, feature-rich WordPress plugin for creating a professional job board.
 ## 💻 Developer Information
 
 ### REST API
-- **Endpoint**: `GET /wp-json/mjb/v1/jobs`
-- **Params**: `per_page` (default 10)
+- **Endpoint**: `GET /wp-json/mjb/v1/jobs/search/`
+- **Pretty paths** (preferred):
+  - `/wp-json/mjb/v1/jobs/search/in/remote/category/engineering/type/full-time/keyword/developer/page/2/per-page/20/`
+- **Legacy query URLs** (`?search_keywords=...`) redirect with **301** to the path format above.
+- **Pagination headers**: `X-WP-Total`, `X-WP-TotalPages`, `Link: rel="canonical"`
 
 ### XML Feed (Indeed/Google Jobs)
 - **URL**: `yourdomain.com/feed/job-listings`

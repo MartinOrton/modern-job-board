@@ -35,7 +35,7 @@ class MJB_Shortcodes
         // Search Form
         ?>
         <?php $filter_params = MJB_Search::get_request_filter_params(); ?>
-        <form id="mjb-job-filter" class="mjb-job-filter" method="GET" action="">
+        <form id="mjb-job-filter" class="mjb-job-filter" method="GET" action="<?php echo esc_url(MJB_Job_Routes::build_url()); ?>">
             <div class="mjb-filter-row">
                 <input type="text" name="search_keywords" placeholder="<?php _e('Keywords...', 'modern-job-board'); ?>" value="<?php echo esc_attr($filter_params['search_keywords']); ?>">
                 <?php echo MJB_Search::render_location_dropdown($filter_params['search_location']); ?>
@@ -144,7 +144,14 @@ class MJB_Shortcodes
 
         for ($page = 1; $page <= $query->max_num_pages; $page++) {
             $class = ($page === $current_page) ? 'mjb-page-link is-active' : 'mjb-page-link';
-            echo '<button type="button" class="' . esc_attr($class) . '" data-page="' . esc_attr($page) . '">';
+            $page_params = $filter_params;
+            if ($page > 1) {
+                $page_params['page'] = $page;
+            } else {
+                unset($page_params['page']);
+            }
+            $page_url = MJB_Job_Routes::build_url($page_params);
+            echo '<button type="button" class="' . esc_attr($class) . '" data-page="' . esc_attr($page) . '" data-url="' . esc_url($page_url) . '">';
             echo esc_html((string) $page);
             echo '</button> ';
         }

@@ -15,6 +15,38 @@ class MJB_REST_API
     public function init()
     {
         add_action('rest_api_init', array($this, 'register_routes'));
+        add_filter('rest_pre_dispatch', array($this, 'redirect_legacy_query_urls'), 10, 3);
+    }
+
+    /**
+     * Redirect legacy query-string API requests to path-based URLs.
+     *
+     * @param mixed           $result
+     * @param WP_REST_Server  $server
+     * @param WP_REST_Request $request
+     * @return mixed
+     */
+    public function redirect_legacy_query_urls($result, $server, $request)
+    {
+        if ($request->get_route() !== '/mjb/v1/jobs') {
+            return $result;
+        }
+
+        if (!MJB_Job_Routes::has_legacy_query_filters()) {
+            return $result;
+        }
+
+        $params = MJB_Job_Routes::get_legacy_query_params();
+        $per_page = isset($params['per_page']) ? intval($params['per_page']) : 10;
+        unset($params['per_page']);
+
+        $target = MJB_Job_Routes::build_url($params, array(
+            'rest' => true,
+            'per_page' => $per_page,
+        ));
+
+        wp_safe_redirect($target, 301);
+        exit;
     }
 
     /**
@@ -22,6 +54,24 @@ class MJB_REST_API
      */
     public function register_routes()
     {
+        register_rest_route('mjb/v1', '/jobs/search', array(
+            'methods' => 'GET',
+            'callback' => array($this, 'get_jobs'),
+            'permission_callback' => '__return_true',
+        ));
+
+        register_rest_route('mjb/v1', '/jobs/search/(?P<search_path>[a-zA-Z0-9\\-\\/]+)', array(
+            'methods' => 'GET',
+            'callback' => array($this, 'get_jobs'),
+            'permission_callback' => '__return_true',
+            'args' => array(
+                'search_path' => array(
+                    'required' => true,
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
+        ));
+
         register_rest_route('mjb/v1', '/jobs', array(
             'methods' => 'GET',
             'callback' => array($this, 'get_jobs'),
@@ -59,6 +109,18 @@ class MJB_REST_API
      */
     public static function build_query_args_from_request($request)
     {
+        $search_path = $request->get_param('search_path');
+        if ($search_path) {
+            $parsed = MJB_Job_Routes::parse_path($search_path);
+            $per_page = !empty($parsed['per_page']) ? intval($parsed['per_page']) : 10;
+            unset($parsed['per_page']);
+            $per_page = min(max($per_page, 1), 100);
+
+            return MJB_Search::build_query_args($parsed, array(
+                'posts_per_page' => $per_page,
+            ));
+        }
+
         $per_page = $request->get_param('per_page') ? intval($request->get_param('per_page')) : 10;
         $per_page = min(max($per_page, 1), 100);
 
@@ -72,6 +134,41 @@ class MJB_REST_API
 
         return MJB_Search::build_query_args($params, array(
             'posts_per_page' => $per_page,
+        ));
+    }
+
+    /**
+     * Canonical pretty URL for a REST request.
+     *
+     * @param WP_REST_Request $request
+     * @return string
+     */
+    public static function get_canonical_search_url($request)
+    {
+        $search_path = $request->get_param('search_path');
+        if ($search_path) {
+            return MJB_Job_Routes::build_url(MJB_Job_Routes::parse_path($search_path), array(
+                'rest' => true,
+                'per_page' => $request->get_param('per_page') ?: 10,
+            ));
+        }
+
+        if (MJB_Job_Routes::has_legacy_query_filters()) {
+            $params = MJB_Job_Routes::get_legacy_query_params();
+            $per_page = isset($params['per_page']) ? intval($params['per_page']) : ($request->get_param('per_page') ?: 10);
+            unset($params['per_page']);
+
+            return MJB_Job_Routes::build_url($params, array(
+                'rest' => true,
+                'per_page' => $per_page,
+            ));
+        }
+
+        return MJB_Job_Routes::build_url(array(
+            'page' => $request->get_param('page'),
+        ), array(
+            'rest' => true,
+            'per_page' => $request->get_param('per_page') ?: 10,
         ));
     }
 
@@ -126,6 +223,7 @@ class MJB_REST_API
         $response = new WP_REST_Response($jobs, 200);
         $response->header('X-WP-Total', (int) $query->found_posts);
         $response->header('X-WP-TotalPages', (int) $query->max_num_pages);
+        $response->header('Link', '<' . esc_url_raw(self::get_canonical_search_url($request)) . '>; rel="canonical"');
 
         return $response;
     }

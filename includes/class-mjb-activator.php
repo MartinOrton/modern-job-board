@@ -20,6 +20,9 @@ class MJB_Activator
         self::schedule_cron();
         MJB_Resumes::ensure_secure_directory();
 
+        require_once dirname(__FILE__) . '/class-mjb-job-routes.php';
+        MJB_Job_Routes::register_rewrites();
+
         flush_rewrite_rules();
     }
 
