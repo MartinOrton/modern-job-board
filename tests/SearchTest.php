@@ -40,7 +40,8 @@ class SearchTest extends TestCase
             'search_type' => 'contract',
         ));
 
-        $this->assertCount(3, $args['tax_query']);
+        $clauses = array_values(array_filter($args['tax_query'], 'is_array'));
+        $this->assertCount(3, $clauses);
         $this->assertSame('AND', $args['tax_query']['relation']);
         $this->assertSame('job_location', $args['tax_query'][0]['taxonomy']);
         $this->assertSame('remote', $args['tax_query'][0]['terms']);

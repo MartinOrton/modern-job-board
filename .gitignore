@@ -13,3 +13,4 @@ Thumbs.db
 
 # PHP dependencies
 /vendor/
+.phpunit.result.cache
