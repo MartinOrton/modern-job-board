@@ -41,7 +41,7 @@ cd "C:\Users\marti\4Mation Digital\modern-job-board"
 
 ## Import the marketing home page
 
-Copies the landing site into the **Home** page, creates **Documentation** at `/docs/`, and activates **Modern Job Board Theme**:
+Imports `gutenberg-blocks.html` into the **Home** page as separate Gutenberg blocks (Hero, Stats, Features, Compare, Developers, Pricing, CTA), creates **Documentation** at `/docs/`, and activates **Modern Job Board Theme**:
 
 ```powershell
 $env:PHPRC = "$env:APPDATA\Local\run\cp2oegpc-\conf\php"
