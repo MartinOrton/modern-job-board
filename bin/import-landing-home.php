@@ -106,6 +106,24 @@ function mjb_container_wrap($inner) {
 }
 
 /**
+ * @param string $inner Comparison section inner HTML.
+ * @return string
+ */
+function mjb_extract_comparison_table_html($inner) {
+    preg_match_all(
+        '/<div class="row[^"]*">(?:\s*<div class="col[^"]*">[\s\S]*?<\/div>\s*)+<\/div>/is',
+        $inner,
+        $rows
+    );
+
+    if (empty($rows[0])) {
+        return '';
+    }
+
+    return '<div class="comparison-table">' . implode("\n", $rows[0]) . '</div>';
+}
+
+/**
  * @param string $html HTML fragment.
  * @return string
  */
@@ -453,12 +471,7 @@ function mjb_build_home_block_markup($main_html) {
         } elseif ('features' === $anchor || mjb_section_has_class($section['attrs'], 'bg-neutral') && str_contains($inner, 'features-grid')) {
             $content = mjb_build_features_blocks($inner);
         } elseif ('comparison' === $anchor) {
-            $table_html = '';
-            if (preg_match('/<div class="comparison-table-wrapper[^"]*">\s*(<div class="comparison-table">.*?<\/div>)\s*<\/div>/is', $inner, $match)) {
-                $table_html = trim($match[1]);
-            } elseif (preg_match('/<div class="comparison-table">.*?<\/div>/is', $inner, $match)) {
-                $table_html = trim($match[0]);
-            }
+            $table_html = mjb_extract_comparison_table_html($inner);
 
             $content = mjb_container_wrap(
                 mjb_build_section_header_blocks($inner) . "\n\n" . mjb_group_block(

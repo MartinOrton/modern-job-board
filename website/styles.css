@@ -49,10 +49,21 @@ a {
 }
 
 /* Utilities */
-.container {
+.container,
+.wp-block-group.container {
     max-width: var(--container-max);
     margin: 0 auto;
     padding: 0 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.wp-block-group.container > .wp-block-group__inner-container {
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .section {
@@ -597,16 +608,28 @@ footer { border-top: 1px solid var(--border); padding: 3rem 0; background: white
     .mobile-toggle { display: none; }
     .desktop-only { display: flex; }
     .hero-title { font-size: 4rem; }
-    .stats-grid { grid-template-columns: repeat(4, 1fr); }
-    .features-grid { grid-template-columns: repeat(2, 1fr); }
-    .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+    .stats-grid,
+    .wp-block-group.stats-grid,
+    .wp-block-group.container.stats-grid,
+    .wp-block-group.stats-grid > .wp-block-group__inner-container,
+    .wp-block-group.container.stats-grid > .wp-block-group__inner-container { grid-template-columns: repeat(4, 1fr); }
+    .features-grid,
+    .wp-block-group.features-grid,
+    .wp-block-group.features-grid > .wp-block-group__inner-container { grid-template-columns: repeat(2, 1fr); }
+    .pricing-grid,
+    .wp-block-group.pricing-grid,
+    .wp-block-group.pricing-grid > .wp-block-group__inner-container { grid-template-columns: repeat(2, 1fr); }
     .footer-content { flex-direction: row; justify-content: space-between; }
 }
 
 @media (min-width: 1024px) {
     .hero-grid { grid-template-columns: 1fr 1fr; }
-    .features-grid { grid-template-columns: repeat(3, 1fr); }
-    .dev-grid { grid-template-columns: 1fr 1fr; }
+    .features-grid,
+    .wp-block-group.features-grid,
+    .wp-block-group.features-grid > .wp-block-group__inner-container { grid-template-columns: repeat(3, 1fr); }
+    .dev-grid,
+    .wp-block-group.dev-grid,
+    .wp-block-group.dev-grid > .wp-block-group__inner-container { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 767px) {
