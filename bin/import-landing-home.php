@@ -473,11 +473,8 @@ function mjb_build_home_block_markup($main_html) {
         } elseif ('comparison' === $anchor) {
             $table_html = mjb_extract_comparison_table_html($inner);
 
-            $content = mjb_container_wrap(
-                mjb_build_section_header_blocks($inner) . "\n\n" . mjb_group_block(
-                    'comparison-table-wrapper reveal delay-1',
-                    mjb_html_block($table_html)
-                )
+            $content = mjb_container_wrap(mjb_build_section_header_blocks($inner)) . "\n\n" . mjb_html_block(
+                '<div class="comparison-table-wrapper reveal delay-1">' . $table_html . '</div>'
             );
         } elseif ('developers' === $anchor) {
             $content = mjb_build_developers_blocks($inner);
