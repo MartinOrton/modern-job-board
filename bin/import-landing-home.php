@@ -90,7 +90,7 @@ function mjb_serialize_parsed_blocks($markup) {
  * @return array<int, array<int, string>>
  */
 function mjb_match_class_divs($html, $class_prefix) {
-    $pattern = '/<div class="(' . preg_quote($class_prefix, '/') . '[^"]*)">(.*?)<\/div>\s*(?=(?:<!--.*?-->\s*)*(?:<div class="' . preg_quote($class_prefix, '/') . '|<\/div>\s*<\/div>))/is';
+    $pattern = '/<div class="(' . preg_quote($class_prefix, '/') . '[^"]*)">(.*?)<\/div>\s*(?=(?:<!--.*?-->\s*)*(?:<div class="' . preg_quote($class_prefix, '/') . '|<\/div>))/is';
 
     preg_match_all($pattern, $html, $matches, PREG_SET_ORDER);
 
@@ -121,6 +121,48 @@ function mjb_extract_comparison_table_html($inner) {
     }
 
     return '<div class="comparison-table">' . implode("\n", $rows[0]) . '</div>';
+}
+
+/**
+ * @param string $html         HTML fragment.
+ * @param string $class_prefix Div class prefix.
+ * @param string $wrapper_class Optional wrapper class.
+ * @return string
+ */
+function mjb_rebuild_div_group_html($html, $class_prefix, $wrapper_class = '') {
+    $matches = mjb_match_class_divs($html, $class_prefix);
+    $items   = array();
+
+    foreach ($matches as $match) {
+        $items[] = '<div class="' . esc_attr(trim($match[1])) . '">' . trim($match[2]) . '</div>';
+    }
+
+    if ('' === $wrapper_class) {
+        return implode("\n", $items);
+    }
+
+    return '<div class="' . esc_attr($wrapper_class) . '">' . implode("\n", $items) . '</div>';
+}
+
+/**
+ * @param string $inner Developers section inner HTML.
+ * @return string
+ */
+function mjb_build_dev_grid_html($inner) {
+    $items = array();
+
+    foreach (mjb_match_class_divs($inner, 'dev-item') as $match) {
+        $items[] = '<div class="' . esc_attr(trim($match[1])) . '">' . trim($match[2]) . '</div>';
+    }
+
+    $dev_content = $items ? '<div class="dev-content">' . implode("\n", $items) . '</div>' : '';
+    $dev_code    = '';
+
+    if (preg_match('/<div class="(dev-code[^"]*)">\s*(<div class="code-window">[\s\S]*?<\/div>)\s*<\/div>/is', $inner, $match)) {
+        $dev_code = '<div class="' . esc_attr(trim($match[1])) . '">' . trim($match[2]) . '</div>';
+    }
+
+    return '<div class="dev-grid">' . $dev_content . ( $dev_code ? "\n" . $dev_code : '' ) . '</div>';
 }
 
 /**
@@ -305,17 +347,7 @@ function mjb_build_section_header_blocks($inner) {
  * @return string
  */
 function mjb_build_stats_blocks($inner) {
-    preg_match_all('/<div class="(stat-block[^"]*)">.*?<h3>(.*?)<\/h3>.*?<p>(.*?)<\/p>.*?<\/div>/is', $inner, $matches, PREG_SET_ORDER);
-    $children = array();
-
-    foreach ($matches as $match) {
-        $children[] = mjb_group_block(
-            trim($match[1]),
-            mjb_heading_block(3, trim($match[2])) . "\n\n" . mjb_paragraph_block(trim($match[3]))
-        );
-    }
-
-    return mjb_group_block('container stats-grid', implode("\n\n", $children), 'div', '', '');
+    return mjb_html_block(mjb_rebuild_div_group_html($inner, 'stat-block', 'container stats-grid'));
 }
 
 /**
@@ -323,41 +355,10 @@ function mjb_build_stats_blocks($inner) {
  * @return string
  */
 function mjb_build_features_blocks($inner) {
-    $matches = mjb_match_class_divs($inner, 'feature-card');
-    $cards    = array();
-
-    foreach ($matches as $match) {
-        $card_inner = $match[2];
-        $icon       = '';
-        $title      = '';
-        $text       = '';
-
-        if (preg_match('/<div class="feature-icon">(.*?)<\/div>/is', $card_inner, $icon_match)) {
-            $icon = '<div class="feature-icon">' . trim($icon_match[1]) . '</div>';
-        }
-        if (preg_match('/<h3>(.*?)<\/h3>/is', $card_inner, $title_match)) {
-            $title = trim($title_match[1]);
-        }
-        if (preg_match('/<p>(.*?)<\/p>/is', $card_inner, $text_match)) {
-            $text = trim($text_match[1]);
-        }
-
-        $card_blocks = array();
-        if ($icon) {
-            $card_blocks[] = mjb_html_block($icon);
-        }
-        if ($title) {
-            $card_blocks[] = mjb_heading_block(3, $title);
-        }
-        if ($text) {
-            $card_blocks[] = mjb_paragraph_block($text);
-        }
-
-        $cards[] = mjb_group_block(trim($match[1]), implode("\n\n", $card_blocks));
-    }
-
     return mjb_container_wrap(
-        mjb_build_section_header_blocks($inner) . "\n\n" . mjb_group_block('features-grid', implode("\n\n", $cards), 'div', '', '')
+        mjb_build_section_header_blocks($inner) . "\n\n" . mjb_html_block(
+            mjb_rebuild_div_group_html($inner, 'feature-card', 'features-grid')
+        )
     );
 }
 
@@ -366,29 +367,8 @@ function mjb_build_features_blocks($inner) {
  * @return string
  */
 function mjb_build_developers_blocks($inner) {
-    preg_match_all('/<div class="(dev-item[^"]*)">.*?<h3>(.*?)<\/h3>.*?<p>(.*?)<\/p>.*?<\/div>/is', $inner, $matches, PREG_SET_ORDER);
-    $items    = array();
-
-    foreach ($matches as $match) {
-        $items[] = mjb_group_block(
-            trim($match[1]),
-            mjb_heading_block(3, trim($match[2])) . "\n\n" . mjb_paragraph_block(trim($match[3]))
-        );
-    }
-
-    $code = '';
-    if (preg_match('/<div class="dev-code[^"]*">\s*(<div class="code-window">.*?<\/div>)\s*<\/div>/is', $inner, $match)) {
-        $code = trim($match[1]);
-    }
-
-    $dev_content = mjb_group_block('dev-content', implode("\n\n", $items));
-    $dev_code    = $code ? mjb_group_block('dev-code reveal delay-2', mjb_html_block($code)) : '';
-
     return mjb_container_wrap(
-        mjb_build_section_header_blocks($inner) . "\n\n" . mjb_group_block(
-            'dev-grid',
-            $dev_content . ( $dev_code ? "\n\n" . $dev_code : '' )
-        )
+        mjb_build_section_header_blocks($inner) . "\n\n" . mjb_html_block(mjb_build_dev_grid_html($inner))
     );
 }
 
@@ -397,37 +377,10 @@ function mjb_build_developers_blocks($inner) {
  * @return string
  */
 function mjb_build_pricing_blocks($inner) {
-    $matches = mjb_match_class_divs($inner, 'pricing-card');
-    $cards = array();
-
-    foreach ($matches as $match) {
-        $card_inner = $match[2];
-        $blocks     = array();
-
-        if (preg_match('/<div class="recommended-badge">(.*?)<\/div>/is', $card_inner, $badge_match)) {
-            $blocks[] = mjb_html_block('<div class="recommended-badge">' . trim($badge_match[1]) . '</div>');
-        }
-        if (preg_match('/<h3>(.*?)<\/h3>/is', $card_inner, $title_match)) {
-            $blocks[] = mjb_heading_block(3, trim($title_match[1]));
-        }
-        if (preg_match('/<p class="price-sub">(.*?)<\/p>/is', $card_inner, $sub_match)) {
-            $blocks[] = mjb_paragraph_block(trim($sub_match[1]), 'price-sub');
-        }
-        if (preg_match('/<div class="price">(.*?)<\/div>/is', $card_inner, $price_match)) {
-            $blocks[] = mjb_html_block('<div class="price">' . trim($price_match[1]) . '</div>');
-        }
-        if (preg_match('/<ul class="price-features">(.*?)<\/ul>/is', $card_inner, $list_match)) {
-            $blocks[] = mjb_html_block('<ul class="price-features">' . trim($list_match[1]) . '</ul>');
-        }
-        if (preg_match('/<a[^>]+class="btn[^"]*"[^>]*>.*?<\/a>/is', $card_inner, $link_match)) {
-            $blocks[] = mjb_html_block(trim($link_match[0]));
-        }
-
-        $cards[] = mjb_group_block(trim($match[1]), implode("\n\n", $blocks));
-    }
-
     return mjb_container_wrap(
-        mjb_build_section_header_blocks($inner) . "\n\n" . mjb_group_block('pricing-grid', implode("\n\n", $cards))
+        mjb_build_section_header_blocks($inner) . "\n\n" . mjb_html_block(
+            mjb_rebuild_div_group_html($inner, 'pricing-card', 'pricing-grid')
+        )
     );
 }
 
@@ -473,8 +426,10 @@ function mjb_build_home_block_markup($main_html) {
         } elseif ('comparison' === $anchor) {
             $table_html = mjb_extract_comparison_table_html($inner);
 
-            $content = mjb_container_wrap(mjb_build_section_header_blocks($inner)) . "\n\n" . mjb_html_block(
-                '<div class="comparison-table-wrapper reveal delay-1">' . $table_html . '</div>'
+            $content = mjb_container_wrap(
+                mjb_build_section_header_blocks($inner) . "\n\n" . mjb_html_block(
+                    '<div class="comparison-table-wrapper reveal delay-1">' . $table_html . '</div>'
+                )
             );
         } elseif ('developers' === $anchor) {
             $content = mjb_build_developers_blocks($inner);
