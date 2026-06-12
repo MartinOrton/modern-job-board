@@ -1,4 +1,4 @@
-# Start Local WP services for martin-orton-design.local when the Local app has not started them.
+# Start Local WP services for mjb.local when the Local app has not started them.
 # Prefer starting the site from the Local app when possible (Site -> Start, SSL -> Trust).
 
 $siteId = "cp2oegpc-"
@@ -54,8 +54,8 @@ if ($checks.Values -contains $false) {
 
 Write-Host ""
 Write-Host "Site URLs:"
-Write-Host "  https://martin-orton-design.local"
-Write-Host "  https://martin-orton-design.local/jobs/"
+Write-Host "  https://mjb.local"
+Write-Host "  https://mjb.local/jobs/"
 Write-Host ""
 Write-Host "If the browser warns about the certificate, run:"
-Write-Host "  certutil -addstore -user Root `"$routerNginx\certs\martin-orton-design.local.crt`""
+Write-Host "  certutil -addstore -user Root `"$routerNginx\certs\mjb.local.crt`""
