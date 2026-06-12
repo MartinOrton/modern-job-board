@@ -2,6 +2,17 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [1.9.0] - 2026-06-10
+### Added
+- **Gutenberg blocks**: All six core shortcodes available in the block inserter under **Modern Job Board**.
+- **Documentation**: `docs/getting-started.md`, `docs/developers.md`, `readme.txt`, and `DEMO.md`.
+- **Demo tooling**: `bin/seed-demo.php` and `bin/sync-local-test.ps1` for the local WordPress install.
+
+### Improved
+- **Frontend templates**: Refreshed archive and single job layouts with updated cards, filters, and typography.
+- **Frontend styles**: Design tokens aligned with the marketing site (DM Sans, teal palette, modern cards).
+- **Landing site**: Documentation page, live demo links, and version bump to v1.9.0.
+
 ## [1.8.5] - 2026-06-10
 ### Changed
 - **Chart styles in separate file**: Admin performance chart layout and bar widths moved to `assets/css/mjb-charts.css` (utility classes `mjb-chart-w-0` … `mjb-chart-w-100`); embedded `<style>` blocks removed.

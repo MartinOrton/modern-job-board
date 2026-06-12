@@ -1,66 +1,57 @@
 # Modern Job Board
 
-A powerful, feature-rich WordPress plugin for creating a professional job board. This plugin handles everything from job submissions and candidate management to monetization and developer extensibility.
+A feature-rich WordPress job board plugin with employer and candidate dashboards, applications, WooCommerce monetization, REST API, webhooks, and Gutenberg blocks.
 
-## 🚀 Key Features
+**Current version:** 1.9.0
 
-### 📋 Job Management
-- **Frontend Submission**: Easy-to-use form for employers to post jobs.
-- **Job Expiration**: Automatic expiration logic with background cleanup (Cron).
-- **Featured Listings**: Highlight premium jobs to increase visibility.
-- **Company Profiles**: Dedicated profiles for employers.
+## Quick start
 
-### 🔍 Advanced Search & Display
-- **AJAX Filtering**: Filter by keywords, location, job type, and category without page reloads.
-- **Google Maps**: Visual location display on single job pages.
-- **SEO Ready**: Automatic Schema.org (`JobPosting`) structured data for better indexing in Google for Jobs.
+1. Install and activate the plugin.
+2. Open **Modern Job Board → Setup** and create the required pages.
+3. Configure **Modern Job Board → Settings**.
 
-### 👥 User Roles & Dashboards
-- **Employer System**: registration, account management, and a frontend dashboard to manage jobs and view applications.
-- **Candidate System**: registration, profile management, and CV/Resume uploads.
-- **Secure Resume Storage**: Resumes are stored in a dedicated, admin-only area and separated from the public media library.
-- **Apply with Profile**: Logged-in candidates can apply to jobs instantly using their stored resume.
+See [docs/getting-started.md](docs/getting-started.md) for full setup instructions.
 
-### 💰 Monetization (WooCommerce)
-- **Pay-Per-Post**: Charge employers for individual job submissions.
-- **Job Credits/Packages**: Sell bulk job listing packs.
-- **Paid CV Access**: Monetize access to the candidate database using single unlocks or time-based passes.
+## Local demo
 
-### 🛠️ Admin & Developer Tools
-- **Custom Fields Builder**: Create unlimited custom fields for jobs and applications via a simple UI.
-- **CSV Import/Export**: Bulk import jobs or export your data for external analysis.
-- **REST API**: Expose listings via JSON (`/wp-json/mjb/v1/jobs`).
-- **XML Feeds**: Standardized feed for aggregators (`/feed/job-listings`).
-- **Hooks & Filters**: Highly extensible with dozens of developer hooks.
+```powershell
+composer sync-local
+composer seed-demo
+```
 
-## 📥 Installation
+See [DEMO.md](DEMO.md) for details. The marketing site in `modern-job-board-website/` links to the local demo URL configured in `js/script.js`.
 
-1. Upload the `modern-job-board` folder to the `/wp-content/plugins/` directory.
-2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. Configure settings under **Job Board > Settings**.
+## Shortcodes & blocks
 
-## 🧩 Shortcodes
+| Shortcode | Purpose |
+|-----------|---------|
+| `[mjb_jobs]` | Job search and listings |
+| `[mjb_job_form]` | Frontend job submission |
+| `[mjb_dashboard]` | Employer dashboard |
+| `[mjb_candidate_dashboard]` | Candidate profile and applications |
+| `[mjb_employer_registration]` | Employer signup |
+| `[mjb_candidate_registration]` | Candidate signup |
 
-- `[mjb_jobs]`: Displays the job search filter and listing loop.
-- `[mjb_job_form]`: The frontend job submission form for employers.
-- `[mjb_dashboard]`: The employer dashboard (manage jobs/applications).
-- `[mjb_employer_registration]`: Registration form for employers.
-- `[mjb_candidate_registration]`: Registration form for candidates.
-- `[mjb_candidate_dashboard]`: Candidate profile and resume management.
+All shortcodes are available as Gutenberg blocks under **Modern Job Board**.
 
-## 💻 Developer Information
+## Developer docs
 
-### REST API
-- **Endpoint**: `GET /wp-json/mjb/v1/jobs/search/`
-- **Pretty paths** (preferred):
-  - `/wp-json/mjb/v1/jobs/search/in/remote/category/engineering/type/full-time/keyword/developer/page/2/per-page/20/`
-- **Legacy query URLs** (`?search_keywords=...`) redirect with **301** to the path format above.
-- **Pagination headers**: `X-WP-Total`, `X-WP-TotalPages`, `Link: rel="canonical"`
+- [docs/developers.md](docs/developers.md) — REST, webhooks, hooks
+- [REMOTE_SETUP.md](REMOTE_SETUP.md) — nginx resume protection and SSH workflow
 
-### XML Feed (Indeed/Google Jobs)
-- **URL**: `yourdomain.com/feed/job-listings`
+## Development
 
+```bash
+composer install
+composer test
+composer phpcs
+composer make-pot
+```
 
+## Links
+
+- [GitHub](https://github.com/MartinOrton/modern-job-board)
+- [Documentation site](../modern-job-board-website/docs/index.html) (local marketing site)
 
 ---
 Copyright © 2026 Modern Job Board.

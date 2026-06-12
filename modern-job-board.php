@@ -3,7 +3,7 @@
  * Plugin Name: Modern Job Board
  * Plugin URI: https://github.com/MartinOrton/modern-job-board
  * Description: A lightweight job board plugin for WordPress.
- * Version: 1.8.5
+ * Version: 1.9.0
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
  * Text Domain: modern-job-board
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '1.8.5');
+define('MJB_VERSION', '1.9.0');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
 
@@ -31,6 +31,7 @@ require_once MJB_PATH . 'includes/class-mjb-page-wizard.php';
 require_once MJB_PATH . 'includes/class-mjb-application-status.php';
 require_once MJB_PATH . 'includes/class-mjb-rest-api-v2.php';
 require_once MJB_PATH . 'includes/class-mjb-data-grid.php';
+require_once MJB_PATH . 'includes/class-mjb-blocks.php';
 require_once MJB_PATH . 'includes/class-mjb-analytics.php';
 require_once MJB_PATH . 'includes/class-mjb-webhook-queue.php';
 require_once MJB_PATH . 'includes/class-mjb-webhooks.php';
@@ -85,6 +86,7 @@ class Modern_Job_Board
         MJB_Analytics::init();
         MJB_Webhooks::init();
         MJB_Webhook_Queue::init();
+        MJB_Blocks::init();
         $this->init_hooks();
     }
 
@@ -272,8 +274,14 @@ class Modern_Job_Board
             return;
         }
 
+        wp_enqueue_style(
+            'mjb-fonts',
+            'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap',
+            array(),
+            null
+        );
         wp_enqueue_style('mjb-shared', MJB_URL . 'assets/css/mjb-shared.css', array(), MJB_VERSION);
-        wp_enqueue_style('mjb-style', MJB_URL . 'assets/css/mjb-style.css', array('mjb-shared'), MJB_VERSION);
+        wp_enqueue_style('mjb-style', MJB_URL . 'assets/css/mjb-style.css', array('mjb-shared', 'mjb-fonts'), MJB_VERSION);
 
         if ($this->should_enqueue_recaptcha()) {
             wp_enqueue_script('google-recaptcha', 'https://www.google.com/recaptcha/api.js', array(), null, true);

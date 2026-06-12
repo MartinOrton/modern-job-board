@@ -35,7 +35,7 @@ class MJB_Shortcodes
         // Search Form
         ?>
         <?php $filter_params = MJB_Search::get_request_filter_params(); ?>
-        <form id="mjb-job-filter" class="mjb-job-filter" method="GET" action="<?php echo esc_url(MJB_Job_Routes::build_url()); ?>">
+        <form id="mjb-job-filter" class="mjb-job-filter mjb-search-panel" method="GET" action="<?php echo esc_url(MJB_Job_Routes::build_url()); ?>">
             <div class="mjb-filter-row">
                 <input type="text" name="search_keywords" placeholder="<?php esc_attr_e('Keywords...', 'modern-job-board'); ?>" value="<?php echo esc_attr($filter_params['search_keywords']); ?>">
                 <?php
@@ -98,27 +98,36 @@ class MJB_Shortcodes
                 
                 $featured = get_post_meta(get_the_ID(), '_featured', true);
                 $featured_class = $featured ? ' mjb-featured' : '';
-                
-                echo '<div class="mjb-job-item' . esc_attr($featured_class) . '">';
-                echo '<h3><a href="' . esc_url(get_permalink()) . '">' . esc_html(get_the_title()) . '</a></h3>';
-                echo '<div class="mjb-job-meta">';
-                echo '<span>' . wp_kses_post(get_the_term_list(get_the_ID(), 'job_type', '', ', ')) . '</span>';
-                echo '<span>' . wp_kses_post(get_the_term_list(get_the_ID(), 'job_location', '', ', ')) . '</span>';
-                
-                // Show Company if available
-                $company_name = get_post_meta(get_the_ID(), '_company_name', true);
-                if ($company_name) {
-                    echo '<span> | ' . esc_html($company_name) . '</span>';
+
+                echo '<article class="mjb-job-card mjb-job-item' . esc_attr($featured_class) . '">';
+                if ($featured) {
+                    echo '<span class="mjb-badge mjb-badge--featured">' . esc_html__('Featured', 'modern-job-board') . '</span>';
                 }
-                
-                // Show Expiration Date? Optional.
-                $expires = get_post_meta(get_the_ID(), '_job_expires', true);
-                if ($expires) {
-                     echo '<span class="mjb-meta-right">' . esc_html(sprintf(__('Exp: %s', 'modern-job-board'), date_i18n(get_option('date_format'), strtotime($expires)))) . '</span>';
+                echo '<h3 class="mjb-job-card__title"><a href="' . esc_url(get_permalink()) . '">' . esc_html(get_the_title()) . '</a></h3>';
+                echo '<div class="mjb-job-meta mjb-job-card__meta">';
+
+                $job_type = get_the_term_list(get_the_ID(), 'job_type', '', ', ');
+                if ($job_type) {
+                    echo '<span class="mjb-meta-pill">' . wp_kses_post($job_type) . '</span>';
                 }
 
-                echo '</div>'; // .mjb-job-meta
-                echo '</div>'; // .mjb-job-item
+                $job_location = get_the_term_list(get_the_ID(), 'job_location', '', ', ');
+                if ($job_location) {
+                    echo '<span class="mjb-meta-pill">' . wp_kses_post($job_location) . '</span>';
+                }
+
+                $company_name = get_post_meta(get_the_ID(), '_company_name', true);
+                if ($company_name) {
+                    echo '<span class="mjb-meta-pill">' . esc_html($company_name) . '</span>';
+                }
+
+                $expires = get_post_meta(get_the_ID(), '_job_expires', true);
+                if ($expires) {
+                    echo '<span class="mjb-meta-right mjb-meta-pill">' . esc_html(sprintf(__('Exp: %s', 'modern-job-board'), date_i18n(get_option('date_format'), strtotime($expires)))) . '</span>';
+                }
+
+                echo '</div>';
+                echo '</article>';
             }
             echo '</div>'; // .mjb-job-list
         } else {

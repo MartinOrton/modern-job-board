@@ -5,9 +5,9 @@
 
 get_header(); ?>
 
-<div class="mjb-container">
-    <div class="mjb-content-area">
-        <main class="site-main">
+<div class="mjb-container mjb-container--single">
+    <div class="mjb-content-area mjb-content-area--single">
+        <main class="site-main mjb-single-main">
             <?php while (have_posts()):
                 the_post(); ?>
                 <article id="post-<?php the_ID(); ?>" <?php post_class('mjb-single-job'); ?>>

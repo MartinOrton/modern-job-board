@@ -6,14 +6,15 @@
 get_header(); ?>
 
 <div class="mjb-container">
-    <header class="page-header">
-        <h1 class="page-title"><?php post_type_archive_title(); ?></h1>
+    <header class="mjb-page-header">
+        <h1 class="mjb-page-title"><?php post_type_archive_title(); ?></h1>
+        <p class="mjb-page-intro"><?php esc_html_e('Browse open roles and filter by location, category, or keywords.', 'modern-job-board'); ?></p>
     </header>
 
     <div class="mjb-content-area">
         <aside class="mjb-sidebar">
             <form action="<?php echo esc_url(MJB_Job_Routes::build_url()); ?>" method="GET"
-                class="mjb-search-form">
+                class="mjb-search-form mjb-search-panel">
                 <h3><?php _e('Filter Jobs', 'modern-job-board'); ?></h3>
 
                 <p>
