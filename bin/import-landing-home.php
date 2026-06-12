@@ -152,12 +152,13 @@ function mjb_paragraph_block($text, $className = '') {
  * @param string $tagName   Wrapper tag.
  * @param string $align     Optional alignment.
  * @param string $anchor    Optional HTML anchor/id.
+ * @param string $layout    Group layout type (default avoids inner-container wrappers).
  * @return string
  */
-function mjb_group_block($className, $inner, $tagName = 'div', $align = '', $anchor = '') {
+function mjb_group_block($className, $inner, $tagName = 'div', $align = '', $anchor = '', $layout = 'default') {
     $attrs = array(
         'className' => $className,
-        'layout'    => array('type' => 'constrained'),
+        'layout'    => array('type' => $layout),
     );
 
     if ($tagName && 'div' !== $tagName) {
@@ -263,7 +264,7 @@ function mjb_build_section_header_blocks($inner) {
     if (preg_match('/<h2[^>]*>(.*?)<\/h2>/is', $inner, $match)) {
         $title = trim($match[1]);
     }
-    if (preg_match('/<div class="section-header[^"]*">.*?<p>(?!.*class=)(.*?)<\/p>/is', $inner, $match)) {
+    if (preg_match('/<div class="section-header[^"]*">[\s\S]*?<p>(.*?)<\/p>/is', $inner, $match)) {
         $text = trim($match[1]);
     }
 
@@ -492,6 +493,28 @@ function mjb_build_docs_block_markup($main_html) {
 }
 
 /**
+ * @param int    $post_id Post ID.
+ * @param string $content Raw post content.
+ */
+function mjb_save_unfiltered_content($post_id, $content) {
+    global $wpdb;
+
+    $wpdb->update(
+        $wpdb->posts,
+        array(
+            'post_content' => $content,
+        ),
+        array(
+            'ID' => (int) $post_id,
+        ),
+        array('%s'),
+        array('%d')
+    );
+
+    clean_post_cache((int) $post_id);
+}
+
+/**
  * @param string $slug Page slug.
  * @param string $title Page title.
  * @param string $content Post content.
@@ -503,25 +526,30 @@ function mjb_upsert_page($slug, $title, $content) {
     if ($existing) {
         wp_update_post(
             array(
-                'ID'           => $existing->ID,
-                'post_title'   => $title,
-                'post_content' => $content,
-                'post_status'  => 'publish',
+                'ID'          => $existing->ID,
+                'post_title'  => $title,
+                'post_status' => 'publish',
             )
         );
+        mjb_save_unfiltered_content((int) $existing->ID, $content);
 
         return (int) $existing->ID;
     }
 
-    return (int) wp_insert_post(
+    $post_id = (int) wp_insert_post(
         array(
-            'post_title'   => $title,
-            'post_name'    => $slug,
-            'post_content' => $content,
-            'post_status'  => 'publish',
-            'post_type'    => 'page',
+            'post_title'  => $title,
+            'post_name'   => $slug,
+            'post_status' => 'publish',
+            'post_type'   => 'page',
         )
     );
+
+    if ($post_id) {
+        mjb_save_unfiltered_content($post_id, $content);
+    }
+
+    return $post_id;
 }
 
 $main_html    = mjb_extract_main_html((string) file_get_contents($index_file));
