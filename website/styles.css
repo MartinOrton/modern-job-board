@@ -59,11 +59,19 @@ a {
 }
 
 .wp-block-group.container > .wp-block-group__inner-container {
-    max-width: var(--container-max);
-    margin: 0 auto;
-    padding: 0 1.5rem;
+    max-width: none;
+    margin: 0;
+    padding: 0;
     width: 100%;
     box-sizing: border-box;
+}
+
+.wp-block-group.alignfull { width: 100%; max-width: none; }
+.wp-block-group.alignfull > .wp-block-group__inner-container {
+    width: 100%;
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 .section {
@@ -478,7 +486,11 @@ a {
 .feature-card p { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; }
 
 /* Comparison */
+.comparison-table-wrapper,
+.wp-block-group.comparison-table-wrapper,
+.wp-block-group.comparison-table-wrapper > .wp-block-group__inner-container { width: 100%; }
 .comparison-table {
+    width: 100%;
     border: 1px solid var(--border);
     border-radius: 1rem;
     overflow: hidden;
