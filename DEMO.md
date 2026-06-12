@@ -1,10 +1,20 @@
 # Local Demo Setup
 
-Primary WordPress install (Local WP):
+## Two local sites (keep them separate)
+
+| Domain | Purpose | WordPress site title |
+|--------|---------|----------------------|
+| `https://mjb.local` | **Modern Job Board** plugin demo | Modern Job Board |
+| `https://martin-orton-design.local` | **Reserved** for your portfolio / design site | Martin Orton Design (when created) |
+
+The job board demo uses the legacy folder path below. When you add the design site in Local, create it as a **new** site so it gets its own database, nginx route, and SSL cert.
+
+### Job board demo (this project)
 
 `C:\Users\marti\Local Sites\martin-orton-design\app\public`
 
 - **HTTPS:** `https://mjb.local`
+- **Theme:** Twenty Twenty-Five (plugin supplies job page templates/styles)
 - **HTTP** also works, but WordPress is configured for HTTPS.
 
 ## Start the site
