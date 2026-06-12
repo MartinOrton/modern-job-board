@@ -1,5 +1,5 @@
 param(
-    [string]$WordPressRoot = "C:\Users\marti\4Mation Digital\mjb-local-test",
+    [string]$WordPressRoot = "C:\Users\marti\Local Sites\mjb\app\public",
     [string]$PluginSource = "C:\Users\marti\4Mation Digital\modern-job-board"
 )
 

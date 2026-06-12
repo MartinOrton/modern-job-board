@@ -7,11 +7,11 @@
 | `https://mjb.local` | **Modern Job Board** plugin demo | Modern Job Board |
 | `https://martin-orton-design.local` | **Reserved** for your portfolio / design site | Martin Orton Design (when created) |
 
-The job board demo uses the legacy folder path below. When you add the design site in Local, create it as a **new** site so it gets its own database, nginx route, and SSL cert.
+When you add the design site in Local, create it at `Local Sites\martin-orton-design` so it gets its own database, nginx route, and SSL cert.
 
 ### Job board demo (this project)
 
-`C:\Users\marti\Local Sites\martin-orton-design\app\public`
+`C:\Users\marti\Local Sites\mjb\app\public`
 
 - **HTTPS:** `https://mjb.local`
 - **Theme:** Twenty Twenty-Five (plugin supplies job page templates/styles)
@@ -36,7 +36,7 @@ certutil -addstore -user Root "$env:APPDATA\Local\run\router\nginx\certs\mjb.loc
 
 ```powershell
 cd "C:\Users\marti\4Mation Digital\modern-job-board"
-.\bin\sync-local-test.ps1 -WordPressRoot "C:\Users\marti\Local Sites\martin-orton-design\app\public"
+.\bin\sync-local-test.ps1 -WordPressRoot "C:\Users\marti\Local Sites\mjb\app\public"
 ```
 
 ## Seed demo pages and jobs
@@ -48,7 +48,7 @@ $env:PHPRC = "$env:APPDATA\Local\run\cp2oegpc-\conf\php"
 & "$env:APPDATA\Local\lightning-services\php-8.3.17+1\bin\win64\php.exe" `
   -d auto_prepend_file= `
   "C:\Users\marti\4Mation Digital\modern-job-board\bin\seed-demo.php" `
-  "C:\Users\marti\Local Sites\martin-orton-design\app\public"
+  "C:\Users\marti\Local Sites\mjb\app\public"
 ```
 
 ## Demo URLs

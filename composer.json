@@ -25,7 +25,7 @@
         "phpcbf": "phpcbf",
         "make-pot": "php bin/make-pot.php",
         "make-charts-css": "php bin/make-charts-css.php",
-        "seed-demo": "php bin/seed-demo.php \"C:\\Users\\marti\\4Mation Digital\\mjb-local-test\"",
+        "seed-demo": "php bin/seed-demo.php \"C:\\Users\\marti\\Local Sites\\mjb\\app\\public\"",
         "sync-local": "powershell -ExecutionPolicy Bypass -File bin/sync-local-test.ps1"
     }
 }
