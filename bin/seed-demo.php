@@ -12,6 +12,10 @@ if ($argc < 2) {
 
 $wp_root = rtrim($argv[1], "\\/");
 
+if (!isset($_SERVER['REQUEST_METHOD'])) {
+    $_SERVER['REQUEST_METHOD'] = 'CLI';
+}
+
 if (!is_file($wp_root . '/wp-load.php')) {
     fwrite(STDERR, "Could not find wp-load.php in {$wp_root}\n");
     exit(1);
@@ -29,8 +33,9 @@ if (!class_exists('MJB_Page_Wizard')) {
     exit(1);
 }
 
-require_once dirname(__DIR__) . '/includes/class-mjb-page-wizard.php';
-require_once dirname(__DIR__) . '/includes/class-mjb-job-importer.php';
+if (!class_exists('MJB_Job_Importer')) {
+    require_once dirname(__DIR__) . '/includes/class-mjb-job-importer.php';
+}
 
 $created_pages = MJB_Page_Wizard::create_missing_pages();
 echo 'Pages: created ' . intval($created_pages['created']) . ', existing ' . intval($created_pages['existing']) . PHP_EOL;
