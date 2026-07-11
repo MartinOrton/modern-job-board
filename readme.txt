@@ -74,7 +74,7 @@ Yes. Public job search is available at `/wp-json/mjb/v1/jobs`. Authenticated emp
 == Changelog ==
 
 = 0.9.0-beta.1 =
-* Pre-gold beta versioning. Treat as beta until 1.0.0 gold.
+* Pre-stable beta versioning. Treat as beta until 1.0.0 stable.
 
 
 = 1.9.0 =
