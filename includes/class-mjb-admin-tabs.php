@@ -186,6 +186,7 @@ class MJB_Admin_Tabs
         echo '<nav class="mjb-admin-tabs" aria-label="' . esc_attr__('Modern Job Board sections', 'modern-job-board') . '">';
         echo '<ul class="mjb-admin-tabs__list" role="tablist">';
 
+        // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Tab icon SVG escaped in MJB_Icons::render(); other args escaped.
         foreach (self::get_tabs() as $tab_id => $tab) {
             $is_active = $tab_id === $active_tab;
             printf(
@@ -197,6 +198,7 @@ class MJB_Admin_Tabs
                 esc_html($tab['label'])
             );
         }
+        // phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 
         echo '</ul></nav>';
     }
@@ -558,22 +560,34 @@ class MJB_Admin_Tabs
             <h2 class="mjb-section-title"><?php esc_html_e('Quick Actions', 'modern-job-board'); ?></h2>
             <div class="mjb-features-grid">
                 <button type="button" class="mjb-feature-card mjb-feature-card--action" data-tab="jobs">
-                    <div class="mjb-feature-icon"><?php echo MJB_Icons::render('briefcase', 24); ?></div>
+                    <div class="mjb-feature-icon"><?php
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                        echo MJB_Icons::render('briefcase', 24);
+                    ?></div>
                     <h3><?php esc_html_e('Manage Jobs', 'modern-job-board'); ?></h3>
                     <p><?php esc_html_e('View, edit, and moderate job listings. Manage expiration dates and featured status.', 'modern-job-board'); ?></p>
                 </button>
                 <button type="button" class="mjb-feature-card mjb-feature-card--action" data-tab="applications">
-                    <div class="mjb-feature-icon"><?php echo MJB_Icons::render('inbox', 24); ?></div>
+                    <div class="mjb-feature-icon"><?php
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                        echo MJB_Icons::render('inbox', 24);
+                    ?></div>
                     <h3><?php esc_html_e('Applications', 'modern-job-board'); ?></h3>
                     <p><?php esc_html_e('Review candidate applications and download resumes.', 'modern-job-board'); ?></p>
                 </button>
                 <button type="button" class="mjb-feature-card mjb-feature-card--action" data-tab="settings">
-                    <div class="mjb-feature-icon"><?php echo MJB_Icons::render('settings', 24); ?></div>
+                    <div class="mjb-feature-icon"><?php
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                        echo MJB_Icons::render('settings', 24);
+                    ?></div>
                     <h3><?php esc_html_e('Settings', 'modern-job-board'); ?></h3>
                     <p><?php esc_html_e('Configure listings, Google Maps API, and monetization options.', 'modern-job-board'); ?></p>
                 </button>
                 <button type="button" class="mjb-feature-card mjb-feature-card--action" data-tab="setup">
-                    <div class="mjb-feature-icon"><?php echo MJB_Icons::render('sparkles', 24); ?></div>
+                    <div class="mjb-feature-icon"><?php
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                        echo MJB_Icons::render('sparkles', 24);
+                    ?></div>
                     <h3><?php esc_html_e('Setup', 'modern-job-board'); ?></h3>
                     <p><?php esc_html_e('Create frontend pages for job search, dashboards, and registration shortcodes.', 'modern-job-board'); ?></p>
                 </button>
@@ -639,7 +653,10 @@ class MJB_Admin_Tabs
                         <?php esc_html_e('Open Full List', 'modern-job-board'); ?>
                     </a>
                     <a href="<?php echo esc_url(admin_url('post-new.php?post_type=' . $post_type)); ?>" class="mjb-btn mjb-btn-primary">
-                        <?php echo MJB_Icons::render('plus', 16); ?>
+                        <?php
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                        echo MJB_Icons::render('plus', 16);
+                        ?>
                         <?php esc_html_e('Add New', 'modern-job-board'); ?>
                     </a>
                 </div>
@@ -775,24 +792,28 @@ class MJB_Admin_Tabs
         )) . '</div>';
         echo '<div class="mjb-admin-pagination__controls">';
 
+        $prev_page = max(1, $current_page - 1);
+        $next_page = min($total_pages, $current_page + 1);
         $prev_disabled = $current_page <= 1 ? ' disabled' : '';
         $next_disabled = $current_page >= $total_pages ? ' disabled' : '';
 
+        // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons escaped in MJB_Icons::render(); page nums cast; disabled attr is controlled.
         printf(
-            '<button type="button" class="mjb-btn mjb-btn-outline mjb-btn--sm mjb-admin-pagination__btn" data-page="%1$d"%2$s>%3$s %4$s</button>',
-            max(1, $current_page - 1),
+            '<button type="button" class="mjb-btn mjb-btn-outline mjb-btn--sm mjb-admin-pagination__btn" data-page="%1$s"%2$s>%3$s %4$s</button>',
+            esc_attr((string) $prev_page),
             $prev_disabled,
             MJB_Icons::render('chevron-left', 16),
             esc_html__('Previous', 'modern-job-board')
         );
 
         printf(
-            '<button type="button" class="mjb-btn mjb-btn-outline mjb-btn--sm mjb-admin-pagination__btn" data-page="%1$d"%2$s>%3$s %4$s</button>',
-            min($total_pages, $current_page + 1),
+            '<button type="button" class="mjb-btn mjb-btn-outline mjb-btn--sm mjb-admin-pagination__btn" data-page="%1$s"%2$s>%3$s %4$s</button>',
+            esc_attr((string) $next_page),
             $next_disabled,
             esc_html__('Next', 'modern-job-board'),
             MJB_Icons::render('chevron-right', 16)
         );
+        // phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 
         echo '</div></nav>';
     }

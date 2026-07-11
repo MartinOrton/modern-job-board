@@ -54,10 +54,11 @@ class MJB_Shortcodes
 
         do_action('mjb_before_job_listings', $jobs);
 
-        $company_attr = !empty($filter_params['search_company'])
-            ? ' data-search-company="' . esc_attr($filter_params['search_company']) . '"'
-            : '';
-        echo '<div id="mjb-jobs-list" class="mjb-jobs-list-wrap" data-posts-per-page="' . esc_attr($per_page) . '"' . $company_attr . '>';
+        echo '<div id="mjb-jobs-list" class="mjb-jobs-list-wrap" data-posts-per-page="' . esc_attr($per_page) . '"';
+        if (!empty($filter_params['search_company'])) {
+            echo ' data-search-company="' . esc_attr($filter_params['search_company']) . '"';
+        }
+        echo '>';
         echo '<div id="mjb-jobs-results">';
         self::render_job_loop($jobs);
         self::render_pagination($jobs, $filter_params);
@@ -294,11 +295,10 @@ class MJB_Shortcodes
                 'search_company' => get_post_field('post_name', $company_id),
             ));
 
+            // Feature-card style: icon/avatar on top, then title + body (matches homepage .feature-card).
             echo '<article class="mjb-company-card">';
             echo '<a class="mjb-company-card__stretched-link" href="' . esc_url($permalink) . '" aria-label="' . esc_attr(sprintf(__('View company: %s', 'modern-job-board'), $title)) . '"></a>';
-            echo '<div class="mjb-company-card__header">';
             self::render_company_avatar($company_id);
-            echo '<div class="mjb-company-card__summary">';
             echo '<h2 class="mjb-company-card__title">' . esc_html($title) . '</h2>';
             echo '<p class="mjb-company-card__meta">';
             echo esc_html(sprintf(
@@ -306,8 +306,6 @@ class MJB_Shortcodes
                 $job_count
             ));
             echo '</p>';
-            echo '</div>';
-            echo '</div>';
 
             if ($excerpt !== '') {
                 echo '<p class="mjb-company-card__excerpt">' . esc_html($excerpt) . '</p>';
@@ -332,6 +330,8 @@ class MJB_Shortcodes
     /**
      * Render pagination for a post-type archive query.
      *
+     * Matches the Jobs board control styling (btn / btn-sm / mjb-page-link).
+     *
      * @param WP_Query $query
      * @param string   $base_url
      */
@@ -342,34 +342,108 @@ class MJB_Shortcodes
         }
 
         $current_page = max(1, intval(get_query_var('paged')));
-        $base_url = $base_url !== '' ? $base_url : get_post_type_archive_link($query->get('post_type'));
+        if ($current_page < 1) {
+            $current_page = 1;
+        }
 
+        $base_url = $base_url !== '' ? $base_url : get_post_type_archive_link($query->get('post_type'));
         if (!$base_url) {
             return;
         }
 
-        $links = paginate_links(array(
-            'base' => trailingslashit($base_url) . '%_%',
-            'format' => 'page/%#%/',
-            'current' => $current_page,
-            'total' => $query->max_num_pages,
-            'type' => 'array',
-            'prev_text' => __('Previous', 'modern-job-board'),
-            'next_text' => __('Next', 'modern-job-board'),
-        ));
+        $base_url = trailingslashit($base_url);
+        $total = intval($query->max_num_pages);
 
-        if (empty($links) || !is_array($links)) {
-            return;
+        echo '<nav class="mjb-pagination" aria-label="' . esc_attr__('Archive pagination', 'modern-job-board') . '" data-current-page="' . esc_attr($current_page) . '">';
+
+        if ($current_page > 1) {
+            self::render_archive_pagination_link(
+                self::get_archive_page_url($base_url, $current_page - 1),
+                '',
+                'mjb-page-prev',
+                false,
+                __('Previous page', 'modern-job-board'),
+                'chevron-left'
+            );
         }
 
-        echo '<nav class="mjb-pagination mjb-pagination--archive" aria-label="' . esc_attr__('Archive pagination', 'modern-job-board') . '">';
-        echo '<div class="mjb-pagination__links">';
-
-        foreach ($links as $link) {
-            echo wp_kses_post($link);
+        for ($page = 1; $page <= $total; $page++) {
+            self::render_archive_pagination_link(
+                self::get_archive_page_url($base_url, $page),
+                (string) $page,
+                'mjb-page-number',
+                $page === $current_page
+            );
         }
 
-        echo '</div></nav>';
+        if ($current_page < $total) {
+            self::render_archive_pagination_link(
+                self::get_archive_page_url($base_url, $current_page + 1),
+                '',
+                'mjb-page-next',
+                false,
+                __('Next page', 'modern-job-board'),
+                'chevron-right'
+            );
+        }
+
+        echo '</nav>';
+    }
+
+    /**
+     * Build a pretty archive page URL.
+     *
+     * @param string $base_url Trailing-slashed archive base.
+     * @param int    $page     1-based page number.
+     * @return string
+     */
+    private static function get_archive_page_url($base_url, $page)
+    {
+        $page = max(1, intval($page));
+        if ($page <= 1) {
+            return $base_url;
+        }
+
+        return $base_url . 'page/' . $page . '/';
+    }
+
+    /**
+     * Render a single archive pagination control (link styled like Jobs buttons).
+     *
+     * @param string $url
+     * @param string $label
+     * @param string $modifier_class
+     * @param bool   $active
+     * @param string $aria_label
+     * @param string $icon
+     */
+    private static function render_archive_pagination_link($url, $label, $modifier_class, $active = false, $aria_label = '', $icon = '')
+    {
+        $classes = array('btn', 'btn-sm', 'mjb-page-link', $modifier_class);
+        $classes[] = $active ? 'btn-primary' : 'btn-outline';
+
+        if ($active) {
+            $classes[] = 'is-active';
+        }
+
+        $accessible_label = $aria_label !== '' ? $aria_label : $label;
+
+        if ($active) {
+            echo '<span class="' . esc_attr(implode(' ', $classes)) . '" aria-current="page" aria-label="' . esc_attr($accessible_label) . '">';
+        } else {
+            echo '<a href="' . esc_url($url) . '" class="' . esc_attr(implode(' ', $classes)) . '" aria-label="' . esc_attr($accessible_label) . '">';
+        }
+
+        if ($icon !== '') {
+            echo '<span class="mjb-page-link__icon" aria-hidden="true">';
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+            echo MJB_Icons::render($icon, 16);
+            echo '</span>';
+        } else {
+            echo '<span aria-hidden="true">' . esc_html($label) . '</span>';
+        }
+
+        echo $active ? '</span>' : '</a>';
     }
 
     /**
@@ -587,26 +661,21 @@ class MJB_Shortcodes
                 <?php endif; ?>
                 <input type="text" name="search_keywords" placeholder="<?php esc_attr_e('Keywords...', 'modern-job-board'); ?>" value="<?php echo esc_attr($filter_params['search_keywords']); ?>">
                 <?php
-                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is escaped in MJB_Search::render_location_dropdown().
+                // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Dropdown helpers escape all HTML.
                 echo MJB_Search::render_location_dropdown($filter_params['search_location']);
-                ?>
-
-                <?php
-                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Search::render_taxonomy_dropdown().
                 echo MJB_Search::render_taxonomy_dropdown(
                     'job_category',
                     'search_category',
                     $filter_params['search_category'],
                     esc_html__('All Categories', 'modern-job-board')
                 );
-
-                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Search::render_taxonomy_dropdown().
                 echo MJB_Search::render_taxonomy_dropdown(
                     'job_type',
                     'search_type',
                     $filter_params['search_type'],
                     esc_html__('All Job Types', 'modern-job-board')
                 );
+                // phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
                 ?>
                 <button type="submit" class="btn btn-primary btn-sm mjb-button mjb-button--search"><?php esc_html_e('Search', 'modern-job-board'); ?></button>
             </div>

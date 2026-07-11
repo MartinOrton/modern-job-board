@@ -194,7 +194,10 @@ class MJB_Custom_Fields
                         </p>
                         <p>
                             <button type="submit" class="mjb-btn mjb-btn-primary">
-                                <?php echo MJB_Icons::render('plus', 16); ?>
+                                <?php
+                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                                echo MJB_Icons::render('plus', 16);
+                                ?>
                                 <?php esc_html_e('Add Field', 'modern-job-board'); ?>
                             </button>
                         </p>

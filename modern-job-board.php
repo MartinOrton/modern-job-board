@@ -3,7 +3,7 @@
  * Plugin Name: Modern Job Board
  * Plugin URI: https://martinorton.com/modern-job-board
  * Description: A freemium job board plugin for WordPress (pre-stable beta — not 1.0).
- * Version: 0.9.0-beta.1
+ * Version: 0.9.0-beta.2
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
  * License: Proprietary
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '0.9.0-beta.1');
+define('MJB_VERSION', '0.9.0-beta.2');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
 

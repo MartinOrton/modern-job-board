@@ -333,7 +333,10 @@ class MJB_Page_Wizard
                 <input type="hidden" name="mjb_action" value="create_setup_pages">
                 <p>
                     <button type="submit" class="mjb-btn mjb-btn-primary">
-                        <?php echo MJB_Icons::render('sparkles', 16); ?>
+                        <?php
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                        echo MJB_Icons::render('sparkles', 16);
+                        ?>
                         <?php esc_html_e('Create Missing Pages', 'modern-job-board'); ?>
                     </button>
                 </p>
