@@ -1,0 +1,36 @@
+Modern Job Board — Proprietary Software License Agreement
+
+Copyright (c) 2026 Martin Orton. All rights reserved.
+
+1. GRANT OF LICENSE
+   Martin Orton ("Licensor") grants you a limited, non-exclusive,
+   non-transferable license to install and use Modern Job Board ("Software")
+   subject to the plan you obtain:
+
+   - Free: core job board features as described on the product website.
+   - Pro / Business: additional features unlocked with a valid paid license key.
+
+2. RESTRICTIONS
+   You may not copy, modify, merge, publish, distribute, sublicense, sell,
+   or otherwise make the Software available as open source without written
+   permission from Licensor. Reverse engineering is permitted only to the
+   extent required by applicable law.
+
+3. OWNERSHIP
+   The Software is licensed, not sold. Licensor retains all intellectual
+   property rights.
+
+4. SUPPORT & UPDATES
+   Paid plans include support and updates for the licensed term. Free-tier
+   users receive community support only.
+
+5. TERMINATION
+   This license terminates if you breach these terms. Upon termination you
+   must cease use and destroy all copies.
+
+6. DISCLAIMER
+   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
+
+7. CONTACT
+   hello@martinorton.com
+   https://martinorton.com

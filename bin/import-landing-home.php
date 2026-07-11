@@ -85,6 +85,54 @@ function mjb_serialize_parsed_blocks($markup) {
 }
 
 /**
+ * Extract the outer HTML of the first balanced element with a given class token.
+ *
+ * Handles nested same-tag children (e.g. code-window containing window-controls).
+ *
+ * @param string $html       HTML fragment.
+ * @param string $class_name Class token to match (word boundary).
+ * @param string $tag        Element tag name.
+ * @return string Outer HTML or empty string.
+ */
+function mjb_extract_element_by_class($html, $class_name, $tag = 'div') {
+    $tag = preg_quote($tag, '/');
+    $class_name = preg_quote($class_name, '/');
+    $open_pattern = '/<' . $tag . '\b[^>]*class="[^"]*\b' . $class_name . '\b[^"]*"[^>]*>/is';
+
+    if (!preg_match($open_pattern, $html, $open_match, PREG_OFFSET_CAPTURE)) {
+        return '';
+    }
+
+    $start = $open_match[0][1];
+    $pos = $start + strlen($open_match[0][0]);
+    $depth = 1;
+    $length = strlen($html);
+
+    while ($pos < $length && $depth > 0) {
+        if (!preg_match('/<\/?' . $tag . '\b[^>]*>/is', $html, $tag_match, PREG_OFFSET_CAPTURE, $pos)) {
+            break;
+        }
+
+        $token = $tag_match[0][0];
+        $token_pos = $tag_match[0][1];
+
+        if (preg_match('/^<\//' . $tag . '\b/i', $token)) {
+            $depth--;
+        } elseif (!preg_match('/\/\s*>$/', $token)) {
+            $depth++;
+        }
+
+        $pos = $token_pos + strlen($token);
+
+        if ($depth === 0) {
+            return substr($html, $start, $pos - $start);
+        }
+    }
+
+    return '';
+}
+
+/**
  * @param string $html        HTML fragment.
  * @param string $class_prefix Div class prefix (e.g. feature-card).
  * @return array<int, array<int, string>>
@@ -156,11 +204,7 @@ function mjb_build_dev_grid_html($inner) {
     }
 
     $dev_content = $items ? '<div class="dev-content">' . implode("\n", $items) . '</div>' : '';
-    $dev_code    = '';
-
-    if (preg_match('/<div class="(dev-code[^"]*)">\s*(<div class="code-window">[\s\S]*?<\/div>)\s*<\/div>/is', $inner, $match)) {
-        $dev_code = '<div class="' . esc_attr(trim($match[1])) . '">' . trim($match[2]) . '</div>';
-    }
+    $dev_code    = mjb_extract_element_by_class($inner, 'dev-code');
 
     return '<div class="dev-grid">' . $dev_content . ( $dev_code ? "\n" . $dev_code : '' ) . '</div>';
 }

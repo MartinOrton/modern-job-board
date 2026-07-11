@@ -87,6 +87,6 @@ class RestApiTest extends TestCase
         $this->assertSame('Backend Engineer', $job['title']);
         $this->assertTrue($job['featured']);
         $this->assertSame('Acme Corp', $job['company']);
-        $this->assertSame('London', $job['location']);
+        $this->assertSame('London, England, United Kingdom', $job['location']);
     }
 }

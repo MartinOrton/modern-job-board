@@ -1,13 +1,18 @@
 jQuery(document).ready(function ($) {
     var $filterForm = $('#mjb-job-filter');
+    var $jobsBoard = $('#mjb-jobs-board');
     var $jobsList = $('#mjb-jobs-list');
-    var $loader = $('.mjb-loader');
+    var $loader = $('#mjb-loader-overlay');
+
+    if ($loader.length && !$loader.parent().is('body')) {
+        $loader.appendTo('body');
+    }
 
     function slugifyKeyword(keyword) {
         return $.trim(keyword)
             .toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, '')
-            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9\s_-]/g, '')
+            .replace(/[\s_]+/g, '-')
             .replace(/-+/g, '-');
     }
 
@@ -24,6 +29,9 @@ jQuery(document).ready(function ($) {
         if (filters.search_type) {
             parts.push('type', filters.search_type);
         }
+        if (filters.search_company) {
+            parts.push('company', filters.search_company);
+        }
         if (filters.search_keywords) {
             parts.push('keyword', slugifyKeyword(filters.search_keywords));
         }
@@ -34,13 +42,59 @@ jQuery(document).ready(function ($) {
         return base + (parts.length ? parts.join('/') + '/' : '');
     }
 
+    function getSearchCompany() {
+        var fromForm = $filterForm.find('input[name="search_company"]').val();
+        if (fromForm) {
+            return fromForm;
+        }
+
+        var fromList = $jobsList.data('search-company');
+        if (fromList) {
+            return String(fromList);
+        }
+
+        // Fall back to pretty path: /jobs/company/{slug}/
+        var match = window.location.pathname.match(/\/company\/([^/]+)/i);
+        return match ? decodeURIComponent(match[1]) : '';
+    }
+
     function getFilters() {
         return {
             search_keywords: $filterForm.find('input[name="search_keywords"]').val(),
             search_location: $filterForm.find('[name="search_location"]').val(),
             search_category: $filterForm.find('select[name="search_category"]').val(),
-            search_type: $filterForm.find('select[name="search_type"]').val()
+            search_type: $filterForm.find('select[name="search_type"]').val(),
+            search_company: getSearchCompany()
         };
+    }
+
+    function getJobsResults() {
+        var $results = $jobsList.find('#mjb-jobs-results');
+        return $results.length ? $results : $jobsList;
+    }
+
+    function scrollToPageTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+
+    function setLoadingState(isLoading) {
+        if (!$loader.length) {
+            return;
+        }
+
+        if (isLoading) {
+            $('body').addClass('mjb-jobs-loading');
+            $jobsBoard.addClass('mjb-is-loading');
+            $loader.addClass('is-active').attr('aria-hidden', 'false');
+            return;
+        }
+
+        $loader.removeClass('is-active').attr('aria-hidden', 'true');
+        $('body').removeClass('mjb-jobs-loading');
+        $jobsBoard.removeClass('mjb-is-loading');
     }
 
     function fetchJobs(page, pushHistory) {
@@ -52,21 +106,21 @@ jQuery(document).ready(function ($) {
             search_location: filters.search_location,
             search_category: filters.search_category,
             search_type: filters.search_type,
-            page: page || 1,
+            search_company: filters.search_company,
+            mjb_page: page || 1,
             posts_per_page: $jobsList.data('posts-per-page') || 10
         };
 
-        $loader.removeClass('mjb-is-hidden');
-        $jobsList.addClass('mjb-is-loading');
+        setLoadingState(true);
 
         $.ajax({
             url: mjb_ajax.ajax_url,
             type: 'POST',
             data: data,
             success: function (response) {
-                $jobsList.html(response);
-                $jobsList.removeClass('mjb-is-loading');
-                $loader.addClass('mjb-is-hidden');
+                getJobsResults().html(response);
+                setLoadingState(false);
+                scrollToPageTop();
 
                 if (pushHistory !== false && window.history && window.history.pushState) {
                     window.history.pushState(null, '', buildPrettyUrl(filters, page || 1));
@@ -74,13 +128,12 @@ jQuery(document).ready(function ($) {
             },
             error: function () {
                 console.log('Error fetching jobs');
-                $jobsList.removeClass('mjb-is-loading');
-                $loader.addClass('mjb-is-hidden');
+                setLoadingState(false);
             }
         });
     }
 
-    if ($filterForm.length) {
+    if ($filterForm.length && $jobsBoard.length) {
         $filterForm.on('submit', function (e) {
             e.preventDefault();
             var filters = getFilters();
@@ -90,10 +143,14 @@ jQuery(document).ready(function ($) {
         $jobsList.on('click', '.mjb-page-link', function (e) {
             e.preventDefault();
 
+            if ($(this).hasClass('is-disabled') || $(this).hasClass('is-active')) {
+                return;
+            }
+
             var page = parseInt($(this).data('page'), 10);
             var targetUrl = $(this).data('url');
 
-            if (!page || $(this).hasClass('is-active')) {
+            if (!page) {
                 return;
             }
 

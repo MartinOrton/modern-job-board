@@ -70,6 +70,10 @@ class MJB_Job_Importer
         self::assign_taxonomy_terms($post_id, 'job_type', $data['type'] ?? '');
         self::assign_taxonomy_terms($post_id, 'job_category', $data['category'] ?? '');
 
+        if (class_exists('MJB_Job_Permalinks')) {
+            MJB_Job_Permalinks::sync_geo_meta($post_id);
+        }
+
         $company_name = isset($data['company']) ? sanitize_text_field($data['company']) : '';
         if ($company_name !== '') {
             $company_id = self::find_or_create_company($company_name);
@@ -79,9 +83,7 @@ class MJB_Job_Importer
             }
         }
 
-        if (!empty($data['featured'])) {
-            update_post_meta($post_id, '_featured', '1');
-        }
+        update_post_meta($post_id, '_featured', !empty($data['featured']) ? '1' : '0');
 
         return intval($post_id);
     }

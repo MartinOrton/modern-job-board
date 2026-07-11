@@ -43,11 +43,11 @@ if (!is_dir(dirname($pot_path))) {
 
 $pot = '';
 $pot .= "# Copyright (C) 2026 Martin Orton\n";
-$pot .= "# This file is distributed under the GPL.\n";
+$pot .= "# This file is distributed under a proprietary license. See LICENSE.txt.\n";
 $pot .= "msgid \"\"\n";
 $pot .= "msgstr \"\"\n";
 $pot .= "\"Project-Id-Version: Modern Job Board\\n\"\n";
-$pot .= "\"Report-Msgid-Bugs-To: https://github.com/MartinOrton/modern-job-board\\n\"\n";
+$pot .= "\"Report-Msgid-Bugs-To: hello@martinorton.com\\n\"\n";
 $pot .= "\"POT-Creation-Date: " . gmdate('Y-m-d H:iO') . "\\n\"\n";
 $pot .= "\"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n\"\n";
 $pot .= "\"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n\"\n";

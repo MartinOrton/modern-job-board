@@ -70,9 +70,8 @@ class MJB_Feeds
                         $query->the_post();
                         $post_id = get_the_ID();
                         $company_name = get_post_meta($post_id, '_company_name', true);
-                        $location_terms = wp_get_post_terms($post_id, 'job_location', array('fields' => 'names'));
                         $type_terms = wp_get_post_terms($post_id, 'job_type', array('fields' => 'names'));
-                        $location = !empty($location_terms) ? $location_terms[0] : '';
+                        $location = MJB_Location::format_job_location($post_id);
                         $type = !empty($type_terms) ? $type_terms[0] : '';
                         $application_url = get_permalink($post_id);
                         ?>

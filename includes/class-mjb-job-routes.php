@@ -15,6 +15,7 @@ class MJB_Job_Routes
         'search_location',
         'search_category',
         'search_type',
+        'search_company',
         'page',
         'per_page',
     );
@@ -28,6 +29,7 @@ class MJB_Job_Routes
         add_action('init', array(__CLASS__, 'maybe_flush_rewrites'), 99);
         add_filter('query_vars', array(__CLASS__, 'register_query_vars'));
         add_action('template_redirect', array(__CLASS__, 'redirect_legacy_query_urls'), 1);
+        add_action('template_redirect', array(__CLASS__, 'redirect_underscore_search_urls'), 2);
     }
 
     /**
@@ -97,17 +99,22 @@ class MJB_Job_Routes
 
         if (!empty($params['search_location'])) {
             $segments[] = 'in';
-            $segments[] = $params['search_location'];
+            $segments[] = MJB_Search::normalize_slug($params['search_location']);
         }
 
         if (!empty($params['search_category'])) {
             $segments[] = 'category';
-            $segments[] = $params['search_category'];
+            $segments[] = MJB_Search::normalize_slug($params['search_category']);
         }
 
         if (!empty($params['search_type'])) {
             $segments[] = 'type';
-            $segments[] = $params['search_type'];
+            $segments[] = MJB_Search::normalize_slug($params['search_type']);
+        }
+
+        if (!empty($params['search_company'])) {
+            $segments[] = 'company';
+            $segments[] = MJB_Search::normalize_slug($params['search_company']);
         }
 
         if (!empty($params['search_keywords'])) {
@@ -154,7 +161,7 @@ class MJB_Job_Routes
                 break;
             }
 
-            $value = $parts[$i + 1];
+            $value = MJB_Search::normalize_slug($parts[$i + 1]);
             $i++;
 
             switch ($marker) {
@@ -166,6 +173,9 @@ class MJB_Job_Routes
                     break;
                 case 'type':
                     $raw['search_type'] = $value;
+                    break;
+                case 'company':
+                    $raw['search_company'] = $value;
                     break;
                 case 'keyword':
                     $raw['search_keywords'] = self::restore_keyword_from_slug($value);
@@ -283,5 +293,28 @@ class MJB_Job_Routes
 
         wp_safe_redirect($target, 301);
         exit;
+    }
+
+    /**
+     * Redirect search paths that still contain underscores to hyphenated URLs.
+     */
+    public static function redirect_underscore_search_urls()
+    {
+        if (is_admin() || wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
+            return;
+        }
+
+        $path = get_query_var(self::QUERY_VAR);
+        if (!is_string($path) || $path === '' || strpos($path, '_') === false) {
+            return;
+        }
+
+        $target = self::build_url(self::parse_path($path));
+        $current = home_url(wp_parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+
+        if (trailingslashit($target) !== trailingslashit($current)) {
+            wp_safe_redirect($target, 301);
+            exit;
+        }
     }
 }

@@ -3,33 +3,62 @@
  * The template for displaying Single Job
  */
 
-get_header(); ?>
+get_header();
 
-<div class="mjb-container mjb-container--single">
-    <div class="mjb-content-area mjb-content-area--single">
+while (have_posts()) {
+    the_post();
+    $company_name = get_post_meta(get_the_ID(), '_company_name', true);
+    $hero_intro = $company_name
+        ? sprintf(
+            /* translators: %s: company name */
+            __('Posted by %s', 'modern-job-board'),
+            $company_name
+        )
+        : '';
+    MJB_Shortcodes::render_content_hero(get_the_title(), $hero_intro);
+}
+rewind_posts();
+?>
+
+<div class="mjb-container mjb-container--listing mjb-container--single">
+    <div class="mjb-content-area">
+        <aside class="mjb-sidebar">
+            <?php
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in render_job_search_form().
+            echo MJB_Shortcodes::render_job_search_form(null, true);
+            ?>
+        </aside>
         <main class="site-main mjb-single-main">
-            <?php while (have_posts()):
+            <?php while (have_posts()) :
                 the_post(); ?>
                 <article id="post-<?php the_ID(); ?>" <?php post_class('mjb-single-job'); ?>>
                     <header class="entry-header">
-                        <h1 class="entry-title"><?php the_title(); ?></h1>
-                        <div class="mjb-job-meta">
-                            <span><?php echo get_the_term_list(get_the_ID(), 'job_type', '', ', '); ?></span>
-                            <span><?php echo get_the_term_list(get_the_ID(), 'job_location', '', ', '); ?></span>
+                        <div class="mjb-job-meta mjb-job-meta--single">
                             <?php
+                            MJB_Shortcodes::render_meta_pill('clock', get_the_term_list(get_the_ID(), 'job_type', '', ', '));
+                            MJB_Shortcodes::render_meta_pill('map-pin', MJB_Location::render_job_location_term_list(get_the_ID()));
+                            MJB_Shortcodes::render_meta_pill('tag', get_the_term_list(get_the_ID(), 'job_category', '', ', '));
+
                             $company_name = get_post_meta(get_the_ID(), '_company_name', true);
                             $company_id = get_post_meta(get_the_ID(), '_company_id', true);
 
+                            $company_url = MJB_Search::get_company_jobs_url_for_listing(get_the_ID());
                             if ($company_id && get_post($company_id)) {
-                                echo '<p class="company-name"><strong>' . __('Company:', 'modern-job-board') . '</strong> <a href="' . get_permalink($company_id) . '">' . esc_html(get_the_title($company_id)) . '</a></p>';
+                                MJB_Shortcodes::render_meta_pill_link('briefcase', $company_url, esc_html(get_the_title($company_id)));
+                            } elseif ($company_name && $company_url) {
+                                MJB_Shortcodes::render_meta_pill_link('briefcase', $company_url, esc_html($company_name));
                             } elseif ($company_name) {
-                                echo '<p class="company-name"><strong>' . __('Company:', 'modern-job-board') . '</strong> ' . esc_html($company_name) . '</p>';
+                                MJB_Shortcodes::render_meta_pill('briefcase', esc_html($company_name));
                             }
                             ?>
-                            <p class="posted-date"><strong><?php _e('Posted:', 'modern-job-board'); ?></strong>
-                                <?php echo get_the_date(); ?></p>
-                            <p class="job-category"><strong><?php _e('Category:', 'modern-job-board'); ?></strong>
-                                <?php echo get_the_term_list(get_the_ID(), 'job_category', '', ', '); ?></p>
+                            <span class="mjb-meta-pill">
+                                <?php
+                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                                echo MJB_Icons::render('calendar');
+                                ?>
+                                <strong><?php esc_html_e('Posted:', 'modern-job-board'); ?></strong>
+                                <?php echo esc_html(get_the_date()); ?>
+                            </span>
                         </div>
                     </header>
 

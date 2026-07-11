@@ -6,7 +6,7 @@
     <title>Modern Job Board – The WordPress Job Board Plugin You Own</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 <script type="importmap">
 {
@@ -35,7 +35,7 @@
                 <a href="#comparison">Compare</a>
                 <a href="#developers">Developers</a>
                 <a href="#pricing">Pricing</a>
-                <a href="https://github.com/MartinOrton/modern-job-board" class="btn btn-primary btn-sm">Download Free</a>
+                <a href="#pricing" class="btn btn-primary btn-sm">Get Started Free</a>
             </div>
 
             <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle menu">
@@ -48,7 +48,7 @@
             <a href="#comparison" class="mobile-link">Compare</a>
             <a href="#developers" class="mobile-link">Developers</a>
             <a href="#pricing" class="mobile-link">Pricing</a>
-            <a href="https://github.com/MartinOrton/modern-job-board" class="btn btn-primary mobile-btn">Download Free</a>
+            <a href="#pricing" class="btn btn-primary mobile-btn">Get Started Free</a>
         </div>
     </nav>
 
@@ -60,20 +60,20 @@
                     <div class="reveal">
                         <div class="badge">
                             <span class="badge-dot"></span>
-                            WordPress Plugin • v1.2.1
+                            WordPress Plugin • v0.9.0-beta.1
                         </div>
                     </div>
                     <div class="reveal delay-1">
-                        <h1 class="hero-title">The job board plugin <em class="italic-highlight">you actually own</em></h1>
+                        <h1 class="hero-title">The job board plugin <span class="italic-highlight">you actually own</span></h1>
                     </div>
                     <div class="reveal delay-2">
                         <p class="hero-text">Stop paying monthly SaaS fees. Build a professional job board on WordPress with complete control over your data, unlimited customization, and powerful monetization tools.</p>
                     </div>
                     <div class="reveal delay-3">
                         <div class="hero-actions">
-                            <a href="https://github.com/MartinOrton/modern-job-board" class="btn btn-primary btn-lg">
+                            <a href="#pricing" class="btn btn-primary btn-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                Download Free
+                                Get Started Free
                             </a>
                             <a href="#features" class="btn btn-outline btn-lg">
                                 Explore Features
@@ -331,36 +331,52 @@ GET /wp-json/mjb/v1/jobs
             <div class="container">
                 <div class="section-header reveal">
                     <span class="eyebrow">Pricing</span>
-                    <h2>Simple, honest pricing</h2>
-                    <p>No subscriptions, no hidden fees. Pay once, own forever.</p>
+                    <h2>Start free, upgrade when you need more</h2>
+                    <p>A generous free tier to launch your board. Unlock monetization, imports, and integrations with paid plans.</p>
                 </div>
                 <div class="pricing-grid">
                     <!-- Free -->
                     <div class="pricing-card reveal delay-1">
-                        <h3>Open Source</h3>
-                        <p class="price-sub">Full-featured core plugin</p>
+                        <h3>Free</h3>
+                        <p class="price-sub">Core job board features to get started</p>
                         <div class="price">Free</div>
                         <ul class="price-features">
-                            <li><span class="check-icon">✓</span> All core features</li>
-                            <li><span class="check-icon">✓</span> Employer & Candidate system</li>
-                            <li><span class="check-icon">✓</span> WooCommerce integration</li>
-                            <li><span class="check-icon">✓</span> REST API & XML feeds</li>
+                            <li><span class="check-icon">✓</span> Job listings with AJAX search</li>
+                            <li><span class="check-icon">✓</span> Applications &amp; dashboards</li>
+                            <li><span class="check-icon">✓</span> Gutenberg blocks &amp; shortcodes</li>
+                            <li><span class="check-icon">✓</span> Schema.org JobPosting SEO</li>
+                            <li><span class="check-icon">✓</span> Community support</li>
                         </ul>
-                        <a href="https://github.com/MartinOrton/modern-job-board" class="btn btn-outline btn-block">Download from GitHub</a>
+                        <a href="mailto:hello@martinorton.com?subject=Modern%20Job%20Board%20Free" class="btn btn-outline btn-block">Get Started Free</a>
                     </div>
                     <!-- Pro -->
                     <div class="pricing-card pro reveal delay-2">
                         <div class="recommended-badge">Recommended</div>
-                        <h3>Pro Support</h3>
-                        <p class="price-sub">Priority help & customization</p>
+                        <h3>Pro</h3>
+                        <p class="price-sub">Monetization and scale for growing boards</p>
                         <div class="price">$149 <span class="period">/year</span></div>
                         <ul class="price-features">
                             <li><span class="check-icon">✓</span> Everything in Free</li>
-                            <li><span class="check-icon">✓</span> Priority email support</li>
-                            <li><span class="check-icon">✓</span> Installation assistance</li>
-                            <li><span class="check-icon">✓</span> 2 hours custom development</li>
+                            <li><span class="check-icon">✓</span> Unlimited active jobs</li>
+                            <li><span class="check-icon">✓</span> WooCommerce monetization</li>
+                            <li><span class="check-icon">✓</span> Custom fields &amp; import/export</li>
+                            <li><span class="check-icon">✓</span> Email support</li>
                         </ul>
-                        <a href="mailto:hello@martinorton.com" class="btn btn-primary btn-block">Get Pro Support</a>
+                        <a href="mailto:hello@martinorton.com?subject=Modern%20Job%20Board%20Pro" class="btn btn-primary btn-block">Get Pro</a>
+                    </div>
+                    <!-- Business -->
+                    <div class="pricing-card reveal delay-3">
+                        <h3>Business</h3>
+                        <p class="price-sub">Integrations and priority support</p>
+                        <div class="price">$299 <span class="period">/year</span></div>
+                        <ul class="price-features">
+                            <li><span class="check-icon">✓</span> Everything in Pro</li>
+                            <li><span class="check-icon">✓</span> REST API (v1 + v2)</li>
+                            <li><span class="check-icon">✓</span> XML job feed syndication</li>
+                            <li><span class="check-icon">✓</span> Webhooks with retry queue</li>
+                            <li><span class="check-icon">✓</span> Priority support &amp; 2 hrs custom dev</li>
+                        </ul>
+                        <a href="mailto:hello@martinorton.com?subject=Modern%20Job%20Board%20Business" class="btn btn-outline btn-block">Get Business</a>
                     </div>
                 </div>
             </div>
@@ -370,10 +386,10 @@ GET /wp-json/mjb/v1/jobs
         <section class="cta-section">
             <div class="container reveal">
                 <h2>Ready to own your job board?</h2>
-                <p>Download Modern Job Board today and start building your recruitment platform without monthly fees or platform lock-in.</p>
-                <a href="https://github.com/MartinOrton/modern-job-board" class="btn btn-white btn-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-                    View on GitHub
+                <p>Start with the free tier today and upgrade when you need monetization, imports, or API integrations.</p>
+                <a href="#pricing" class="btn btn-white btn-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    View Pricing
                 </a>
             </div>
         </section>
@@ -389,7 +405,7 @@ GET /wp-json/mjb/v1/jobs
                 Modern Job Board
             </div>
             <div class="footer-links">
-                <a href="#">GitHub</a>
+                <a href="#pricing">Pricing</a>
                 <a href="#">Documentation</a>
                 <a href="#">Author</a>
             </div>

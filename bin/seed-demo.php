@@ -37,13 +37,46 @@ if (!class_exists('MJB_Job_Importer')) {
     require_once dirname(__DIR__) . '/includes/class-mjb-job-importer.php';
 }
 
+if (!class_exists('MJB_Job_Permalinks')) {
+    require_once dirname(__DIR__) . '/includes/class-mjb-job-permalinks.php';
+}
+
+require_once __DIR__ . '/demo-jobs-data.php';
+
 $created_pages = MJB_Page_Wizard::create_missing_pages();
 echo 'Pages: created ' . intval($created_pages['created']) . ', existing ' . intval($created_pages['existing']) . PHP_EOL;
 
 $taxonomies = array(
-    'job_location' => array('Remote', 'London', 'San Francisco'),
-    'job_category' => array('Engineering', 'Design', 'Marketing'),
-    'job_type' => array('Full Time', 'Contract', 'Part Time'),
+    'job_location' => array(
+        'Remote',
+        'London',
+        'San Francisco',
+        'New York',
+        'Manchester',
+        'Austin',
+        'Berlin',
+        'Toronto',
+        'Sydney',
+        'Portland',
+        'Dublin',
+    ),
+    'job_category' => array(
+        'Engineering',
+        'Design',
+        'Marketing',
+        'Sales',
+        'Customer Success',
+        'Data',
+        'Product',
+        'HR',
+        'Legal',
+        'Operations',
+    ),
+    'job_type' => array(
+        'Full Time',
+        'Contract',
+        'Part Time',
+    ),
 );
 
 foreach ($taxonomies as $taxonomy => $terms) {
@@ -54,62 +87,78 @@ foreach ($taxonomies as $taxonomy => $terms) {
     }
 }
 
-$demo_jobs = array(
-    array(
-        'title' => 'Senior WordPress Developer',
-        'description' => 'Build and maintain custom WordPress plugins and themes for agency clients. Experience with REST APIs, WooCommerce, and PHPCS required.',
-        'location' => 'Remote',
-        'type' => 'Full Time',
-        'category' => 'Engineering',
-        'company' => 'Acme Digital',
-        'featured' => 1,
-    ),
-    array(
-        'title' => 'Product Designer',
-        'description' => 'Lead UX for a B2B hiring platform. You will own flows for employers, candidates, and admin analytics.',
-        'location' => 'London',
-        'type' => 'Full Time',
-        'category' => 'Design',
-        'company' => 'Northline Studio',
-        'featured' => 0,
-    ),
-    array(
-        'title' => 'Growth Marketing Manager',
-        'description' => 'Own acquisition for a WordPress job board plugin. SEO, content, and partner campaigns.',
-        'location' => 'San Francisco',
-        'type' => 'Contract',
-        'category' => 'Marketing',
-        'company' => 'Launchpad Labs',
-        'featured' => 0,
-    ),
-);
+/**
+ * Import or refresh a demo job by stable external ID.
+ *
+ * @param array<string, mixed> $job
+ * @return int Post ID on success, 0 on failure.
+ */
+function mjb_seed_demo_job($job) {
+    $external_id = 'mjb-demo-' . sanitize_title($job['title']);
+    $existing_id = MJB_Job_Importer::find_existing_by_external_id($external_id);
 
-$imported = 0;
+    if ($existing_id) {
+        $updated = wp_update_post(
+            array(
+                'ID' => $existing_id,
+                'post_title' => sanitize_text_field($job['title']),
+                'post_content' => wp_kses_post($job['content']),
+                'post_status' => 'publish',
+            ),
+            true
+        );
 
-foreach ($demo_jobs as $job) {
-    $post_id = MJB_Job_Importer::import_job(
+        if (!$updated || is_wp_error($updated)) {
+            return 0;
+        }
+
+        MJB_Job_Importer::assign_taxonomy_terms($existing_id, 'job_location', $job['location'] ?? '');
+        MJB_Job_Importer::assign_taxonomy_terms($existing_id, 'job_type', $job['type'] ?? '');
+        MJB_Job_Importer::assign_taxonomy_terms($existing_id, 'job_category', $job['category'] ?? '');
+
+        $company_name = isset($job['company']) ? sanitize_text_field($job['company']) : '';
+        if ($company_name !== '') {
+            $company_id = MJB_Job_Importer::find_or_create_company($company_name);
+            if ($company_id) {
+                update_post_meta($existing_id, '_company_id', $company_id);
+                update_post_meta($existing_id, '_company_name', $company_name);
+            }
+        }
+
+        update_post_meta($existing_id, '_featured', !empty($job['featured']) ? '1' : '0');
+        MJB_Job_Permalinks::sync_geo_meta($existing_id);
+
+        return intval($existing_id);
+    }
+
+    return MJB_Job_Importer::import_job(
         array(
             'title' => $job['title'],
-            'description' => $job['description'],
+            'content' => $job['content'],
             'location' => $job['location'],
             'type' => $job['type'],
             'category' => $job['category'],
             'company' => $job['company'],
             'featured' => !empty($job['featured']),
-            'external_id' => 'mjb-demo-' . sanitize_title($job['title']),
+            'external_id' => $external_id,
         ),
         array(
             'author_id' => 1,
             'skip_duplicates' => true,
         )
     );
+}
 
-    if ($post_id) {
+$demo_jobs = mjb_get_demo_jobs_data();
+$imported = 0;
+
+foreach ($demo_jobs as $job) {
+    if (mjb_seed_demo_job($job)) {
         $imported++;
     }
 }
 
-echo "Imported {$imported} demo jobs." . PHP_EOL;
+echo "Seeded {$imported} demo jobs (" . count($demo_jobs) . ' defined).' . PHP_EOL;
 echo 'Demo URLs:' . PHP_EOL;
 echo '  Jobs: ' . home_url('/jobs/') . PHP_EOL;
 echo '  Post a job: ' . home_url('/post-a-job/') . PHP_EOL;

@@ -2,6 +2,8 @@
 
 define('ABSPATH', dirname(__DIR__) . '/');
 define('HOUR_IN_SECONDS', 3600);
+define('DAY_IN_SECONDS', 86400);
+define('WEEK_IN_SECONDS', 604800);
 define('MJB_VERSION', 'test');
 define('OBJECT', 'OBJECT');
 
@@ -36,6 +38,8 @@ $GLOBALS['mjb_test_status_updates'] = array();
 $GLOBALS['mjb_test_referer'] = false;
 $GLOBALS['mjb_test_remote_posts'] = array();
 $GLOBALS['mjb_test_remote_response_code'] = 204;
+$GLOBALS['mjb_test_mails'] = array();
+$GLOBALS['mjb_test_cron_events'] = array();
 
 if (!function_exists('__')) {
     function __($text, $domain = null)
@@ -399,7 +403,8 @@ if (!function_exists('wp_get_post_terms')) {
     function wp_get_post_terms($post_id, $taxonomy, $args = array())
     {
         $terms = $GLOBALS['mjb_test_terms'][intval($post_id)][$taxonomy] ?? array();
-        if (!empty($args['fields']) && $args['fields'] === 'names') {
+        $fields = !empty($args['fields']) ? $args['fields'] : 'all';
+        if ($fields === 'names' || $fields === 'slugs') {
             return $terms;
         }
         return $terms;
@@ -475,6 +480,13 @@ if (!function_exists('add_query_arg')) {
 
         $separator = strpos($url, '?') === false ? '?' : '&';
         return $url . $separator . http_build_query($args);
+    }
+}
+
+if (!function_exists('admin_url')) {
+    function admin_url($path = '')
+    {
+        return 'https://example.test/wp-admin/' . ltrim((string) $path, '/');
     }
 }
 
@@ -597,6 +609,51 @@ if (!function_exists('esc_url_raw')) {
     }
 }
 
+if (!function_exists('wp_mail')) {
+    function wp_mail($to, $subject, $message)
+    {
+        $GLOBALS['mjb_test_mails'][] = array(
+            'to' => $to,
+            'subject' => $subject,
+            'message' => $message,
+        );
+
+        return true;
+    }
+}
+
+if (!function_exists('is_email')) {
+    function is_email($email)
+    {
+        return (bool) filter_var($email, FILTER_VALIDATE_EMAIL);
+    }
+}
+
+if (!function_exists('get_bloginfo')) {
+    function get_bloginfo($show = '')
+    {
+        if ($show === 'name') {
+            return 'MJB Test Site';
+        }
+
+        return '';
+    }
+}
+
+if (!function_exists('wp_specialchars_decode')) {
+    function wp_specialchars_decode($string, $quote_style = ENT_QUOTES)
+    {
+        return html_entity_decode((string) $string, $quote_style, 'UTF-8');
+    }
+}
+
+if (!function_exists('wp_rand')) {
+    function wp_rand($min = 0, $max = 0)
+    {
+        return mt_rand($min, $max);
+    }
+}
+
 if (!function_exists('wp_remote_get')) {
     function wp_remote_get($url, $args = array())
     {
@@ -701,6 +758,10 @@ if (!defined('ARRAY_A')) {
 $GLOBALS['wpdb'] = new MJB_Test_WPDB();
 
 require_once dirname(__DIR__) . '/includes/class-mjb-job-routes.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-job-permalinks.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-location.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-icons.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-shortcodes.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-search.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-resumes.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-application-guard.php';
@@ -711,6 +772,7 @@ require_once dirname(__DIR__) . '/includes/class-mjb-rest-api.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-feeds.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-job-importer.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-xml-importer.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-import-scheduler.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-page-wizard.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-application-status.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-rest-api-v2.php';
@@ -720,3 +782,4 @@ require_once dirname(__DIR__) . '/includes/class-mjb-blocks.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-analytics.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-webhook-queue.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-webhooks.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-admin-tabs.php';

@@ -1,5 +1,43 @@
 /* Shared utility classes used across admin and frontend */
 
+:root {
+    --mjb-heading-weight: 600;
+    --mjb-heading-line-height: 1.2;
+}
+
+/* Unified plugin heading weight (H1–H6 and heading-class components) */
+body[class*="page_modern-job-board"] :is(h1, h2, h3, h4, h5, h6),
+body[class*="post-type-job_"] :is(h1, h2, h3, h4, h5, h6),
+body[class*="post-type-company"] :is(h1, h2, h3, h4, h5, h6),
+body[class*="post-type-mjb_resume"] :is(h1, h2, h3, h4, h5, h6),
+.mjb-admin-page :is(h1, h2, h3, h4, h5, h6),
+.mjb-admin-shell :is(h1, h2, h3, h4, h5, h6),
+.mjb-dashboard-wrap :is(h1, h2, h3, h4, h5, h6),
+.mjb-container :is(h1, h2, h3, h4, h5, h6),
+.mjb-content-hero :is(h1, h2, h3, h4, h5, h6),
+.mjb-content-hero__title,
+.mjb-section-title,
+.mjb-audience-card__title,
+.mjb-feature-card h3,
+.mjb-settings-form :is(h2, h3),
+.mjb-tools-card :is(h2, h3),
+.mjb-custom-fields-panel h3,
+.mjb-search-panel h3,
+.mjb-job-filter h3,
+.mjb-application-area h3,
+.mjb-single-job .entry-content :is(h1, h2, h3, h4, h5, h6),
+.mjb-company-card__title,
+.mjb-company-profile__name,
+.mjb-company-jobs__header h2,
+.mjb-chart-panel h3,
+.mjb-container .entry-title,
+.mjb-container .mjb-page-title,
+.mjb-job-card__title,
+.mjb-job-item :is(h1, h2, h3, h4, h5, h6) {
+    font-weight: var(--mjb-heading-weight);
+    line-height: var(--mjb-heading-line-height);
+}
+
 .mjb-is-hidden {
     display: none !important;
 }

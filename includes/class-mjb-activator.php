@@ -18,10 +18,13 @@ class MJB_Activator
 
         self::register_roles();
         self::schedule_cron();
+        self::schedule_import_cron();
         MJB_Resumes::ensure_secure_directory();
 
         require_once dirname(__FILE__) . '/class-mjb-job-routes.php';
+        require_once dirname(__FILE__) . '/class-mjb-job-permalinks.php';
         MJB_Job_Routes::register_rewrites();
+        MJB_Job_Permalinks::register_rewrites();
 
         require_once dirname(__FILE__) . '/class-mjb-page-resolver.php';
         require_once dirname(__FILE__) . '/class-mjb-page-wizard.php';
@@ -36,6 +39,8 @@ class MJB_Activator
     public static function deactivate()
     {
         wp_clear_scheduled_hook('mjb_daily_cron_event');
+        require_once dirname(__FILE__) . '/class-mjb-import-scheduler.php';
+        MJB_Import_Scheduler::clear_events();
         flush_rewrite_rules();
     }
 
@@ -75,5 +80,14 @@ class MJB_Activator
         if (!wp_next_scheduled('mjb_daily_cron_event')) {
             wp_schedule_event(time(), 'daily', 'mjb_daily_cron_event');
         }
+    }
+
+    /**
+     * Schedule hourly import backfill cron if not already scheduled.
+     */
+    private static function schedule_import_cron()
+    {
+        require_once dirname(__FILE__) . '/class-mjb-import-scheduler.php';
+        MJB_Import_Scheduler::schedule_events();
     }
 }

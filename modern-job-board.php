@@ -1,11 +1,13 @@
 <?php
 /**
  * Plugin Name: Modern Job Board
- * Plugin URI: https://github.com/MartinOrton/modern-job-board
- * Description: A lightweight job board plugin for WordPress.
- * Version: 1.9.0
+ * Plugin URI: https://martinorton.com/modern-job-board
+ * Description: A freemium job board plugin for WordPress (pre-gold beta — not 1.0).
+ * Version: 0.9.0-beta.1
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
+ * License: Proprietary
+ * License URI: https://martinorton.com/modern-job-board
  * Text Domain: modern-job-board
  */
 
@@ -14,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '1.9.0');
+define('MJB_VERSION', '0.9.0-beta.1');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
 
@@ -23,10 +25,12 @@ require_once MJB_PATH . 'includes/class-mjb-activator.php';
 require_once MJB_PATH . 'includes/class-mjb-notices.php';
 require_once MJB_PATH . 'includes/class-mjb-page-resolver.php';
 require_once MJB_PATH . 'includes/class-mjb-job-routes.php';
+require_once MJB_PATH . 'includes/class-mjb-job-permalinks.php';
 require_once MJB_PATH . 'includes/class-mjb-application-guard.php';
 require_once MJB_PATH . 'includes/class-mjb-recaptcha.php';
 require_once MJB_PATH . 'includes/class-mjb-job-importer.php';
 require_once MJB_PATH . 'includes/class-mjb-xml-importer.php';
+require_once MJB_PATH . 'includes/class-mjb-import-scheduler.php';
 require_once MJB_PATH . 'includes/class-mjb-page-wizard.php';
 require_once MJB_PATH . 'includes/class-mjb-application-status.php';
 require_once MJB_PATH . 'includes/class-mjb-rest-api-v2.php';
@@ -41,7 +45,10 @@ register_deactivation_hook(__FILE__, array('MJB_Activator', 'deactivate'));
 
 // Include core classes.
 require_once MJB_PATH . 'includes/class-mjb-cpt.php';
+require_once MJB_PATH . 'includes/class-mjb-icons.php';
+require_once MJB_PATH . 'includes/class-mjb-location.php';
 require_once MJB_PATH . 'includes/class-mjb-shortcodes.php';
+require_once MJB_PATH . 'includes/class-mjb-admin-tabs.php';
 require_once MJB_PATH . 'includes/class-mjb-admin.php';
 require_once MJB_PATH . 'includes/class-mjb-template-loader.php';
 require_once MJB_PATH . 'includes/class-mjb-applications.php';
@@ -82,10 +89,12 @@ class Modern_Job_Board
     {
         MJB_Page_Resolver::init();
         MJB_Job_Routes::init();
+        MJB_Job_Permalinks::init();
         MJB_Page_Wizard::init();
         MJB_Analytics::init();
         MJB_Webhooks::init();
         MJB_Webhook_Queue::init();
+        MJB_Import_Scheduler::init();
         MJB_Blocks::init();
         $this->init_hooks();
     }
@@ -170,6 +179,7 @@ class Modern_Job_Board
 
         // Initialize Tools (CSV Import/Export)
         require_once MJB_PATH . 'includes/class-mjb-tools.php';
+        global $mjb_tools;
         $mjb_tools = new MJB_Tools();
         $mjb_tools->init();
 
@@ -204,7 +214,7 @@ class Modern_Job_Board
      */
     private function should_load_assets()
     {
-        if (is_singular(array('job_listing', 'company')) || is_post_type_archive('job_listing') || is_tax(array('job_type', 'job_category', 'job_location'))) {
+        if (is_singular(array('job_listing', 'company')) || is_post_type_archive(array('job_listing', 'company')) || is_tax(array('job_type', 'job_category', 'job_location'))) {
             return true;
         }
 

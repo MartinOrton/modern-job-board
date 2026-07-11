@@ -51,4 +51,31 @@ class JobRoutesTest extends TestCase
 
         $this->assertSame('https://example.test/wp-json/mjb/v1/jobs/search/in/remote/page/2/per-page/20/', $url);
     }
+
+    public function test_build_path_normalizes_underscore_segments_to_hyphens()
+    {
+        $path = MJB_Job_Routes::build_path(array(
+            'search_location' => 'san_francisco',
+            'search_type' => 'full_time',
+        ));
+
+        $this->assertSame('in/san-francisco/type/full-time', $path);
+    }
+
+    public function test_build_path_supports_company_filter()
+    {
+        $path = MJB_Job_Routes::build_path(array(
+            'search_company' => 'acme_digital',
+        ));
+
+        $this->assertSame('company/acme-digital', $path);
+    }
+
+    public function test_parse_path_restores_company_filter()
+    {
+        $params = MJB_Job_Routes::parse_path('company/acme-digital/page/2');
+
+        $this->assertSame('acme-digital', $params['search_company']);
+        $this->assertSame(2, $params['page']);
+    }
 }

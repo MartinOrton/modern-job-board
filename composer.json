@@ -1,8 +1,8 @@
 {
     "name": "martinorton/modern-job-board",
-    "description": "A WordPress job board plugin",
+    "description": "A freemium WordPress job board plugin (pre-gold beta 0.9.0-beta.1)",
     "type": "wordpress-plugin",
-    "license": "GPL-2.0-or-later",
+    "license": "proprietary",
     "require-dev": {
         "phpunit/phpunit": "^9.6",
         "dealerdirect/phpcodesniffer-composer-installer": "^1.0",

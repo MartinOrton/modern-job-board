@@ -4,11 +4,11 @@ Tags: jobs, job board, careers, recruitment, woocommerce
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.9.0
-License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Stable tag: 0.9.0-beta.1
+License: Proprietary
+License URI: https://martinorton.com/modern-job-board
 
-A lightweight, extensible WordPress job board with employer and candidate dashboards, applications, and WooCommerce monetization.
+A freemium WordPress job board with employer and candidate dashboards, applications, and optional WooCommerce monetization on paid plans.
 
 == Description ==
 
@@ -21,11 +21,11 @@ Modern Job Board helps you run a professional recruitment site on WordPress with
 * Frontend employer dashboard with application workflow
 * Candidate dashboard with resume management
 * Internal applications or external apply URLs
-* WooCommerce pay-per-post, job credits, and paid CV access
-* Custom fields builder for jobs and applications
-* CSV and XML import/export tools
-* REST API and XML feed for aggregators
-* Outbound webhooks with retry queue
+* WooCommerce pay-per-post, job credits, and paid CV access (Pro plan)
+* Custom fields builder for jobs and applications (Pro plan)
+* CSV and XML import/export tools (Pro plan)
+* REST API and XML feed for aggregators (Business plan)
+* Outbound webhooks with retry queue (Business plan)
 * Gutenberg blocks for all core shortcodes
 * Schema.org JobPosting markup
 
@@ -40,7 +40,7 @@ Modern Job Board helps you run a professional recruitment site on WordPress with
 
 = Documentation =
 
-Full setup and developer docs are available in the plugin repository `docs/` folder and on the project website.
+Full setup and developer docs are available in the plugin `docs/` folder and on the project website. See LICENSE.txt for plan details.
 
 == Installation ==
 
@@ -72,6 +72,10 @@ Yes. Public job search is available at `/wp-json/mjb/v1/jobs`. Authenticated emp
 5. Single job application form
 
 == Changelog ==
+
+= 0.9.0-beta.1 =
+* Pre-gold beta versioning. Treat as beta until 1.0.0 gold.
+
 
 = 1.9.0 =
 * Frontend template and stylesheet refresh

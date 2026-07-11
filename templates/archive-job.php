@@ -3,66 +3,40 @@
  * The template for displaying Job Archives
  */
 
-get_header(); ?>
+get_header();
 
-<div class="mjb-container">
-    <header class="mjb-page-header">
-        <h1 class="mjb-page-title"><?php post_type_archive_title(); ?></h1>
-        <p class="mjb-page-intro"><?php esc_html_e('Browse open roles and filter by location, category, or keywords.', 'modern-job-board'); ?></p>
-    </header>
+$filter_params = MJB_Search::get_request_filter_params();
+$heading = MJB_Search::get_listing_page_heading($filter_params);
+$jobs_query = $GLOBALS['wp_query'];
+$per_page = max(1, intval($jobs_query->get('posts_per_page')));
+if ($per_page < 1) {
+    $per_page = 10;
+}
 
-    <div class="mjb-content-area">
-        <aside class="mjb-sidebar">
-            <form action="<?php echo esc_url(MJB_Job_Routes::build_url()); ?>" method="GET"
-                class="mjb-search-form mjb-search-panel">
-                <h3><?php _e('Filter Jobs', 'modern-job-board'); ?></h3>
+MJB_Shortcodes::render_content_hero($heading['title'], $heading['intro']);
+?>
 
-                <p>
-                    <label for="search_keywords"><?php _e('Keywords', 'modern-job-board'); ?></label>
-                    <input type="text" name="search_keywords" id="search_keywords"
-                        value="<?php echo isset($_GET['search_keywords']) ? esc_attr($_GET['search_keywords']) : ''; ?>">
-                </p>
+<div class="mjb-container mjb-container--listing">
+    <?php MJB_Shortcodes::render_audience_cards($filter_params); ?>
+    <div id="mjb-jobs-board" class="mjb-jobs-board">
+        <?php MJB_Shortcodes::render_jobs_loader(); ?>
+        <div class="mjb-content-area">
+            <aside class="mjb-sidebar">
+                <?php
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in render_job_search_form().
+                echo MJB_Shortcodes::render_job_search_form($filter_params, true);
+                ?>
+            </aside>
 
-                <p>
-                    <label for="search_location"><?php _e('Location', 'modern-job-board'); ?></label>
-                    <?php
-                    $archive_filters = MJB_Search::get_request_filter_params();
-                    echo MJB_Search::render_location_dropdown($archive_filters['search_location']);
-                    ?>
-                </p>
-
-                <p>
-                    <label for="search_category"><?php _e('Category', 'modern-job-board'); ?></label>
-                    <select name="search_category" id="search_category">
-                        <option value=""><?php _e('All Categories', 'modern-job-board'); ?></option>
-                        <?php
-                        $categories = get_terms(array('taxonomy' => 'job_category', 'hide_empty' => false));
-                        foreach ($categories as $category) {
-                            $selected = isset($_GET['search_category']) && $_GET['search_category'] == $category->slug ? 'selected' : '';
-                            echo '<option value="' . esc_attr($category->slug) . '" ' . $selected . '>' . esc_html($category->name) . '</option>';
-                        }
-                        ?>
-                    </select>
-                </p>
-
-                <p>
-                    <input type="submit" value="<?php _e('Search', 'modern-job-board'); ?>">
-                    <a href="<?php echo get_post_type_archive_link('job_listing'); ?>"
-                        class="mjb-reset-button"><?php _e('Reset', 'modern-job-board'); ?></a>
-                </p>
-            </form>
-        </aside>
-
-        <main class="site-main">
-            <?php if (have_posts()): ?>
-                <div id="mjb-jobs-list">
-                    <?php MJB_Shortcodes::render_job_loop($GLOBALS['wp_query']); ?>
+            <main class="site-main">
+                <div id="mjb-jobs-list" class="mjb-jobs-list-wrap" data-posts-per-page="<?php echo esc_attr($per_page); ?>"<?php echo !empty($filter_params['search_company']) ? ' data-search-company="' . esc_attr($filter_params['search_company']) . '"' : ''; ?>>
+                    <div id="mjb-jobs-results">
+                        <?php MJB_Shortcodes::render_job_loop($jobs_query); ?>
+                        <?php MJB_Shortcodes::render_pagination($jobs_query, $filter_params); ?>
+                    </div>
                 </div>
-                <?php the_posts_pagination(); ?>
-            <?php else: ?>
-                <p><?php _e('No jobs found.', 'modern-job-board'); ?></p>
-            <?php endif; ?>
-        </main>
+            </main>
+        </div>
     </div>
 </div>
 

@@ -20,6 +20,9 @@ class MJB_Tools
         add_action('admin_init', array($this, 'handle_import_jobs'));
         add_action('admin_init', array($this, 'handle_import_jobs_xml'));
         add_action('admin_init', array($this, 'handle_import_jobs_xml_url'));
+        add_action('admin_init', array($this, 'handle_schedule_feed_save'));
+        add_action('admin_init', array($this, 'handle_schedule_feed_delete'));
+        add_action('admin_init', array($this, 'handle_schedule_feed_run'));
     }
 
     /**
@@ -27,36 +30,54 @@ class MJB_Tools
      */
     public function register_admin_page()
     {
-        add_submenu_page(
-            'edit.php?post_type=job_listing',
-            __('Tools', 'modern-job-board'),
-            __('Tools', 'modern-job-board'),
-            'manage_options',
-            'mjb-tools',
-            array($this, 'render_tools_page')
-        );
+        // Tools is rendered inside the tabbed admin shell.
     }
 
     /**
-     * Render Tools Page.
+     * Build admin shell URL for the tools tab.
+     *
+     * @param string $tools_tab
+     * @param array  $args
+     * @return string
      */
-    public function render_tools_page()
+    private function get_tools_tab_url($tools_tab = 'export', $args = array())
     {
-        $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'export';
-        ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('Modern Job Board Tools', 'modern-job-board'); ?></h1>
+        $query = array_merge(array(
+            'page' => 'modern-job-board',
+            'tab' => 'tools',
+            'tools_tab' => $tools_tab,
+        ), $args);
 
-            <h2 class="nav-tab-wrapper">
-                <a href="<?php echo esc_url(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=export')); ?>"
-                    class="nav-tab <?php echo $active_tab == 'export' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Export', 'modern-job-board'); ?></a>
-                <a href="<?php echo esc_url(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import')); ?>"
-                    class="nav-tab <?php echo $active_tab == 'import' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Import', 'modern-job-board'); ?></a>
-            </h2>
+        return add_query_arg($query, admin_url('admin.php'));
+    }
+
+    /**
+     * Render tools tab content.
+     *
+     * @param string $active_tab
+     */
+    public function render_tools_content($active_tab = 'export')
+    {
+        $active_tab = in_array($active_tab, array('export', 'import', 'schedules'), true) ? $active_tab : 'export';
+        ?>
+        <div class="mjb-tab-panel mjb-tab-panel--tools">
+            <h2 class="mjb-section-title"><?php esc_html_e('Tools', 'modern-job-board'); ?></h2>
+
+            <div class="mjb-tools-subtabs" role="tablist" aria-label="<?php esc_attr_e('Import and export', 'modern-job-board'); ?>">
+                <button type="button" class="mjb-tools-subtab<?php echo $active_tab === 'export' ? ' is-active' : ''; ?>" data-tools-tab="export" role="tab" aria-selected="<?php echo $active_tab === 'export' ? 'true' : 'false'; ?>">
+                    <?php esc_html_e('Export', 'modern-job-board'); ?>
+                </button>
+                <button type="button" class="mjb-tools-subtab<?php echo $active_tab === 'import' ? ' is-active' : ''; ?>" data-tools-tab="import" role="tab" aria-selected="<?php echo $active_tab === 'import' ? 'true' : 'false'; ?>">
+                    <?php esc_html_e('Import', 'modern-job-board'); ?>
+                </button>
+                <button type="button" class="mjb-tools-subtab<?php echo $active_tab === 'schedules' ? ' is-active' : ''; ?>" data-tools-tab="schedules" role="tab" aria-selected="<?php echo $active_tab === 'schedules' ? 'true' : 'false'; ?>">
+                    <?php esc_html_e('Schedules', 'modern-job-board'); ?>
+                </button>
+            </div>
 
             <!-- Export Tab -->
             <?php if ($active_tab == 'export'): ?>
-                <div class="card mjb-tools-card">
+                <div class="mjb-tools-card">
                     <h2><?php esc_html_e('Export Data', 'modern-job-board'); ?></h2>
                     <p><?php esc_html_e('Download your data in CSV format.', 'modern-job-board'); ?></p>
 
@@ -67,8 +88,9 @@ class MJB_Tools
                         <?php wp_nonce_field('mjb_export_jobs_nonce'); ?>
                         <input type="hidden" name="mjb_action" value="export_jobs">
                         <p>
-                            <input type="submit" class="button button-primary"
-                                value="<?php esc_attr_e('Export All Jobs to CSV', 'modern-job-board'); ?>">
+                            <button type="submit" class="mjb-btn mjb-btn-primary">
+                                <?php esc_html_e('Export All Jobs to CSV', 'modern-job-board'); ?>
+                            </button>
                         </p>
                     </form>
 
@@ -79,8 +101,9 @@ class MJB_Tools
                         <?php wp_nonce_field('mjb_export_applications_nonce'); ?>
                         <input type="hidden" name="mjb_action" value="export_applications">
                         <p>
-                            <input type="submit" class="button button-secondary"
-                                value="<?php esc_attr_e('Export All Applications to CSV', 'modern-job-board'); ?>">
+                            <button type="submit" class="mjb-btn mjb-btn-outline">
+                                <?php esc_html_e('Export All Applications to CSV', 'modern-job-board'); ?>
+                            </button>
                         </p>
                     </form>
                 </div>
@@ -88,7 +111,7 @@ class MJB_Tools
 
             <!-- Import Tab -->
             <?php if ($active_tab == 'import'): ?>
-                <div class="card mjb-tools-card">
+                <div class="mjb-tools-card">
                     <h2><?php esc_html_e('Import Jobs', 'modern-job-board'); ?></h2>
                     <p><?php esc_html_e('Upload a CSV file to bulk import job listings.', 'modern-job-board'); ?></p>
                     <p><strong><?php esc_html_e('Required Columns:', 'modern-job-board'); ?></strong>
@@ -121,8 +144,9 @@ class MJB_Tools
                             <input type="file" name="import_file" accept=".csv" required>
                         </p>
                         <p>
-                            <input type="submit" class="button button-primary"
-                                value="<?php esc_attr_e('Import Jobs from CSV', 'modern-job-board'); ?>">
+                            <button type="submit" class="mjb-btn mjb-btn-primary">
+                                <?php esc_html_e('Import Jobs from CSV', 'modern-job-board'); ?>
+                            </button>
                         </p>
                     </form>
 
@@ -143,8 +167,9 @@ class MJB_Tools
                             <input type="file" name="import_xml_file" accept=".xml,.rss,application/xml,text/xml" required>
                         </p>
                         <p>
-                            <input type="submit" class="button button-secondary"
-                                value="<?php esc_attr_e('Import Jobs from XML File', 'modern-job-board'); ?>">
+                            <button type="submit" class="mjb-btn mjb-btn-outline">
+                                <?php esc_html_e('Import Jobs from XML File', 'modern-job-board'); ?>
+                            </button>
                         </p>
                     </form>
 
@@ -157,13 +182,178 @@ class MJB_Tools
                                 placeholder="https://example.com/feed/job-listings/" required>
                         </p>
                         <p>
-                            <input type="submit" class="button button-secondary"
-                                value="<?php esc_attr_e('Import Jobs from Feed URL', 'modern-job-board'); ?>">
+                            <button type="submit" class="mjb-btn mjb-btn-outline">
+                                <?php esc_html_e('Import Jobs from Feed URL', 'modern-job-board'); ?>
+                            </button>
                         </p>
                     </form>
                 </div>
             <?php endif; ?>
 
+            <?php if ($active_tab === 'schedules'): ?>
+                <?php $this->render_schedules_content(); ?>
+            <?php endif; ?>
+
+        </div>
+        <?php
+    }
+
+    /**
+     * Render scheduled import feeds UI.
+     */
+    private function render_schedules_content()
+    {
+        $edit_id = isset($_GET['schedule_edit']) ? sanitize_key(wp_unslash($_GET['schedule_edit'])) : '';
+        $editing = $edit_id !== '' ? MJB_Import_Scheduler::get_feed($edit_id) : null;
+        $feeds = MJB_Import_Scheduler::get_feeds();
+        ?>
+        <div class="mjb-tools-card">
+            <h2><?php esc_html_e('Scheduled XML Backfill', 'modern-job-board'); ?></h2>
+            <p><?php esc_html_e('Automatically import jobs from remote XML/RSS feeds on a daily or weekly schedule.', 'modern-job-board'); ?></p>
+
+            <?php
+            if (isset($_GET['schedule_saved'])) {
+                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Scheduled feed saved.', 'modern-job-board') . '</p></div>';
+            }
+            if (isset($_GET['schedule_deleted'])) {
+                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Scheduled feed deleted.', 'modern-job-board') . '</p></div>';
+            }
+            if (isset($_GET['schedule_ran'])) {
+                $imported = intval($_GET['schedule_imported'] ?? 0);
+                $skipped = intval($_GET['schedule_skipped'] ?? 0);
+                echo '<div class="notice notice-success is-dismissible"><p>' .
+                    esc_html(sprintf(
+                        __('Feed import complete. %1$d jobs imported, %2$d skipped.', 'modern-job-board'),
+                        $imported,
+                        $skipped
+                    )) .
+                    '</p></div>';
+            }
+            if (isset($_GET['schedule_error'])) {
+                echo '<div class="notice notice-error is-dismissible"><p>' . esc_html(sanitize_text_field(wp_unslash($_GET['schedule_error']))) . '</p></div>';
+            }
+            ?>
+
+            <h3><?php echo $editing ? esc_html__('Edit Scheduled Feed', 'modern-job-board') : esc_html__('Add Scheduled Feed', 'modern-job-board'); ?></h3>
+            <form method="post" action="" class="mjb-tools-form-spaced">
+                <?php wp_nonce_field('mjb_schedule_feed_save_nonce'); ?>
+                <input type="hidden" name="mjb_action" value="schedule_feed_save">
+                <?php if ($editing): ?>
+                    <input type="hidden" name="schedule_feed_id" value="<?php echo esc_attr($editing['id']); ?>">
+                <?php endif; ?>
+                <p>
+                    <label for="mjb_schedule_name"><strong><?php esc_html_e('Feed Name', 'modern-job-board'); ?></strong></label><br>
+                    <input type="text" class="regular-text" id="mjb_schedule_name" name="schedule_name"
+                        value="<?php echo esc_attr($editing['name'] ?? ''); ?>" required>
+                </p>
+                <p>
+                    <label for="mjb_schedule_url"><strong><?php esc_html_e('Feed URL', 'modern-job-board'); ?></strong></label><br>
+                    <input type="url" class="regular-text" id="mjb_schedule_url" name="schedule_url"
+                        value="<?php echo esc_attr($editing['url'] ?? ''); ?>"
+                        placeholder="https://example.com/feed/job-listings/" required>
+                </p>
+                <p>
+                    <label for="mjb_schedule_interval"><strong><?php esc_html_e('Schedule', 'modern-job-board'); ?></strong></label><br>
+                    <select id="mjb_schedule_interval" name="schedule_interval">
+                        <option value="daily" <?php selected(($editing['schedule'] ?? 'daily'), 'daily'); ?>><?php esc_html_e('Daily', 'modern-job-board'); ?></option>
+                        <option value="weekly" <?php selected(($editing['schedule'] ?? ''), 'weekly'); ?>><?php esc_html_e('Weekly', 'modern-job-board'); ?></option>
+                    </select>
+                </p>
+                <p>
+                    <label>
+                        <input type="checkbox" name="schedule_enabled" value="1" <?php checked(!isset($editing['enabled']) || !empty($editing['enabled'])); ?>>
+                        <?php esc_html_e('Enabled', 'modern-job-board'); ?>
+                    </label>
+                </p>
+                <p>
+                    <button type="submit" class="mjb-btn mjb-btn-primary">
+                        <?php echo $editing ? esc_html__('Update Feed', 'modern-job-board') : esc_html__('Add Feed', 'modern-job-board'); ?>
+                    </button>
+                    <?php if ($editing): ?>
+                        <a class="mjb-btn mjb-btn-outline" href="<?php echo esc_url($this->get_tools_tab_url('schedules')); ?>">
+                            <?php esc_html_e('Cancel', 'modern-job-board'); ?>
+                        </a>
+                    <?php endif; ?>
+                </p>
+            </form>
+
+            <hr>
+
+            <h3><?php esc_html_e('Scheduled Feeds', 'modern-job-board'); ?></h3>
+            <?php if (empty($feeds)): ?>
+                <p><?php esc_html_e('No scheduled feeds yet. Add a remote XML feed above to start automatic backfill.', 'modern-job-board'); ?></p>
+            <?php else: ?>
+                <table class="widefat striped">
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e('Name', 'modern-job-board'); ?></th>
+                            <th><?php esc_html_e('URL', 'modern-job-board'); ?></th>
+                            <th><?php esc_html_e('Schedule', 'modern-job-board'); ?></th>
+                            <th><?php esc_html_e('Status', 'modern-job-board'); ?></th>
+                            <th><?php esc_html_e('Last Run', 'modern-job-board'); ?></th>
+                            <th><?php esc_html_e('Last Result', 'modern-job-board'); ?></th>
+                            <th><?php esc_html_e('Actions', 'modern-job-board'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($feeds as $feed): ?>
+                            <tr>
+                                <td>
+                                    <strong><?php echo esc_html($feed['name'] ?? ''); ?></strong><br>
+                                    <span class="description"><?php echo !empty($feed['enabled']) ? esc_html__('Enabled', 'modern-job-board') : esc_html__('Disabled', 'modern-job-board'); ?></span>
+                                </td>
+                                <td><code><?php echo esc_html($feed['url'] ?? ''); ?></code></td>
+                                <td><?php echo ($feed['schedule'] ?? 'daily') === 'weekly' ? esc_html__('Weekly', 'modern-job-board') : esc_html__('Daily', 'modern-job-board'); ?></td>
+                                <td>
+                                    <?php
+                                    $status = $feed['last_status'] ?? '';
+                                    if ($status === 'success') {
+                                        esc_html_e('Success', 'modern-job-board');
+                                    } elseif ($status === 'error') {
+                                        esc_html_e('Error', 'modern-job-board');
+                                    } else {
+                                        esc_html_e('Never run', 'modern-job-board');
+                                    }
+                                    ?>
+                                </td>
+                                <td><?php echo !empty($feed['last_run']) ? esc_html($feed['last_run']) : '—'; ?></td>
+                                <td>
+                                    <?php if (($feed['last_status'] ?? '') === 'success'): ?>
+                                        <?php
+                                        echo esc_html(sprintf(
+                                            __('%1$d imported, %2$d skipped', 'modern-job-board'),
+                                            intval($feed['last_imported'] ?? 0),
+                                            intval($feed['last_skipped'] ?? 0)
+                                        ));
+                                        ?>
+                                    <?php elseif (($feed['last_status'] ?? '') === 'error'): ?>
+                                        <span class="description"><?php echo esc_html($feed['last_error'] ?? ''); ?></span>
+                                    <?php else: ?>
+                                        —
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <a class="mjb-btn mjb-btn-outline" href="<?php echo esc_url($this->get_tools_tab_url('schedules', array('schedule_edit' => $feed['id']))); ?>">
+                                        <?php esc_html_e('Edit', 'modern-job-board'); ?>
+                                    </a>
+                                    <form method="post" action="" style="display:inline;">
+                                        <?php wp_nonce_field('mjb_schedule_feed_run_nonce'); ?>
+                                        <input type="hidden" name="mjb_action" value="schedule_feed_run">
+                                        <input type="hidden" name="schedule_feed_id" value="<?php echo esc_attr($feed['id']); ?>">
+                                        <button type="submit" class="mjb-btn mjb-btn-outline"><?php esc_html_e('Run Now', 'modern-job-board'); ?></button>
+                                    </form>
+                                    <form method="post" action="" style="display:inline;" onsubmit="return confirm('<?php echo esc_js(__('Delete this scheduled feed?', 'modern-job-board')); ?>');">
+                                        <?php wp_nonce_field('mjb_schedule_feed_delete_nonce'); ?>
+                                        <input type="hidden" name="mjb_action" value="schedule_feed_delete">
+                                        <input type="hidden" name="schedule_feed_id" value="<?php echo esc_attr($feed['id']); ?>">
+                                        <button type="submit" class="mjb-btn mjb-btn-outline"><?php esc_html_e('Delete', 'modern-job-board'); ?></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
         </div>
         <?php
     }
@@ -199,7 +389,13 @@ class MJB_Tools
                     $post_id = get_the_ID();
 
                     // Taxonomies
-                    $locations = wp_get_post_terms($post_id, 'job_location', array('fields' => 'names'));
+                    $location_terms = wp_get_post_terms($post_id, 'job_location');
+                    $locations = array();
+                    if (!empty($location_terms) && !is_wp_error($location_terms)) {
+                        foreach ($location_terms as $location_term) {
+                            $locations[] = MJB_Location::format_location_term($location_term);
+                        }
+                    }
                     $types = wp_get_post_terms($post_id, 'job_type', array('fields' => 'names'));
                     $categories = wp_get_post_terms($post_id, 'job_category', array('fields' => 'names'));
 
@@ -318,7 +514,7 @@ class MJB_Tools
 
                 fclose($handle);
 
-                wp_safe_redirect(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import&imported=' . $count));
+                wp_safe_redirect($this->get_tools_tab_url('import', array('imported' => $count)));
                 exit;
             }
         }
@@ -394,7 +590,10 @@ class MJB_Tools
      */
     private function redirect_with_xml_result($result)
     {
-        wp_safe_redirect(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import&xml_imported=' . intval($result['imported']) . '&xml_skipped=' . intval($result['skipped'])));
+        wp_safe_redirect($this->get_tools_tab_url('import', array(
+            'xml_imported' => intval($result['imported']),
+            'xml_skipped' => intval($result['skipped']),
+        )));
         exit;
     }
 
@@ -405,7 +604,92 @@ class MJB_Tools
      */
     private function redirect_with_xml_error($message)
     {
-        wp_safe_redirect(admin_url('edit.php?post_type=job_listing&page=mjb-tools&tab=import&xml_error=' . rawurlencode($message)));
+        wp_safe_redirect($this->get_tools_tab_url('import', array('xml_error' => $message)));
+        exit;
+    }
+
+    /**
+     * Handle scheduled feed create/update.
+     */
+    public function handle_schedule_feed_save()
+    {
+        if (!isset($_POST['mjb_action']) || $_POST['mjb_action'] !== 'schedule_feed_save') {
+            return;
+        }
+
+        if (!check_admin_referer('mjb_schedule_feed_save_nonce') || !current_user_can('manage_options')) {
+            return;
+        }
+
+        $result = MJB_Import_Scheduler::save_feed(array(
+            'id' => isset($_POST['schedule_feed_id']) ? sanitize_key(wp_unslash($_POST['schedule_feed_id'])) : '',
+            'name' => isset($_POST['schedule_name']) ? sanitize_text_field(wp_unslash($_POST['schedule_name'])) : '',
+            'url' => isset($_POST['schedule_url']) ? esc_url_raw(wp_unslash($_POST['schedule_url'])) : '',
+            'schedule' => isset($_POST['schedule_interval']) ? sanitize_key(wp_unslash($_POST['schedule_interval'])) : 'daily',
+            'enabled' => !empty($_POST['schedule_enabled']),
+            'author_id' => get_current_user_id(),
+        ));
+
+        if (is_wp_error($result)) {
+            wp_safe_redirect($this->get_tools_tab_url('schedules', array('schedule_error' => $result->get_error_message())));
+            exit;
+        }
+
+        wp_safe_redirect($this->get_tools_tab_url('schedules', array('schedule_saved' => 1)));
+        exit;
+    }
+
+    /**
+     * Handle scheduled feed deletion.
+     */
+    public function handle_schedule_feed_delete()
+    {
+        if (!isset($_POST['mjb_action']) || $_POST['mjb_action'] !== 'schedule_feed_delete') {
+            return;
+        }
+
+        if (!check_admin_referer('mjb_schedule_feed_delete_nonce') || !current_user_can('manage_options')) {
+            return;
+        }
+
+        $feed_id = isset($_POST['schedule_feed_id']) ? sanitize_key(wp_unslash($_POST['schedule_feed_id'])) : '';
+        if ($feed_id !== '') {
+            MJB_Import_Scheduler::delete_feed($feed_id);
+        }
+
+        wp_safe_redirect($this->get_tools_tab_url('schedules', array('schedule_deleted' => 1)));
+        exit;
+    }
+
+    /**
+     * Handle manual scheduled feed run.
+     */
+    public function handle_schedule_feed_run()
+    {
+        if (!isset($_POST['mjb_action']) || $_POST['mjb_action'] !== 'schedule_feed_run') {
+            return;
+        }
+
+        if (!check_admin_referer('mjb_schedule_feed_run_nonce') || !current_user_can('manage_options')) {
+            return;
+        }
+
+        $feed_id = isset($_POST['schedule_feed_id']) ? sanitize_key(wp_unslash($_POST['schedule_feed_id'])) : '';
+        if ($feed_id === '') {
+            return;
+        }
+
+        $result = MJB_Import_Scheduler::run_feed($feed_id, true);
+        if (is_wp_error($result)) {
+            wp_safe_redirect($this->get_tools_tab_url('schedules', array('schedule_error' => $result->get_error_message())));
+            exit;
+        }
+
+        wp_safe_redirect($this->get_tools_tab_url('schedules', array(
+            'schedule_ran' => 1,
+            'schedule_imported' => intval($result['imported']),
+            'schedule_skipped' => intval($result['skipped']),
+        )));
         exit;
     }
 }

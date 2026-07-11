@@ -25,14 +25,7 @@ class MJB_Custom_Fields
      */
     public function register_admin_page()
     {
-        add_submenu_page(
-            'edit.php?post_type=job_listing',
-            __('Custom Fields', 'modern-job-board'),
-            __('Custom Fields', 'modern-job-board'),
-            'manage_options',
-            'mjb-custom-fields',
-            array($this, 'render_admin_page')
-        );
+        // Custom Fields is rendered inside the tabbed admin shell.
     }
 
     /**
@@ -74,7 +67,14 @@ class MJB_Custom_Fields
             $fields[] = $new_field;
             update_option($this->option_name, $fields);
 
-            wp_redirect(add_query_arg('message', 'saved', admin_url('edit.php?post_type=job_listing&page=mjb-custom-fields')));
+            wp_redirect(add_query_arg(
+                array(
+                    'page' => 'modern-job-board',
+                    'tab' => 'custom-fields',
+                    'message' => 'saved',
+                ),
+                admin_url('admin.php')
+            ));
             exit;
         }
 
@@ -86,20 +86,34 @@ class MJB_Custom_Fields
                 unset($fields[$index]);
                 update_option($this->option_name, array_values($fields)); // Re-index
             }
-            wp_redirect(add_query_arg('message', 'deleted', admin_url('edit.php?post_type=job_listing&page=mjb-custom-fields')));
+            wp_redirect(add_query_arg(
+                array(
+                    'page' => 'modern-job-board',
+                    'tab' => 'custom-fields',
+                    'message' => 'deleted',
+                ),
+                admin_url('admin.php')
+            ));
             exit;
         }
     }
 
     /**
-     * Render Admin Page.
+     * Render tab content.
      */
-    public function render_admin_page()
+    public function render_admin_content()
     {
         $fields = $this->get_fields();
+
+        if (isset($_GET['message']) && $_GET['message'] === 'saved') {
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Custom field saved.', 'modern-job-board') . '</p></div>';
+        }
+        if (isset($_GET['message']) && $_GET['message'] === 'deleted') {
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Custom field deleted.', 'modern-job-board') . '</p></div>';
+        }
         ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('Custom Fields Builder', 'modern-job-board'); ?></h1>
+        <div class="mjb-tab-panel mjb-tab-panel--custom-fields">
+            <h2 class="mjb-section-title"><?php esc_html_e('Custom Fields Builder', 'modern-job-board'); ?></h2>
 
             <div class="mjb-custom-fields-layout">
                 <!-- List -->
@@ -118,8 +132,13 @@ class MJB_Custom_Fields
                         $fields_grid->render_empty_row(__('No custom fields defined.', 'modern-job-board'));
                     } else {
                         foreach ($fields as $index => $field) {
-                            $delete_url = wp_nonce_url(add_query_arg(array('action' => 'delete_field', 'index' => $index)), 'delete_field_' . $index);
-                            $actions_html = '<a href="' . esc_url($delete_url) . '" onclick="return confirm(\'' . esc_js(__('Delete this field?', 'modern-job-board')) . '\');" class="button button-small delete">' . esc_html__('Delete', 'modern-job-board') . '</a>';
+                            $delete_url = wp_nonce_url(add_query_arg(array(
+                                'page' => 'modern-job-board',
+                                'tab' => 'custom-fields',
+                                'action' => 'delete_field',
+                                'index' => $index,
+                            ), admin_url('admin.php')), 'delete_field_' . $index);
+                            $actions_html = '<a href="' . esc_url($delete_url) . '" onclick="return confirm(\'' . esc_js(__('Delete this field?', 'modern-job-board')) . '\');" class="mjb-btn mjb-btn-outline mjb-btn--sm delete">' . esc_html__('Delete', 'modern-job-board') . '</a>';
                             $fields_grid->open_row()
                                 ->render_cell(esc_html($field['label']), $field_headers[0])
                                 ->render_cell(esc_html($field['key']), $field_headers[1])
@@ -174,8 +193,10 @@ class MJB_Custom_Fields
                             </label>
                         </p>
                         <p>
-                            <input type="submit" class="button button-primary"
-                                value="<?php esc_attr_e('Add Field', 'modern-job-board'); ?>">
+                            <button type="submit" class="mjb-btn mjb-btn-primary">
+                                <?php echo MJB_Icons::render('plus', 16); ?>
+                                <?php esc_html_e('Add Field', 'modern-job-board'); ?>
+                            </button>
                         </p>
                     </form>
                 </div>

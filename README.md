@@ -2,7 +2,9 @@
 
 A feature-rich WordPress job board plugin with employer and candidate dashboards, applications, WooCommerce monetization, REST API, webhooks, and Gutenberg blocks.
 
-**Current version:** 1.9.0
+**Current version:** 0.9.0-beta.1 (pre-gold beta — not a production/gold release)
+
+Modern Job Board is **freemium** (not open source). Start with the free tier; Pro and Business plans unlock monetization, imports, and API features. See [LICENSE.txt](LICENSE.txt) and the [pricing page](../modern-job-board-website/index.html#pricing).
 
 ## Quick start
 
@@ -50,8 +52,8 @@ composer make-pot
 
 ## Links
 
-- [GitHub](https://github.com/MartinOrton/modern-job-board)
-- [Documentation site](../modern-job-board-website/docs/index.html) (local marketing site)
+- [Product site & pricing](../modern-job-board-website/index.html#pricing)
+- [Documentation site](../modern-job-board-website/docs/index.html)
 
 ---
 Copyright © 2026 Modern Job Board.

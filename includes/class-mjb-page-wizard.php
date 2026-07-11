@@ -171,14 +171,7 @@ class MJB_Page_Wizard
      */
     public static function register_admin_page()
     {
-        add_submenu_page(
-            'modern-job-board',
-            __('Setup', 'modern-job-board'),
-            __('Setup', 'modern-job-board'),
-            'manage_options',
-            'mjb-setup',
-            array(__CLASS__, 'render_setup_page')
-        );
+        // Setup is rendered inside the tabbed admin shell.
     }
 
     /**
@@ -197,7 +190,8 @@ class MJB_Page_Wizard
         $result = self::create_missing_pages();
         $redirect = add_query_arg(
             array(
-                'page' => 'mjb-setup',
+                'page' => 'modern-job-board',
+                'tab' => 'setup',
                 'mjb_pages_created' => $result['created'],
                 'mjb_pages_existing' => $result['existing'],
             ),
@@ -239,7 +233,7 @@ class MJB_Page_Wizard
             return;
         }
 
-        $setup_url = admin_url('admin.php?page=mjb-setup');
+        $setup_url = admin_url('admin.php?page=modern-job-board&tab=setup');
         $dismiss_url = wp_nonce_url(
             add_query_arg('mjb_dismiss_setup_notice', '1'),
             'mjb_dismiss_setup_notice'
@@ -257,9 +251,9 @@ class MJB_Page_Wizard
     }
 
     /**
-     * Render setup wizard admin page.
+     * Render setup wizard tab content.
      */
-    public static function render_setup_page()
+    public static function render_setup_content()
     {
         if (!current_user_can('manage_options')) {
             return;
@@ -285,9 +279,9 @@ class MJB_Page_Wizard
             }
         }
         ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('Modern Job Board Setup', 'modern-job-board'); ?></h1>
-            <p><?php esc_html_e('Create WordPress pages for each shortcode used by the job board frontend.', 'modern-job-board'); ?></p>
+        <div class="mjb-tab-panel mjb-tab-panel--setup">
+            <h2 class="mjb-section-title"><?php esc_html_e('Setup', 'modern-job-board'); ?></h2>
+            <p class="mjb-tab-panel__lead"><?php esc_html_e('Create WordPress pages for each shortcode used by the job board frontend.', 'modern-job-board'); ?></p>
 
             <?php if ($missing_count > 0) : ?>
                 <div class="notice notice-info">
@@ -338,8 +332,10 @@ class MJB_Page_Wizard
                 <?php wp_nonce_field('mjb_create_setup_pages_nonce'); ?>
                 <input type="hidden" name="mjb_action" value="create_setup_pages">
                 <p>
-                    <input type="submit" class="button button-primary"
-                        value="<?php esc_attr_e('Create Missing Pages', 'modern-job-board'); ?>">
+                    <button type="submit" class="mjb-btn mjb-btn-primary">
+                        <?php echo MJB_Icons::render('sparkles', 16); ?>
+                        <?php esc_html_e('Create Missing Pages', 'modern-job-board'); ?>
+                    </button>
                 </p>
             </form>
 

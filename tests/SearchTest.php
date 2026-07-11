@@ -62,9 +62,14 @@ class SearchTest extends TestCase
     {
         $args = MJB_Search::build_query_args(array());
 
-        $this->assertSame('_featured', $args['meta_key']);
-        $this->assertSame('DESC', $args['orderby']['meta_value_num']);
+        $this->assertArrayNotHasKey('meta_key', $args);
+        $this->assertSame('OR', $args['meta_query']['relation']);
+        $this->assertSame('NUMERIC', $args['meta_query']['mjb_featured_clause']['type']);
+        $this->assertSame('EXISTS', $args['meta_query']['mjb_featured_clause']['compare']);
+        $this->assertSame('NOT EXISTS', $args['meta_query']['mjb_featured_missing']['compare']);
+        $this->assertSame('DESC', $args['orderby']['mjb_featured_clause']);
         $this->assertSame('DESC', $args['orderby']['date']);
+        $this->assertSame('DESC', $args['orderby']['ID']);
     }
 
     public function test_build_query_args_supports_pagination()
@@ -74,9 +79,75 @@ class SearchTest extends TestCase
         $this->assertSame(3, $args['paged']);
     }
 
+    public function test_build_query_args_defaults_pagination_to_first_page()
+    {
+        $args = MJB_Search::build_query_args(array());
+
+        $this->assertSame(1, $args['paged']);
+    }
+
+    public function test_sanitize_filter_params_reads_mjb_page_for_ajax()
+    {
+        $params = MJB_Search::sanitize_filter_params(array(
+            'mjb_page' => 4,
+        ));
+
+        $this->assertSame(4, $params['page']);
+    }
+
     public function test_map_employment_type_for_schema()
     {
         $this->assertSame('FULL_TIME', MJB_Search::map_employment_type_for_schema('full-time'));
         $this->assertSame('CONTRACTOR', MJB_Search::map_employment_type_for_schema('contract'));
+    }
+
+    public function test_normalize_slug_converts_underscores_to_hyphens()
+    {
+        $this->assertSame('san-francisco', MJB_Search::normalize_slug('san_francisco'));
+        $this->assertSame('full-time', MJB_Search::normalize_slug('full_time'));
+    }
+
+    public function test_sanitize_filter_params_normalizes_taxonomy_slugs()
+    {
+        $params = MJB_Search::sanitize_filter_params(array(
+            'search_location' => 'san_francisco',
+            'search_category' => 'web_development',
+            'search_type' => 'full_time',
+        ));
+
+        $this->assertSame('san-francisco', $params['search_location']);
+        $this->assertSame('web-development', $params['search_category']);
+        $this->assertSame('full-time', $params['search_type']);
+    }
+
+    public function test_get_listing_page_heading_uses_jobs_at_company_copy()
+    {
+        $heading = MJB_Search::get_listing_page_heading(array(
+            'search_company' => 'acme-digital',
+        ));
+
+        $this->assertSame('Jobs at Acme Digital', $heading['title']);
+        $this->assertStringContainsString('Acme Digital', $heading['intro']);
+    }
+
+    public function test_get_listing_page_heading_uses_jobs_in_location_copy()
+    {
+        $heading = MJB_Search::get_listing_page_heading(array(
+            'search_location' => 'london',
+        ));
+
+        $this->assertSame('Jobs in London, England, United Kingdom', $heading['title']);
+        $this->assertStringContainsString('London, England, United Kingdom', $heading['intro']);
+    }
+
+    public function test_should_show_audience_cards_only_on_unfiltered_home()
+    {
+        $this->assertTrue(MJB_Shortcodes::should_show_audience_cards(array()));
+        $this->assertFalse(MJB_Shortcodes::should_show_audience_cards(array(
+            'search_location' => 'london',
+        )));
+        $this->assertFalse(MJB_Shortcodes::should_show_audience_cards(array(
+            'page' => 2,
+        )));
     }
 }

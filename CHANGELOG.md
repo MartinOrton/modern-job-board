@@ -2,6 +2,12 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## [0.9.0-beta.1] - 2026-07-11
+
+### Changed
+- Switched to pre-gold beta versioning (`0.9.0-beta.1`). Gold/stable target remains `1.0.0`.
+- Theme aligned to the same beta channel (`0.9.0-beta.1`).
+
 ## [1.9.0] - 2026-06-10
 ### Added
 - **Gutenberg blocks**: All six core shortcodes available in the block inserter under **Modern Job Board**.

@@ -9,7 +9,7 @@ class FeedsTest extends TestCase
         $args = MJB_Feeds::build_feed_query_args();
 
         $this->assertSame(100, $args['posts_per_page']);
-        $this->assertSame('_featured', $args['meta_key']);
-        $this->assertSame('DESC', $args['orderby']['meta_value_num']);
+        $this->assertArrayNotHasKey('meta_key', $args);
+        $this->assertSame('DESC', $args['orderby']['mjb_featured_clause']);
     }
 }

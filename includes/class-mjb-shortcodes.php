@@ -32,40 +32,21 @@ class MJB_Shortcodes
         $per_page = max(1, intval($atts['posts_per_page']));
         ob_start();
 
-        // Search Form
-        ?>
-        <?php $filter_params = MJB_Search::get_request_filter_params(); ?>
-        <form id="mjb-job-filter" class="mjb-job-filter mjb-search-panel" method="GET" action="<?php echo esc_url(MJB_Job_Routes::build_url()); ?>">
-            <div class="mjb-filter-row">
-                <input type="text" name="search_keywords" placeholder="<?php esc_attr_e('Keywords...', 'modern-job-board'); ?>" value="<?php echo esc_attr($filter_params['search_keywords']); ?>">
-                <?php
-                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is escaped in MJB_Search::render_location_dropdown().
-                echo MJB_Search::render_location_dropdown($filter_params['search_location']);
-                ?>
-                
-                <?php
-                wp_dropdown_categories(array(
-                    'taxonomy' => 'job_category',
-                    'name' => 'search_category',
-                    'show_option_all' => esc_html__('All Categories', 'modern-job-board'),
-                    'value_field' => 'slug',
-                    'selected' => $filter_params['search_category'],
-                    'hierarchical' => true,
-                ));
+        $filter_params = MJB_Search::get_request_filter_params();
+        $heading = MJB_Search::get_listing_page_heading($filter_params);
 
-                wp_dropdown_categories(array(
-                    'taxonomy' => 'job_type',
-                    'name' => 'search_type',
-                    'show_option_all' => esc_html__('All Job Types', 'modern-job-board'),
-                    'value_field' => 'slug',
-                    'selected' => $filter_params['search_type'],
-                ));
-                ?>
-                <input type="submit" value="<?php esc_attr_e('Search', 'modern-job-board'); ?>">
-            </div>
-            <div class="mjb-loader mjb-is-hidden"><?php esc_html_e('Loading...', 'modern-job-board'); ?></div>
-        </form>
-        <?php
+        self::render_content_hero($heading['title'], $heading['intro']);
+
+        echo '<div class="mjb-container mjb-container--listing mjb-container--shortcode">';
+        self::render_audience_cards($filter_params);
+        echo '<div id="mjb-jobs-board" class="mjb-jobs-board">';
+        self::render_jobs_loader();
+        echo '<div class="mjb-content-area">';
+        echo '<aside class="mjb-sidebar">';
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in render_job_search_form().
+        echo self::render_job_search_form($filter_params, true);
+        echo '</aside>';
+        echo '<main class="site-main">';
 
         $args = MJB_Search::build_query_args($filter_params, array('posts_per_page' => $per_page));
         $args = apply_filters('mjb_job_listing_query_args', $args, $atts);
@@ -73,11 +54,17 @@ class MJB_Shortcodes
 
         do_action('mjb_before_job_listings', $jobs);
 
-        echo '<div id="mjb-jobs-list" data-posts-per-page="' . esc_attr($per_page) . '">';
+        $company_attr = !empty($filter_params['search_company'])
+            ? ' data-search-company="' . esc_attr($filter_params['search_company']) . '"'
+            : '';
+        echo '<div id="mjb-jobs-list" class="mjb-jobs-list-wrap" data-posts-per-page="' . esc_attr($per_page) . '"' . $company_attr . '>';
+        echo '<div id="mjb-jobs-results">';
         self::render_job_loop($jobs);
         self::render_pagination($jobs, $filter_params);
-        echo '</div>';
-        
+        echo '</div></div>';
+
+        echo '</main></div></div></div>';
+
         do_action('mjb_after_job_listings', $jobs);
 
         wp_reset_postdata();
@@ -95,35 +82,43 @@ class MJB_Shortcodes
             echo '<div class="mjb-job-list">';
             while ($jobs->have_posts()) {
                 $jobs->the_post();
-                
+
+                $permalink = get_permalink();
+                $job_title = get_the_title();
                 $featured = get_post_meta(get_the_ID(), '_featured', true);
                 $featured_class = $featured ? ' mjb-featured' : '';
+                $excerpt = self::get_job_card_excerpt();
 
                 echo '<article class="mjb-job-card mjb-job-item' . esc_attr($featured_class) . '">';
+                echo '<a class="mjb-job-card__stretched-link" href="' . esc_url($permalink) . '" aria-label="' . esc_attr(sprintf(__('View job: %s', 'modern-job-board'), $job_title)) . '"></a>';
                 if ($featured) {
                     echo '<span class="mjb-badge mjb-badge--featured">' . esc_html__('Featured', 'modern-job-board') . '</span>';
                 }
-                echo '<h3 class="mjb-job-card__title"><a href="' . esc_url(get_permalink()) . '">' . esc_html(get_the_title()) . '</a></h3>';
+                echo '<h3 class="mjb-job-card__title">' . esc_html($job_title) . '</h3>';
+                self::render_job_card_company(get_the_ID());
+
+                if ($excerpt !== '') {
+                    echo '<p class="mjb-job-card__excerpt">' . esc_html($excerpt) . '</p>';
+                }
+
                 echo '<div class="mjb-job-meta mjb-job-card__meta">';
 
                 $job_type = get_the_term_list(get_the_ID(), 'job_type', '', ', ');
-                if ($job_type) {
-                    echo '<span class="mjb-meta-pill">' . wp_kses_post($job_type) . '</span>';
-                }
+                self::render_meta_pill('clock', $job_type);
 
-                $job_location = get_the_term_list(get_the_ID(), 'job_location', '', ', ');
-                if ($job_location) {
-                    echo '<span class="mjb-meta-pill">' . wp_kses_post($job_location) . '</span>';
-                }
+                $job_location = MJB_Location::render_job_location_term_list(get_the_ID());
+                self::render_meta_pill('map-pin', $job_location);
 
-                $company_name = get_post_meta(get_the_ID(), '_company_name', true);
-                if ($company_name) {
-                    echo '<span class="mjb-meta-pill">' . esc_html($company_name) . '</span>';
-                }
+                $job_category = get_the_term_list(get_the_ID(), 'job_category', '', ', ');
+                self::render_meta_pill('tag', $job_category);
 
                 $expires = get_post_meta(get_the_ID(), '_job_expires', true);
                 if ($expires) {
-                    echo '<span class="mjb-meta-right mjb-meta-pill">' . esc_html(sprintf(__('Exp: %s', 'modern-job-board'), date_i18n(get_option('date_format'), strtotime($expires)))) . '</span>';
+                    echo '<span class="mjb-meta-right mjb-meta-pill">';
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                    echo MJB_Icons::render('calendar');
+                    echo esc_html(sprintf(__('Exp: %s', 'modern-job-board'), date_i18n(get_option('date_format'), strtotime($expires))));
+                    echo '</span>';
                 }
 
                 echo '</div>';
@@ -133,6 +128,492 @@ class MJB_Shortcodes
         } else {
             echo '<p>' . esc_html__('No jobs found.', 'modern-job-board') . '</p>';
         }
+    }
+
+    /**
+     * Render the company name below a listing card title.
+     *
+     * @param int $post_id
+     */
+    public static function render_job_card_company($post_id)
+    {
+        $company_name = get_post_meta($post_id, '_company_name', true);
+        if ($company_name === '') {
+            return;
+        }
+
+        $company_url = MJB_Search::get_company_jobs_url_for_listing($post_id);
+
+        if ($company_url !== '') {
+            echo '<a class="mjb-job-card__company mjb-job-card__company--link" href="' . esc_url($company_url) . '">';
+            echo esc_html($company_name);
+            echo '</a>';
+            return;
+        }
+
+        echo '<p class="mjb-job-card__company">' . esc_html($company_name) . '</p>';
+    }
+
+    /**
+     * Count published jobs linked to a company.
+     *
+     * @param int $company_id
+     * @return int
+     */
+    public static function get_company_job_count($company_id)
+    {
+        $company_id = intval($company_id);
+        if ($company_id < 1) {
+            return 0;
+        }
+
+        $query = new WP_Query(array(
+            'post_type' => 'job_listing',
+            'post_status' => 'publish',
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'no_found_rows' => false,
+            'meta_query' => array(
+                array(
+                    'key' => '_company_id',
+                    'value' => $company_id,
+                ),
+            ),
+        ));
+
+        return intval($query->found_posts);
+    }
+
+    /**
+     * Build initials from a company name for avatar fallbacks.
+     *
+     * @param string $name
+     * @return string
+     */
+    public static function get_company_initials($name)
+    {
+        $name = trim(wp_strip_all_tags((string) $name));
+        if ($name === '') {
+            return '?';
+        }
+
+        $parts = preg_split('/\s+/', $name);
+        $initials = '';
+
+        foreach ($parts as $part) {
+            if ($part === '') {
+                continue;
+            }
+
+            $initials .= strtoupper(substr($part, 0, 1));
+            if (strlen($initials) >= 2) {
+                break;
+            }
+        }
+
+        return $initials !== '' ? $initials : '?';
+    }
+
+    /**
+     * Render a company logo or initials avatar.
+     *
+     * @param int    $company_id
+     * @param string $size       Optional size modifier: md or lg.
+     */
+    public static function render_company_avatar($company_id, $size = 'md')
+    {
+        $company_id = intval($company_id);
+        $title = get_the_title($company_id);
+        $size_class = $size === 'lg' ? ' mjb-company-avatar--lg' : '';
+        $has_logo = has_post_thumbnail($company_id);
+
+        echo '<div class="mjb-company-avatar' . esc_attr($size_class) . '">';
+
+        if ($has_logo) {
+            echo get_the_post_thumbnail($company_id, 'thumbnail', array(
+                'class' => 'mjb-company-avatar__image',
+                'alt' => '',
+            ));
+        } else {
+            echo '<span class="mjb-company-avatar__initials" aria-hidden="true">';
+            echo esc_html(self::get_company_initials($title));
+            echo '</span>';
+        }
+
+        echo '</div>';
+    }
+
+    /**
+     * Build a trimmed excerpt for a company profile card.
+     *
+     * @param int $company_id
+     * @return string
+     */
+    public static function get_company_card_excerpt($company_id)
+    {
+        $company_id = intval($company_id);
+        if ($company_id < 1) {
+            return '';
+        }
+
+        $excerpt = get_the_excerpt($company_id);
+        if ($excerpt !== '') {
+            return trim($excerpt);
+        }
+
+        $content = get_post_field('post_content', $company_id);
+        if ($content === '') {
+            return '';
+        }
+
+        return trim(wp_trim_words(wp_strip_all_tags($content), 24, '…'));
+    }
+
+    /**
+     * Render company directory cards.
+     *
+     * @param WP_Query $companies
+     */
+    public static function render_company_loop($companies)
+    {
+        if (!$companies->have_posts()) {
+            echo '<p class="mjb-empty-state">' . esc_html__('No companies found.', 'modern-job-board') . '</p>';
+            return;
+        }
+
+        echo '<div class="mjb-company-list">';
+
+        while ($companies->have_posts()) {
+            $companies->the_post();
+            $company_id = get_the_ID();
+            $permalink = get_permalink();
+            $title = get_the_title();
+            $job_count = self::get_company_job_count($company_id);
+            $excerpt = self::get_company_card_excerpt($company_id);
+            $jobs_url = MJB_Job_Routes::build_url(array(
+                'search_company' => get_post_field('post_name', $company_id),
+            ));
+
+            echo '<article class="mjb-company-card">';
+            echo '<a class="mjb-company-card__stretched-link" href="' . esc_url($permalink) . '" aria-label="' . esc_attr(sprintf(__('View company: %s', 'modern-job-board'), $title)) . '"></a>';
+            echo '<div class="mjb-company-card__header">';
+            self::render_company_avatar($company_id);
+            echo '<div class="mjb-company-card__summary">';
+            echo '<h2 class="mjb-company-card__title">' . esc_html($title) . '</h2>';
+            echo '<p class="mjb-company-card__meta">';
+            echo esc_html(sprintf(
+                _n('%d open job', '%d open jobs', $job_count, 'modern-job-board'),
+                $job_count
+            ));
+            echo '</p>';
+            echo '</div>';
+            echo '</div>';
+
+            if ($excerpt !== '') {
+                echo '<p class="mjb-company-card__excerpt">' . esc_html($excerpt) . '</p>';
+            } else {
+                echo '<p class="mjb-company-card__excerpt mjb-company-card__excerpt--placeholder">';
+                echo esc_html__('Browse roles from this employer on Modern Job Board.', 'modern-job-board');
+                echo '</p>';
+            }
+
+            if ($job_count > 0) {
+                echo '<a class="mjb-company-card__jobs-link" href="' . esc_url($jobs_url) . '">';
+                echo esc_html__('View open jobs', 'modern-job-board');
+                echo '</a>';
+            }
+
+            echo '</article>';
+        }
+
+        echo '</div>';
+    }
+
+    /**
+     * Render pagination for a post-type archive query.
+     *
+     * @param WP_Query $query
+     * @param string   $base_url
+     */
+    public static function render_archive_pagination($query, $base_url = '')
+    {
+        if ($query->max_num_pages <= 1) {
+            return;
+        }
+
+        $current_page = max(1, intval(get_query_var('paged')));
+        $base_url = $base_url !== '' ? $base_url : get_post_type_archive_link($query->get('post_type'));
+
+        if (!$base_url) {
+            return;
+        }
+
+        $links = paginate_links(array(
+            'base' => trailingslashit($base_url) . '%_%',
+            'format' => 'page/%#%/',
+            'current' => $current_page,
+            'total' => $query->max_num_pages,
+            'type' => 'array',
+            'prev_text' => __('Previous', 'modern-job-board'),
+            'next_text' => __('Next', 'modern-job-board'),
+        ));
+
+        if (empty($links) || !is_array($links)) {
+            return;
+        }
+
+        echo '<nav class="mjb-pagination mjb-pagination--archive" aria-label="' . esc_attr__('Archive pagination', 'modern-job-board') . '">';
+        echo '<div class="mjb-pagination__links">';
+
+        foreach ($links as $link) {
+            echo wp_kses_post($link);
+        }
+
+        echo '</div></nav>';
+    }
+
+    /**
+     * Build a trimmed excerpt for job listing cards.
+     *
+     * @return string
+     */
+    public static function get_job_card_excerpt()
+    {
+        $excerpt = get_the_excerpt();
+        if ($excerpt === '') {
+            $excerpt = wp_trim_words(wp_strip_all_tags(get_the_content()), 30, '…');
+        }
+
+        return trim($excerpt);
+    }
+
+    /**
+     * Render a meta pill with a line icon.
+     *
+     * @param string $icon    Icon key.
+     * @param string $content Pill content (may contain safe HTML from term lists).
+     */
+    public static function render_meta_pill($icon, $content)
+    {
+        if ($content === '' || $content === null) {
+            return;
+        }
+
+        echo '<span class="mjb-meta-pill">';
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+        echo MJB_Icons::render($icon);
+        echo wp_kses_post($content);
+        echo '</span>';
+    }
+
+    /**
+     * Render a clickable meta pill.
+     *
+     * @param string $icon    Icon key.
+     * @param string $url     Destination URL.
+     * @param string $content Pill label.
+     */
+    public static function render_meta_pill_link($icon, $url, $content)
+    {
+        if ($content === '' || $content === null || $url === '') {
+            return;
+        }
+
+        echo '<a class="mjb-meta-pill mjb-meta-pill--link" href="' . esc_url($url) . '">';
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+        echo MJB_Icons::render($icon);
+        echo wp_kses_post($content);
+        echo '</a>';
+    }
+
+    /**
+     * Render a compact content hero for plugin pages.
+     *
+     * @param string $title
+     * @param string $intro
+     */
+    public static function render_content_hero($title, $intro = '')
+    {
+        ?>
+        <section class="mjb-content-hero alignfull">
+            <div class="mjb-content-hero__inner mjb-container">
+                <h1 class="mjb-content-hero__title"><?php echo esc_html($title); ?></h1>
+                <?php if ($intro !== '') : ?>
+                    <p class="mjb-content-hero__intro"><?php echo esc_html($intro); ?></p>
+                <?php endif; ?>
+            </div>
+        </section>
+        <?php
+    }
+
+    /**
+     * Whether the jobs board home promo cards should render.
+     *
+     * @param array $filter_params
+     * @return bool
+     */
+    public static function should_show_audience_cards($filter_params)
+    {
+        foreach (array('search_keywords', 'search_location', 'search_category', 'search_type', 'search_company') as $key) {
+            if (!empty($filter_params[$key])) {
+                return false;
+            }
+        }
+
+        $page = isset($filter_params['page']) ? intval($filter_params['page']) : 0;
+
+        return $page < 2;
+    }
+
+    /**
+     * Render job seeker and employer promo cards below the jobs hero.
+     *
+     * @param array|null $filter_params
+     */
+    public static function render_audience_cards($filter_params = null)
+    {
+        if ($filter_params === null) {
+            $filter_params = MJB_Search::get_request_filter_params();
+        }
+
+        if (!self::should_show_audience_cards($filter_params)) {
+            return;
+        }
+
+        $candidate_dashboard_url = MJB_Page_Resolver::get_page_url(
+            'mjb_candidate_dashboard',
+            'mjb_candidate_dashboard_page_id',
+            '/candidate-dashboard/'
+        );
+        $employer_registration_url = MJB_Page_Resolver::get_page_url(
+            'mjb_employer_registration',
+            'mjb_employer_registration_page_id',
+            '/employer-registration/'
+        );
+        $post_job_url = MJB_Page_Resolver::get_page_url(
+            'mjb_job_form',
+            'mjb_job_form_page_id',
+            '/post-a-job/'
+        );
+        ?>
+        <section class="mjb-audience-cards" aria-label="<?php esc_attr_e('Get started', 'modern-job-board'); ?>">
+            <div class="mjb-audience-cards__grid">
+                    <article class="mjb-audience-card mjb-audience-card--seekers">
+                        <header class="mjb-audience-card__header">
+                            <span class="mjb-audience-card__icon" aria-hidden="true">
+                                <?php
+                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                                echo MJB_Icons::render('user', 24);
+                                ?>
+                            </span>
+                            <h2 class="mjb-audience-card__title"><?php esc_html_e('Job seekers', 'modern-job-board'); ?></h2>
+                        </header>
+                        <p class="mjb-audience-card__intro">
+                            <?php esc_html_e('Create a profile and get hired by top employers.', 'modern-job-board'); ?>
+                        </p>
+                        <div class="mjb-audience-card__actions">
+                            <a href="<?php echo esc_url($candidate_dashboard_url); ?>" class="btn btn-primary btn-sm">
+                                <?php esc_html_e('Submit CV', 'modern-job-board'); ?>
+                            </a>
+                            <a href="#mjb-jobs-list" class="btn btn-outline btn-sm">
+                                <?php esc_html_e('Find jobs', 'modern-job-board'); ?>
+                            </a>
+                        </div>
+                    </article>
+
+                    <article class="mjb-audience-card mjb-audience-card--employers">
+                        <header class="mjb-audience-card__header">
+                            <span class="mjb-audience-card__icon" aria-hidden="true">
+                                <?php
+                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                                echo MJB_Icons::render('briefcase', 24);
+                                ?>
+                            </span>
+                            <h2 class="mjb-audience-card__title"><?php esc_html_e('Employers', 'modern-job-board'); ?></h2>
+                        </header>
+                        <p class="mjb-audience-card__intro">
+                            <?php esc_html_e('Post open jobs and hire top talent.', 'modern-job-board'); ?>
+                        </p>
+                        <div class="mjb-audience-card__actions">
+                            <a href="<?php echo esc_url($post_job_url); ?>" class="btn btn-primary btn-sm">
+                                <?php esc_html_e('Post a job', 'modern-job-board'); ?>
+                            </a>
+                            <a href="<?php echo esc_url($employer_registration_url); ?>" class="btn btn-outline btn-sm">
+                                <?php esc_html_e('Sign up', 'modern-job-board'); ?>
+                            </a>
+                        </div>
+                    </article>
+            </div>
+        </section>
+        <?php
+    }
+
+    /**
+     * Render the AJAX loading overlay for job listings.
+     */
+    public static function render_jobs_loader()
+    {
+        echo '<div id="mjb-loader-overlay" class="mjb-loader-overlay" aria-hidden="true" role="status">';
+        echo '<svg class="mjb-spinner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">';
+        echo '<circle class="mjb-spinner__track" cx="24" cy="24" r="20" fill="none" stroke-width="3"></circle>';
+        echo '<circle class="mjb-spinner__arc" cx="24" cy="24" r="20" fill="none" stroke-width="3" stroke-linecap="round"></circle>';
+        echo '</svg>';
+        echo '<span class="screen-reader-text">' . esc_html__('Loading jobs', 'modern-job-board') . '</span>';
+        echo '</div>';
+    }
+
+    /**
+     * Render the shared job search form.
+     *
+     * @param array|null $filter_params
+     * @param bool       $show_heading
+     * @return string
+     */
+    public static function render_job_search_form($filter_params = null, $show_heading = false)
+    {
+        if ($filter_params === null) {
+            $filter_params = MJB_Search::get_request_filter_params();
+        }
+
+        ob_start();
+        ?>
+        <form id="mjb-job-filter" class="mjb-job-filter mjb-search-panel" method="GET" action="<?php echo esc_url(MJB_Job_Routes::build_url()); ?>">
+            <?php if ($show_heading) : ?>
+                <h3><?php esc_html_e('Filter Jobs', 'modern-job-board'); ?></h3>
+            <?php endif; ?>
+            <div class="mjb-filter-row">
+                <?php if (!empty($filter_params['search_company'])) : ?>
+                    <input type="hidden" name="search_company" value="<?php echo esc_attr($filter_params['search_company']); ?>">
+                <?php endif; ?>
+                <input type="text" name="search_keywords" placeholder="<?php esc_attr_e('Keywords...', 'modern-job-board'); ?>" value="<?php echo esc_attr($filter_params['search_keywords']); ?>">
+                <?php
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is escaped in MJB_Search::render_location_dropdown().
+                echo MJB_Search::render_location_dropdown($filter_params['search_location']);
+                ?>
+
+                <?php
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Search::render_taxonomy_dropdown().
+                echo MJB_Search::render_taxonomy_dropdown(
+                    'job_category',
+                    'search_category',
+                    $filter_params['search_category'],
+                    esc_html__('All Categories', 'modern-job-board')
+                );
+
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Search::render_taxonomy_dropdown().
+                echo MJB_Search::render_taxonomy_dropdown(
+                    'job_type',
+                    'search_type',
+                    $filter_params['search_type'],
+                    esc_html__('All Job Types', 'modern-job-board')
+                );
+                ?>
+                <button type="submit" class="btn btn-primary btn-sm mjb-button mjb-button--search"><?php esc_html_e('Search', 'modern-job-board'); ?></button>
+            </div>
+        </form>
+        <?php
+
+        return ob_get_clean();
     }
 
     /**
@@ -147,28 +628,113 @@ class MJB_Shortcodes
             return;
         }
 
-        $current_page = max(1, intval($query->get('paged')));
+        $current_page = max(1, intval($filter_params['page'] ?? 0));
         if ($current_page < 1) {
-            $current_page = max(1, intval($filter_params['page'] ?? 1));
+            $current_page = max(1, intval($query->get('paged')));
         }
 
-        echo '<div class="mjb-pagination" data-current-page="' . esc_attr($current_page) . '">';
+        echo '<nav class="mjb-pagination" aria-label="' . esc_attr__('Job listings pagination', 'modern-job-board') . '" data-current-page="' . esc_attr($current_page) . '">';
+
+        if ($current_page > 1) {
+            self::render_pagination_button(
+                '',
+                $current_page - 1,
+                $filter_params,
+                'mjb-page-prev',
+                false,
+                false,
+                __('Previous page', 'modern-job-board'),
+                'chevron-left'
+            );
+        }
 
         for ($page = 1; $page <= $query->max_num_pages; $page++) {
-            $class = ($page === $current_page) ? 'mjb-page-link is-active' : 'mjb-page-link';
-            $page_params = $filter_params;
-            if ($page > 1) {
-                $page_params['page'] = $page;
-            } else {
-                unset($page_params['page']);
-            }
-            $page_url = MJB_Job_Routes::build_url($page_params);
-            echo '<button type="button" class="' . esc_attr($class) . '" data-page="' . esc_attr($page) . '" data-url="' . esc_url($page_url) . '">';
-            echo esc_html((string) $page);
-            echo '</button> ';
+            self::render_pagination_button(
+                (string) $page,
+                $page,
+                $filter_params,
+                'mjb-page-number',
+                false,
+                $page === $current_page
+            );
         }
 
-        echo '</div>';
+        if ($current_page < $query->max_num_pages) {
+            self::render_pagination_button(
+                '',
+                $current_page + 1,
+                $filter_params,
+                'mjb-page-next',
+                false,
+                false,
+                __('Next page', 'modern-job-board'),
+                'chevron-right'
+            );
+        }
+
+        echo '</nav>';
+    }
+
+    /**
+     * Render a single pagination button.
+     *
+     * @param string $label
+     * @param int    $page
+     * @param array  $filter_params
+     * @param string $modifier_class
+     * @param bool   $disabled
+     * @param bool   $active
+     * @param string $aria_label
+     * @param string $icon
+     */
+    private static function render_pagination_button($label, $page, $filter_params, $modifier_class, $disabled = false, $active = false, $aria_label = '', $icon = '')
+    {
+        $classes = array('btn', 'btn-sm', 'mjb-page-link', $modifier_class);
+        $classes[] = $active ? 'btn-primary' : 'btn-outline';
+
+        if ($active) {
+            $classes[] = 'is-active';
+        }
+
+        if ($disabled) {
+            $classes[] = 'is-disabled';
+        }
+
+        $page_params = $filter_params;
+        if ($page > 1) {
+            $page_params['page'] = $page;
+        } else {
+            unset($page_params['page']);
+        }
+
+        $page_url = MJB_Job_Routes::build_url($page_params);
+        $accessible_label = $aria_label !== '' ? $aria_label : $label;
+
+        echo '<button type="button" class="' . esc_attr(implode(' ', $classes)) . '"';
+        echo ' data-page="' . esc_attr($page) . '"';
+        echo ' data-url="' . esc_url($page_url) . '"';
+        echo ' aria-label="' . esc_attr($accessible_label) . '"';
+
+        if ($disabled) {
+            echo ' disabled';
+        }
+
+        if ($active) {
+            echo ' aria-current="page"';
+        }
+
+        echo '>';
+
+        if ($icon !== '') {
+            echo '<span class="mjb-page-link__icon" aria-hidden="true">';
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+            echo MJB_Icons::render($icon, 16);
+            echo '</span>';
+        } else {
+            echo '<span aria-hidden="true">' . esc_html($label) . '</span>';
+        }
+
+        echo '</button>';
     }
 
     /**
@@ -470,6 +1036,16 @@ class MJB_Shortcodes
             update_post_meta($post_id, '_company_name', $company_name_text); // Legacy/Fallback
             if ($company_id) {
                 update_post_meta($post_id, '_company_id', $company_id);
+            }
+
+            // Ensure featured ordering can include frontend-submitted jobs.
+            $featured_meta = get_post_meta($post_id, '_featured', true);
+            if ($featured_meta === '' || $featured_meta === false) {
+                update_post_meta($post_id, '_featured', 0);
+            }
+
+            if (class_exists('MJB_Job_Permalinks')) {
+                MJB_Job_Permalinks::sync_geo_meta($post_id);
             }
             
             // Save Application Method

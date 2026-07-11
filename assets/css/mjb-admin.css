@@ -1,5 +1,5 @@
 /* Modern Job Board Admin Styles */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
 :root {
     --mjb-primary: #0F766E;
@@ -16,9 +16,12 @@
     --mjb-border: #e2e8f0;
     --mjb-border-strong: #cbd5e1;
     --mjb-success: #22c55e;
-    
+    --mjb-radius: 0.75rem;
+    --mjb-radius-lg: 1rem;
+    --mjb-container-max: 1280px;
     --mjb-font-sans: 'DM Sans', sans-serif;
-    --mjb-font-serif: 'Instrument Serif', serif;
+    --mjb-heading-weight: 600;
+    --mjb-heading-line-height: 1.2;
 }
 
 /* Scoped variables for MJB Pages */
@@ -30,14 +33,30 @@ body[class*="post-type-mjb_resume"] {
     background-color: var(--mjb-bg-neutral);
     font-family: var(--mjb-font-sans);
     color: var(--mjb-text-primary);
+    -webkit-font-smoothing: antialiased;
+}
+
+body[class*="page_modern-job-board"] ::selection,
+body[class*="post-type-job_"] ::selection,
+body[class*="post-type-company"] ::selection,
+body[class*="post-type-mjb_resume"] ::selection {
+    background-color: var(--mjb-primary-light);
+    color: var(--mjb-primary);
+}
+
+body[class*="page_modern-job-board"] ::-moz-selection,
+body[class*="post-type-job_"] ::-moz-selection,
+body[class*="post-type-company"] ::-moz-selection,
+body[class*="post-type-mjb_resume"] ::-moz-selection {
+    background-color: var(--mjb-primary-light);
+    color: var(--mjb-primary);
 }
 
 /* Typography Overrides */
-.mjb-dashboard-page h1,
-.mjb-dashboard-page h2,
-.mjb-dashboard-page h3 {
-    font-family: var(--mjb-font-serif);
-    font-weight: 400;
+.mjb-dashboard-page :is(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--mjb-font-sans);
+    font-weight: var(--mjb-heading-weight);
+    line-height: var(--mjb-heading-line-height);
     color: var(--mjb-text-primary);
 }
 
@@ -55,10 +74,16 @@ body[class*="post-type-mjb_resume"] {
 }
 
 /* Dashboard Container */
+.mjb-admin-page.wrap {
+    margin: 0;
+    max-width: none;
+}
+
 .mjb-dashboard-wrap {
-    padding: 2rem;
-    max-width: 1200px;
+    padding: 2rem 1.5rem;
+    max-width: var(--mjb-container-max);
     margin: 0 auto;
+    width: 100%;
 }
 
 /* Initial Reset for WP Styles in specific areas */
@@ -146,7 +171,6 @@ body[class*="post-type-mjb_resume"] {
 
 .mjb-feature-card h3 {
     font-family: var(--mjb-font-sans);
-    font-weight: 700;
     font-size: 1.125rem;
     margin-bottom: 0.5rem;
     color: var(--mjb-text-primary);
@@ -159,29 +183,40 @@ body[class*="post-type-mjb_resume"] {
     margin-bottom: 0;
 }
 
-/* Buttons */
-.mjb-btn {
+/* Buttons — mirrors theme .btn */
+.mjb-btn,
+.mjb-admin-shell .btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    border-radius: 0.75rem;
+    border-radius: var(--mjb-radius);
+    font-family: var(--mjb-font-sans);
     font-weight: 600;
     font-size: 0.95rem;
+    line-height: 1.2;
     cursor: pointer;
     text-decoration: none;
     transition: all 0.2s ease;
     border: none;
+    box-shadow: none;
 }
 
-.mjb-btn-primary {
+.mjb-btn-primary,
+.mjb-admin-shell .btn-primary {
     background-color: var(--mjb-primary);
-    color: white;
+    color: #fff;
 }
 
-.mjb-btn-primary:hover {
+.mjb-btn-primary:hover,
+.mjb-admin-shell .btn-primary:hover,
+.mjb-btn-primary:focus,
+.mjb-admin-shell .btn-primary:focus {
     background-color: var(--mjb-primary-hover);
-    color: white;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(15, 118, 110, 0.2);
 }
 
 /* Badge */
@@ -213,7 +248,7 @@ body[class*="post-type-mjb_resume"] {
 
 /* Table styles for other MJB admin pages to match */
 .wp-list-table {
-    border-radius: 8px;
+    border-radius: var(--mjb-radius-lg);
     border: 1px solid var(--mjb-border);
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     background: #fff;
@@ -231,7 +266,7 @@ body[class*="post-type-mjb_resume"] {
 .post-type-job_listing .wrap > h1, 
 .post-type-job_application .wrap > h1,
 .post-type-company .wrap > h1 {
-    font-family: var(--mjb-font-serif);
+    font-family: var(--mjb-font-sans);
     font-size: 2rem;
     color: var(--mjb-text-primary);
     padding: 1rem 0;
@@ -253,21 +288,22 @@ body[class*="post-type-mjb_resume"] {
     font-family: var(--mjb-font-sans);
     font-size: 1.25rem;
     margin-bottom: 1.5rem;
-    font-weight: 700;
 }
 
 .mjb-data-grid {
     --mjb-grid-cols: 1;
+    width: 100%;
     border: 1px solid var(--mjb-border);
-    border-radius: 8px;
+    border-radius: var(--mjb-radius-lg);
     background: var(--mjb-bg-white);
     overflow: hidden;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .mjb-data-grid--admin {
-    max-width: 900px;
-    margin-top: 20px;
+    width: 100%;
+    max-width: none;
+    margin-top: 0;
 }
 
 .mjb-data-grid__row {
@@ -285,10 +321,15 @@ body[class*="post-type-mjb_resume"] {
 }
 
 .mjb-data-grid__cell {
-    padding: 12px 14px;
+    padding: 1rem 1.25rem;
     font-size: 0.875rem;
     color: var(--mjb-text-primary);
     word-break: break-word;
+}
+
+.mjb-data-grid__cell .mjb-btn,
+.mjb-data-grid__cell .button {
+    margin-right: 0.35rem;
 }
 
 .mjb-data-grid__row--head .mjb-data-grid__cell {
@@ -332,20 +373,25 @@ body[class*="post-type-mjb_resume"] {
 }
 
 .mjb-custom-fields-layout {
-    display: flex;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+    gap: 1.5rem;
+    width: 100%;
+    align-items: start;
 }
 
 .mjb-custom-fields-list {
-    flex: 1;
+    width: 100%;
+    min-width: 0;
 }
 
 .mjb-custom-fields-panel {
-    flex: 0 0 300px;
-    background: #fff;
-    padding: 15px;
-    border: 1px solid #ccd0d4;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    background: var(--mjb-bg-white);
+    padding: 1.75rem;
+    border: 1px solid var(--mjb-border);
+    border-radius: var(--mjb-radius-lg);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .mjb-status-ready {
@@ -357,15 +403,457 @@ body[class*="post-type-mjb_resume"] {
 }
 
 .mjb-setup-form {
-    margin-top: 24px;
+    margin-top: 1.5rem;
 }
 
 .mjb-tools-card {
-    max-width: 600px;
-    margin-top: 20px;
-    padding: 20px;
+    width: 100%;
+    max-width: none;
+    margin-top: 1.5rem;
+    padding: 1.75rem;
+    border-radius: var(--mjb-radius-lg);
+    border: 1px solid var(--mjb-border);
+    background: var(--mjb-bg-white);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .mjb-tools-form-spaced {
     margin-bottom: 20px;
+}
+
+/* Admin shell + tabs */
+.mjb-admin-shell {
+    position: relative;
+}
+
+.mjb-admin-tabs {
+    margin-bottom: 2rem;
+}
+
+.mjb-admin-tabs__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mjb-admin-tabs__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--mjb-border);
+    border-radius: 999px;
+    background: var(--mjb-bg-white);
+    color: var(--mjb-text-secondary);
+    font-family: var(--mjb-font-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mjb-admin-tabs__btn:hover,
+.mjb-admin-tabs__btn:focus {
+    border-color: rgba(15, 118, 110, 0.35);
+    color: var(--mjb-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--mjb-primary-light);
+}
+
+.mjb-admin-tabs__btn.is-active {
+    background: var(--mjb-primary);
+    border-color: var(--mjb-primary);
+    color: #fff;
+}
+
+.mjb-admin-tabs__btn.is-active .mjb-icon {
+    stroke: currentColor;
+}
+
+.mjb-admin-panel {
+    position: relative;
+    min-height: 12rem;
+}
+
+.mjb-admin-loader {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 1rem;
+}
+
+.mjb-admin-loader.is-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.mjb-admin-is-loading .mjb-admin-panel {
+    pointer-events: none;
+}
+
+.mjb-spinner {
+    display: block;
+    width: 42px;
+    height: 42px;
+    border: 3px solid var(--mjb-border);
+    border-top-color: var(--mjb-primary);
+    border-radius: 50%;
+    animation: mjb-admin-spin 0.7s linear infinite;
+}
+
+@keyframes mjb-admin-spin {
+    to { transform: rotate(360deg); }
+}
+
+.mjb-tab-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+.mjb-tab-panel__lead {
+    color: var(--mjb-text-secondary);
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+}
+
+.mjb-btn-outline,
+.mjb-admin-shell .btn-outline {
+    background-color: var(--mjb-bg-white);
+    color: var(--mjb-text-primary);
+    border: 1px solid var(--mjb-border-strong);
+}
+
+.mjb-btn-outline:hover,
+.mjb-admin-shell .btn-outline:hover {
+    border-color: var(--mjb-primary);
+    background-color: var(--mjb-bg-neutral);
+    color: var(--mjb-text-primary);
+}
+
+.mjb-btn--sm,
+.mjb-admin-shell .btn-sm {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.875rem;
+}
+
+.mjb-feature-card--action {
+    border: 1px solid var(--mjb-border);
+    background: var(--mjb-bg-white);
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+}
+
+.mjb-feature-card--action:hover {
+    border-color: var(--mjb-primary);
+}
+
+.mjb-admin-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.mjb-admin-pagination__info {
+    color: var(--mjb-text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.mjb-admin-pagination__controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.mjb-admin-pagination__btn[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.mjb-tools-subtabs {
+    display: inline-flex;
+    gap: 0.35rem;
+    margin-bottom: 1.25rem;
+    padding: 0.25rem;
+    border-radius: 0.75rem;
+    background: var(--mjb-bg-neutral);
+    border: 1px solid var(--mjb-border);
+}
+
+.mjb-tools-subtab {
+    border: none;
+    background: transparent;
+    color: var(--mjb-text-secondary);
+    font-family: var(--mjb-font-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.55rem 1rem;
+    border-radius: 0.55rem;
+    cursor: pointer;
+}
+
+.mjb-tools-subtab.is-active {
+    background: var(--mjb-bg-white);
+    color: var(--mjb-primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+body.toplevel_page_modern-job-board #wpcontent {
+    background-color: var(--mjb-bg-neutral);
+}
+
+body.toplevel_page_modern-job-board {
+    font-family: var(--mjb-font-sans);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Tab panels + sections — full shell width */
+.mjb-admin-panel,
+.mjb-tab-panel {
+    width: 100%;
+}
+
+.mjb-tab-panel__header .mjb-section-title {
+    margin-bottom: 0;
+}
+
+/* WordPress buttons inside MJB admin — theme parity */
+.mjb-admin-shell .button,
+.mjb-admin-shell .button-secondary,
+.mjb-admin-shell input[type="submit"].button,
+.mjb-admin-shell input[type="button"].button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: auto;
+    height: auto;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--mjb-radius);
+    font-family: var(--mjb-font-sans);
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.2;
+    color: var(--mjb-text-primary);
+    background-color: var(--mjb-bg-white);
+    border: 1px solid var(--mjb-border-strong);
+    box-shadow: none;
+    transition: all 0.2s ease;
+}
+
+.mjb-admin-shell .button:hover,
+.mjb-admin-shell .button-secondary:hover,
+.mjb-admin-shell input[type="submit"].button:hover,
+.mjb-admin-shell input[type="button"].button:hover {
+    border-color: var(--mjb-primary);
+    background-color: var(--mjb-bg-neutral);
+    color: var(--mjb-text-primary);
+}
+
+.mjb-admin-shell .button-primary,
+.mjb-admin-shell input[type="submit"].button-primary {
+    background-color: var(--mjb-primary);
+    border-color: var(--mjb-primary);
+    color: #fff;
+}
+
+.mjb-admin-shell .button-primary:hover,
+.mjb-admin-shell input[type="submit"].button-primary:hover {
+    background-color: var(--mjb-primary-hover);
+    border-color: var(--mjb-primary-hover);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(15, 118, 110, 0.2);
+}
+
+.mjb-admin-shell .button-small,
+.mjb-admin-shell .button.button-small {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.8125rem;
+}
+
+.mjb-admin-shell .button.delete,
+.mjb-admin-shell .mjb-btn.delete {
+    color: #b32d2e;
+    border-color: #f1aeb5;
+}
+
+.mjb-admin-shell .button.delete:hover,
+.mjb-admin-shell .mjb-btn.delete:hover {
+    background-color: #fff5f5;
+    border-color: #b32d2e;
+    color: #b32d2e;
+}
+
+/* Settings form — full-width theme cards */
+.mjb-settings-form {
+    width: 100%;
+    max-width: none;
+}
+
+.mjb-settings-form h2 {
+    font-family: var(--mjb-font-sans);
+    font-size: 1.125rem;
+    color: var(--mjb-text-primary);
+    margin: 2rem 0 1rem;
+    padding: 0;
+}
+
+.mjb-settings-form h2:first-child {
+    margin-top: 0;
+}
+
+.mjb-settings-form .form-table {
+    width: 100%;
+    margin: 0 0 1.5rem;
+    border: 1px solid var(--mjb-border);
+    border-radius: var(--mjb-radius-lg);
+    background: var(--mjb-bg-white);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+}
+
+.mjb-settings-form .form-table th,
+.mjb-settings-form .form-table td {
+    padding: 1rem 1.25rem;
+    font-family: var(--mjb-font-sans);
+    font-size: 0.875rem;
+    vertical-align: top;
+}
+
+.mjb-settings-form .form-table th {
+    width: 220px;
+    font-weight: 600;
+    color: var(--mjb-text-primary);
+    background: var(--mjb-bg-neutral);
+}
+
+.mjb-settings-form .form-table td {
+    color: var(--mjb-text-primary);
+}
+
+.mjb-settings-form .form-table tr + tr th,
+.mjb-settings-form .form-table tr + tr td {
+    border-top: 1px solid var(--mjb-border);
+}
+
+.mjb-settings-form input[type="text"],
+.mjb-settings-form input[type="number"],
+.mjb-settings-form input[type="email"],
+.mjb-settings-form input[type="url"],
+.mjb-settings-form input[type="password"],
+.mjb-settings-form textarea,
+.mjb-settings-form select,
+.mjb-custom-fields-panel input[type="text"],
+.mjb-custom-fields-panel textarea,
+.mjb-custom-fields-panel select,
+.mjb-tools-card input[type="text"],
+.mjb-tools-card input[type="url"],
+.mjb-tools-card input[type="file"] {
+    border: 1px solid var(--mjb-border-strong);
+    border-radius: var(--mjb-radius);
+    padding: 0.65rem 0.85rem;
+    font-family: var(--mjb-font-sans);
+    font-size: 0.875rem;
+    color: var(--mjb-text-primary);
+    background: var(--mjb-bg-white);
+    box-shadow: none;
+}
+
+.mjb-settings-form input:focus,
+.mjb-settings-form textarea:focus,
+.mjb-settings-form select:focus,
+.mjb-custom-fields-panel input:focus,
+.mjb-custom-fields-panel textarea:focus,
+.mjb-custom-fields-panel select:focus,
+.mjb-tools-card input:focus {
+    border-color: var(--mjb-primary);
+    box-shadow: 0 0 0 3px var(--mjb-primary-light);
+    outline: none;
+}
+
+.mjb-settings-form .description,
+.mjb-custom-fields-panel .description,
+.mjb-custom-fields-panel small,
+.mjb-tools-card .description {
+    color: var(--mjb-text-secondary);
+    font-size: 0.8125rem;
+}
+
+.mjb-settings-form p.submit {
+    margin-top: 1.5rem;
+    padding: 0;
+}
+
+.mjb-custom-fields-panel h3,
+.mjb-tools-card h2,
+.mjb-tools-card h3 {
+    font-family: var(--mjb-font-sans);
+    color: var(--mjb-text-primary);
+    margin-top: 0;
+}
+
+.mjb-tools-card hr {
+    border: none;
+    border-top: 1px solid var(--mjb-border);
+    margin: 1.5rem 0;
+}
+
+.mjb-admin-shell .notice {
+    border-radius: var(--mjb-radius);
+    border-left-width: 4px;
+    margin: 0 0 1.25rem;
+    font-family: var(--mjb-font-sans);
+}
+
+.mjb-admin-shell code {
+    background: var(--mjb-bg-neutral);
+    border-radius: 0.35rem;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.8125rem;
+}
+
+.mjb-admin-shell a {
+    color: var(--mjb-primary);
+    transition: color 0.2s ease;
+}
+
+.mjb-admin-shell a:hover,
+.mjb-admin-shell a:focus {
+    color: var(--mjb-primary-hover);
+}
+
+.mjb-admin-shell .mjb-btn,
+.mjb-admin-shell .mjb-btn:hover,
+.mjb-admin-shell .button,
+.mjb-admin-shell .button:hover {
+    text-decoration: none;
+}
+
+@media (max-width: 960px) {
+    .mjb-custom-fields-layout {
+        grid-template-columns: 1fr;
+    }
 }

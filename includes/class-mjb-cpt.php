@@ -18,6 +18,9 @@ class MJB_CPT
         add_action('init', array($this, 'register_post_types'));
         add_action('init', array($this, 'register_taxonomies'));
         add_action('init', array($this, 'register_post_statuses'));
+        add_filter('insert_term_data', array($this, 'normalize_term_slug'), 10, 3);
+        add_filter('wp_update_term_data', array($this, 'normalize_term_slug'), 10, 3);
+        add_filter('term_link', array($this, 'filter_term_link'), 10, 3);
 
         // Frontend hooks
         add_filter('the_content', array($this, 'append_job_map'));
@@ -78,6 +81,7 @@ class MJB_CPT
             'exclude_from_search' => false,
             'publicly_queryable' => true,
             'capability_type' => 'post',
+            'rewrite' => false,
         );
         register_post_type('job_listing', $args);
 
@@ -108,6 +112,10 @@ class MJB_CPT
             'exclude_from_search' => false,
             'publicly_queryable' => true,
             'capability_type' => 'post',
+            'rewrite' => array(
+                'slug' => 'company',
+                'with_front' => false,
+            ),
         );
         register_post_type('company', $args_company);
 
@@ -166,6 +174,10 @@ class MJB_CPT
             'show_admin_column' => true,
             'show_in_nav_menus' => true,
             'show_tagcloud' => true,
+            'rewrite' => array(
+                'slug' => 'job-type',
+                'with_front' => false,
+            ),
         );
         register_taxonomy('job_type', array('job_listing'), $args_type);
 
@@ -183,6 +195,10 @@ class MJB_CPT
             'show_admin_column' => true,
             'show_in_nav_menus' => true,
             'show_tagcloud' => true,
+            'rewrite' => array(
+                'slug' => 'job-category',
+                'with_front' => false,
+            ),
         );
         register_taxonomy('job_category', array('job_listing'), $args_cat);
 
@@ -200,8 +216,61 @@ class MJB_CPT
             'show_admin_column' => true,
             'show_in_nav_menus' => true,
             'show_tagcloud' => true,
+            'rewrite' => array(
+                'slug' => 'job-location',
+                'with_front' => false,
+            ),
         );
         register_taxonomy('job_location', array('job_listing'), $args_loc);
+    }
+
+    /**
+     * Normalize taxonomy term slugs to hyphenated form.
+     *
+     * @param array  $data
+     * @param string $taxonomy
+     * @param array  $args
+     * @return array
+     */
+    public function normalize_term_slug($data, $taxonomy, $args)
+    {
+        if (!in_array($taxonomy, array('job_type', 'job_category', 'job_location'), true)) {
+            return $data;
+        }
+
+        if (!empty($data['slug'])) {
+            $data['slug'] = MJB_Search::normalize_slug($data['slug']);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Point taxonomy term links at pretty /jobs/ search URLs.
+     *
+     * @param string  $link
+     * @param WP_Term $term
+     * @param string  $taxonomy
+     * @return string
+     */
+    public function filter_term_link($link, $term, $taxonomy)
+    {
+        if (is_wp_error($term) || !isset($term->slug)) {
+            return $link;
+        }
+
+        $params = array();
+        if ($taxonomy === 'job_location') {
+            $params['search_location'] = MJB_Search::normalize_slug($term->slug);
+        } elseif ($taxonomy === 'job_category') {
+            $params['search_category'] = MJB_Search::normalize_slug($term->slug);
+        } elseif ($taxonomy === 'job_type') {
+            $params['search_type'] = MJB_Search::normalize_slug($term->slug);
+        } else {
+            return $link;
+        }
+
+        return MJB_Job_Routes::build_url($params);
     }
 
     /**
@@ -249,7 +318,7 @@ class MJB_CPT
             return $content;
         }
 
-        $location = $terms[0]->name;
+        $location = MJB_Location::format_location_term($terms[0]);
         $map_url = 'https://www.google.com/maps/embed/v1/place?key=' . esc_attr($api_key) . '&q=' . urlencode($location);
 
         $map_html = '<div class="mjb-map-container">';
@@ -283,17 +352,27 @@ class MJB_CPT
         }
 
         // Location
-        $location_name = '';
-        $terms = get_the_terms($post->ID, 'job_location');
-        if ($terms && !is_wp_error($terms)) {
-            $location_name = $terms[0]->name;
-        }
+        $address = MJB_Location::get_job_schema_address($post->ID);
+        $location_name = $address['formatted'];
 
         // Job Type
         $employment_type = '';
         $type_terms = get_the_terms($post->ID, 'job_type');
         if ($type_terms && !is_wp_error($type_terms)) {
             $employment_type = MJB_Search::map_employment_type_for_schema($type_terms[0]->name);
+        }
+
+        $postal_address = array(
+            '@type' => 'PostalAddress',
+            'addressLocality' => $address['locality'] !== '' ? $address['locality'] : $location_name,
+        );
+
+        if ($address['region'] !== '') {
+            $postal_address['addressRegion'] = $address['region'];
+        }
+
+        if ($address['country'] !== '') {
+            $postal_address['addressCountry'] = $address['country'];
         }
 
         $schema = array(
@@ -314,10 +393,7 @@ class MJB_CPT
             ),
             'jobLocation' => array(
                 '@type' => 'Place',
-                'address' => array(
-                    '@type' => 'PostalAddress',
-                    'addressLocality' => $location_name,
-                ),
+                'address' => $postal_address,
             ),
             'directApply' => true,
             'url' => get_permalink($post->ID),

@@ -15,6 +15,7 @@ class MJB_Admin
      */
     public function init()
     {
+        MJB_Admin_Tabs::init();
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'register_settings'));
 
@@ -50,24 +51,48 @@ class MJB_Admin
             strpos($screen->id, 'company') !== false ||
             strpos($screen->id, 'mjb_resume') !== false
         ) {
+            $base_url = plugin_dir_url(dirname(__FILE__));
+
+            wp_enqueue_style(
+                'mjb-admin-fonts',
+                'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap',
+                array(),
+                null
+            );
+
             wp_enqueue_style(
                 'mjb-shared',
-                plugin_dir_url(dirname(__FILE__)) . 'assets/css/mjb-shared.css',
+                $base_url . 'assets/css/mjb-shared.css',
                 array(),
                 MJB_VERSION
             );
             wp_enqueue_style(
                 'mjb-admin-css',
-                plugin_dir_url(dirname(__FILE__)) . 'assets/css/mjb-admin.css',
-                array('mjb-shared'),
+                $base_url . 'assets/css/mjb-admin.css',
+                array('mjb-shared', 'mjb-admin-fonts'),
                 MJB_VERSION
             );
             wp_enqueue_style(
                 'mjb-charts-css',
-                plugin_dir_url(dirname(__FILE__)) . 'assets/css/mjb-charts.css',
+                $base_url . 'assets/css/mjb-charts.css',
                 array('mjb-admin-css'),
                 MJB_VERSION
             );
+        }
+
+        if ($screen && $screen->id === 'toplevel_page_modern-job-board') {
+            wp_enqueue_script(
+                'mjb-admin-tabs',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/js/mjb-admin-tabs.js',
+                array('jquery'),
+                MJB_VERSION,
+                true
+            );
+            wp_localize_script('mjb-admin-tabs', 'mjb_admin_tabs', array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('mjb_admin_tabs'),
+                'default_tab' => MJB_Admin_Tabs::get_default_tab(),
+            ));
         }
     }
 
@@ -86,11 +111,10 @@ class MJB_Admin
             'manage_options',
             'modern-job-board',
             array($this, 'admin_dashboard_html'),
-            'dashicons-businessman',
+            'dashicons-portfolio',
             56
         );
 
-        // Dashboard Submenu (Default)
         add_submenu_page(
             'modern-job-board',
             __('Dashboard', 'modern-job-board'),
@@ -98,16 +122,6 @@ class MJB_Admin
             'manage_options',
             'modern-job-board',
             array($this, 'admin_dashboard_html')
-        );
-
-        // Settings Submenu
-        add_submenu_page(
-            'modern-job-board',
-            __('Settings', 'modern-job-board'),
-            __('Settings', 'modern-job-board'),
-            'manage_options',
-            'mjb-settings',
-            array($this, 'settings_page_html')
         );
     }
 
@@ -119,100 +133,39 @@ class MJB_Admin
         if (!current_user_can('manage_options')) {
             return;
         }
-        
-        // Basic Stats
-        $job_count = wp_count_posts('job_listing')->publish;
-        $app_count = wp_count_posts('job_application')->publish;
-        $company_count = wp_count_posts('company')->publish;
-        $resume_count = wp_count_posts('mjb_resume')->publish;
-        $performance = MJB_Analytics::summarize_job_stats(MJB_Analytics::get_admin_job_stats());
-        $top_jobs = MJB_Analytics::get_top_jobs_for_charts(5);
-        $pending_webhooks = MJB_Webhook_Queue::get_pending_count();
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $active_tab = MJB_Admin_Tabs::sanitize_tab(sanitize_key(wp_unslash($_GET['tab'] ?? MJB_Admin_Tabs::get_default_tab())));
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $active_page = max(1, intval($_GET['mjb_page'] ?? 1));
 
         ?>
-        <div class="wrap mjb-dashboard-page">
-            <div class="mjb-dashboard-wrap">
+        <div class="wrap mjb-dashboard-page mjb-admin-page">
+            <div class="mjb-dashboard-wrap mjb-admin-shell">
                 <header class="mjb-dashboard-header">
                     <h1><?php esc_html_e('Modern Job Board', 'modern-job-board'); ?> <span class="mjb-badge">v<?php echo esc_html(MJB_VERSION); ?></span></h1>
                     <p class="subtitle"><?php esc_html_e('Manage your job board with complete control.', 'modern-job-board'); ?></p>
                 </header>
 
-                <div class="mjb-stats-grid">
-                    <div class="mjb-stat-card">
-                        <div class="mjb-stat-val"><?php echo esc_html((string) intval($job_count)); ?></div>
-                        <div class="mjb-stat-lbl"><?php esc_html_e('Active Jobs', 'modern-job-board'); ?></div>
-                    </div>
-                    <div class="mjb-stat-card">
-                        <div class="mjb-stat-val"><?php echo esc_html((string) intval($app_count)); ?></div>
-                        <div class="mjb-stat-lbl"><?php esc_html_e('Applications', 'modern-job-board'); ?></div>
-                    </div>
-                    <div class="mjb-stat-card">
-                        <div class="mjb-stat-val"><?php echo esc_html((string) intval($performance['views'])); ?></div>
-                        <div class="mjb-stat-lbl"><?php esc_html_e('Job Views', 'modern-job-board'); ?></div>
-                    </div>
-                    <div class="mjb-stat-card">
-                        <div class="mjb-stat-val"><?php echo esc_html($performance['conversion_rate'] . '%'); ?></div>
-                        <div class="mjb-stat-lbl"><?php esc_html_e('Conversion', 'modern-job-board'); ?></div>
-                    </div>
-                    <div class="mjb-stat-card">
-                        <div class="mjb-stat-val"><?php echo esc_html((string) intval($company_count)); ?></div>
-                        <div class="mjb-stat-lbl"><?php esc_html_e('Companies', 'modern-job-board'); ?></div>
-                    </div>
-                    <div class="mjb-stat-card">
-                        <div class="mjb-stat-val"><?php echo esc_html((string) intval($resume_count)); ?></div>
-                        <div class="mjb-stat-lbl"><?php esc_html_e('Resumes', 'modern-job-board'); ?></div>
-                    </div>
+                <?php MJB_Admin_Tabs::render_tab_nav($active_tab); ?>
+
+                <div
+                    id="mjb-admin-panel"
+                    class="mjb-admin-panel"
+                    role="tabpanel"
+                    aria-labelledby="mjb-tab-<?php echo esc_attr($active_tab); ?>"
+                    data-active-tab="<?php echo esc_attr($active_tab); ?>"
+                    data-active-page="<?php echo esc_attr((string) $active_page); ?>"
+                >
+                    <?php
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Tab HTML is escaped by renderers.
+                    echo MJB_Admin_Tabs::render_tab($active_tab, $active_page);
+                    ?>
                 </div>
 
-                <h2 class="mjb-section-title"><?php esc_html_e('Performance Charts', 'modern-job-board'); ?></h2>
-                <?php
-                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is escaped in MJB_Analytics::render_admin_charts_html().
-                echo MJB_Analytics::render_admin_charts_html($top_jobs);
-                ?>
-
-                <?php if ($pending_webhooks > 0) : ?>
-                    <div class="notice notice-warning mjb-notice-spaced">
-                        <p><?php echo esc_html(sprintf(
-                            _n('%d webhook delivery is queued for retry.', '%d webhook deliveries are queued for retry.', $pending_webhooks, 'modern-job-board'),
-                            $pending_webhooks
-                        )); ?></p>
-                    </div>
-                <?php endif; ?>
-
-                <h2 class="mjb-section-title"><?php esc_html_e('Quick Actions', 'modern-job-board'); ?></h2>
-
-                <div class="mjb-features-grid">
-                    <a href="<?php echo esc_url(admin_url('edit.php?post_type=job_listing')); ?>" class="mjb-feature-card">
-                        <div class="mjb-feature-icon">
-                            <span class="dashicons dashicons-businessman"></span>
-                        </div>
-                        <h3><?php esc_html_e('Manage Jobs', 'modern-job-board'); ?></h3>
-                        <p><?php esc_html_e('View, edit, and moderate job listings. Manage expiration dates and featured status.', 'modern-job-board'); ?></p>
-                    </a>
-
-                    <a href="<?php echo esc_url(admin_url('edit.php?post_type=job_application')); ?>" class="mjb-feature-card">
-                        <div class="mjb-feature-icon">
-                            <span class="dashicons dashicons-email"></span>
-                        </div>
-                        <h3><?php esc_html_e('Applications', 'modern-job-board'); ?></h3>
-                        <p><?php esc_html_e('Review candidate applications and download resumes.', 'modern-job-board'); ?></p>
-                    </a>
-
-                    <a href="<?php echo esc_url(admin_url('admin.php?page=mjb-settings')); ?>" class="mjb-feature-card">
-                        <div class="mjb-feature-icon">
-                            <span class="dashicons dashicons-admin-settings"></span>
-                        </div>
-                        <h3><?php esc_html_e('Settings', 'modern-job-board'); ?></h3>
-                        <p><?php esc_html_e('Configure listings, Google Maps API, and monetization options.', 'modern-job-board'); ?></p>
-                    </a>
-
-                    <a href="<?php echo esc_url(admin_url('admin.php?page=mjb-setup')); ?>" class="mjb-feature-card">
-                        <div class="mjb-feature-icon">
-                            <span class="dashicons dashicons-admin-page"></span>
-                        </div>
-                        <h3><?php esc_html_e('Setup', 'modern-job-board'); ?></h3>
-                        <p><?php esc_html_e('Create frontend pages for job search, dashboards, and registration shortcodes.', 'modern-job-board'); ?></p>
-                    </a>
+                <div id="mjb-admin-loader" class="mjb-admin-loader" aria-hidden="true" role="status">
+                    <span class="mjb-spinner" aria-hidden="true"></span>
+                    <span class="screen-reader-text"><?php esc_html_e('Loading section…', 'modern-job-board'); ?></span>
                 </div>
             </div>
         </div>
@@ -314,28 +267,6 @@ class MJB_Admin
 
         register_setting('mjb_settings_group', 'mjb_recaptcha_secret_key');
         add_settings_field('mjb_recaptcha_secret_key', __('reCAPTCHA Secret Key', 'modern-job-board'), array($this, 'recaptcha_secret_key_callback'), 'mjb-settings', 'mjb_security_section');
-    }
-
-    /**
-     * Settings Page HTML.
-     */
-    public function settings_page_html()
-    {
-        if (!current_user_can('manage_options')) {
-            return;
-        }
-        ?>
-        <div class="wrap">
-            <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-            <form action="options.php" method="post">
-                <?php
-                settings_fields('mjb_settings_group');
-                do_settings_sections('mjb-settings');
-                submit_button(__('Save Settings', 'modern-job-board'));
-                ?>
-            </form>
-        </div>
-        <?php
     }
 
     /**

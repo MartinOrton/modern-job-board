@@ -3,7 +3,7 @@
 | Feature | Modern Job Board (Plugin) | NiceBoard (SaaS) |
 | :--- | :--- | :--- |
 | **Type** | Self-Hosted WordPress Plugin | Fully Managed SaaS |
-| **Cost** | One-time / Free (Open Source) | Recurring Monthly Subscription |
+| **Cost** | Freemium — free tier + paid upgrades | Recurring Monthly Subscription |
 | **Setup Time** | Minutes (Plugin Activation) | Immediate (No-code) |
 | **Customization** | Unlimited (Code + WP Ecosystem) | Limited to Theme Settings |
 | **Job Backfilling** | Via XML Feeds | Built-in Scraper |

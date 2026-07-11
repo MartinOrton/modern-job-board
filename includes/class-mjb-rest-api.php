@@ -182,7 +182,6 @@ class MJB_REST_API
     {
         $post_id = intval($post_id);
         $company_name = get_post_meta($post_id, '_company_name', true);
-        $locations = wp_get_post_terms($post_id, 'job_location', array('fields' => 'names'));
         $types = wp_get_post_terms($post_id, 'job_type', array('fields' => 'names'));
         $categories = wp_get_post_terms($post_id, 'job_category', array('fields' => 'names'));
 
@@ -193,7 +192,7 @@ class MJB_REST_API
             'date' => get_the_date('Y-m-d H:i:s', $post_id),
             'featured' => (bool) get_post_meta($post_id, '_featured', true),
             'company' => $company_name,
-            'location' => !empty($locations) ? $locations[0] : '',
+            'location' => MJB_Location::format_job_location($post_id),
             'type' => !empty($types) ? $types[0] : '',
             'category' => !empty($categories) ? $categories[0] : '',
             'excerpt' => get_the_excerpt($post_id),

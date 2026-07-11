@@ -34,6 +34,14 @@ class MJB_Template_Loader
             } else {
                 return MJB_PATH . 'templates/archive-job.php';
             }
+        } elseif (is_post_type_archive('company')) {
+            $theme_files = array('archive-company.php');
+            $exists_in_theme = locate_template($theme_files, false);
+            if ($exists_in_theme != '') {
+                return $exists_in_theme;
+            }
+
+            return MJB_PATH . 'templates/archive-company.php';
         } elseif (is_singular('job_listing')) {
             $theme_files = array('single-job_listing.php', 'single-job.php');
             $exists_in_theme = locate_template($theme_files, false);
