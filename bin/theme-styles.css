@@ -1023,6 +1023,12 @@ body.mjb-demo .navbar {
     margin: 0 auto;
 }
 
+.pricing-grid--4,
+.wp-block-group.pricing-grid--4,
+.wp-block-group.pricing-grid--4 > .wp-block-group__inner-container {
+    max-width: 90rem;
+}
+
 .pricing-card {
     background: white;
     border: 1px solid var(--border);
@@ -1037,6 +1043,11 @@ body.mjb-demo .navbar {
     border: 2px solid var(--primary);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     transform: scale(1.02);
+}
+
+.pricing-card--complete {
+    border-color: rgba(15, 118, 110, 0.35);
+    background: linear-gradient(180deg, #ffffff 0%, var(--primary-surface) 160%);
 }
 
 .recommended-badge {
@@ -1071,6 +1082,12 @@ body.mjb-demo .navbar {
     font-size: 3rem;
     color: var(--text-primary);
     margin-bottom: 2rem;
+    line-height: 1.1;
+}
+
+.price--setup {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
 }
 
 .price .period {
@@ -1078,6 +1095,13 @@ body.mjb-demo .navbar {
     font-size: 1rem;
     color: var(--text-secondary);
     font-weight: 500;
+}
+
+.price-note {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin: 0 0 1.5rem;
+    line-height: 1.45;
 }
 
 .price-features {
@@ -1088,11 +1112,21 @@ body.mjb-demo .navbar {
 
 .price-features li {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.75rem;
-    margin-bottom: 1rem;
-    font-size: 0.875rem;
+    margin-bottom: 0.85rem;
+    font-size: 0.8125rem;
     color: var(--text-secondary);
+    line-height: 1.45;
+}
+
+.price-features li.is-unavailable {
+    opacity: 0.55;
+}
+
+.price-features li.is-unavailable .check-icon {
+    color: var(--text-secondary);
+    background: rgba(100, 116, 139, 0.12);
 }
 
 .check-icon {
@@ -1261,6 +1295,34 @@ footer {
     .wp-block-group.pricing-grid,
     .wp-block-group.pricing-grid > .wp-block-group__inner-container {
         grid-template-columns: repeat(3, 1fr);
+    }
+
+    .pricing-grid--4,
+    .wp-block-group.pricing-grid--4,
+    .wp-block-group.pricing-grid--4 > .wp-block-group__inner-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .pricing-card.pro {
+        transform: none;
+    }
+}
+
+@media (min-width: 1200px) {
+    .pricing-grid--4,
+    .wp-block-group.pricing-grid--4,
+    .wp-block-group.pricing-grid--4 > .wp-block-group__inner-container {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.25rem;
+    }
+
+    .pricing-grid--4 .pricing-card,
+    .wp-block-group.pricing-grid--4 .pricing-card {
+        padding: 1.5rem;
+    }
+
+    .pricing-grid--4 .price:not(.price--setup) {
+        font-size: 2.25rem;
     }
 }
 

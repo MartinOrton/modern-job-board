@@ -1,22 +1,23 @@
 # Modern Job Board — Freemium Feature Comparison
 
 **Product:** Modern Job Board (WordPress plugin)  
-**Version:** 0.9.0-beta.1  
-**Model:** Freemium (proprietary — not open source)  
-**Last updated:** July 5, 2026  
+**Version:** 0.9.0-beta.2  
+**Model:** Freemium (proprietary — not open source) + Complete Site service  
+**Last updated:** July 12, 2026  
 **Purpose:** Handoff document for AI or human reviewers planning licensing, gating, marketing, or product decisions.
 
 ---
 
 ## Executive summary
 
-Modern Job Board is a self-hosted WordPress job board plugin sold as **freemium**:
+Modern Job Board is a self-hosted WordPress job board product sold as **freemium plugin licenses** plus an optional **done-for-you site build**:
 
-- **Free** — core listings, applications, dashboards, blocks/shortcodes, SEO schema, community support.
-- **Pro ($149/year)** — unlimited jobs, WooCommerce monetization, custom fields, CSV/XML import-export, email support.
-- **Business ($299/year)** — everything in Pro plus REST API, XML feeds, webhooks, priority support, and 2 hours custom development per year.
+- **Free ($0)** — core board features; **capped at 10 active job listings**; community support. Best for testing the waters.
+- **Pro ($149/year)** — unlimited jobs, WooCommerce monetization, custom fields, import/export, email support. Best for monetizing.
+- **Business ($299/year)** — everything in Pro plus REST API, XML feeds, webhooks, priority support + 2 hrs custom dev/year. Best for integrations.
+- **Complete Site ($1,200–2,000 setup, includes 1 year Business; then $299/year)** — full WordPress site build (theme, branding, pages, hosting setup), MJB installed and configured, Business features included. Best for “I just want a working job board site.”
 
-**Critical implementation note:** Tier assignments below reflect the **planned commercial model** (documented in marketing, `LICENSE.txt`, and `readme.txt`). **PHP license enforcement is not implemented yet** — all features currently work regardless of plan until gating is built.
+**Critical implementation note:** Tier assignments below reflect the **planned commercial model** (documented in marketing, `LICENSE.txt`, and `readme.txt`). **PHP license enforcement is not implemented yet** — all features currently work regardless of plan until gating is built. The Free **10-job cap** is marketed but not enforced in code yet.
 
 **Purchase flow today:** CTAs use `mailto:hello@martinorton.com` with tier-specific subjects. No automated checkout or license-key validation exists in the plugin yet.
 
@@ -24,12 +25,18 @@ Modern Job Board is a self-hosted WordPress job board plugin sold as **freemium*
 
 ## Plan overview
 
-| | **Free** | **Pro** | **Business** |
-|---|:---:|:---:|:---:|
-| **Annual price** | $0 | $149/year | $299/year |
-| **License** | Proprietary (free tier) | Proprietary + paid license | Proprietary + paid license |
-| **Best for** | Launching a basic job board | Monetizing and scaling | Integrations and high-volume sites |
-| **Support** | Community | Email | Priority + 2 hrs custom dev/year |
+| | **Free** | **Pro** | **Business** | **Complete Site** |
+|---|:---:|:---:|:---:|:---:|
+| **Price** | $0 | $149/year | $299/year | **$1,200–2,000 setup** (incl. 1 yr Business) then $299/year |
+| **Active job listings** | Capped at 10 | Unlimited | Unlimited | Unlimited |
+| **Core board, applications, dashboards, analytics, SEO, security** | ✓ | ✓ | ✓ | ✓ |
+| **WooCommerce monetization** | — | ✓ | ✓ | ✓ (configured for you) |
+| **Custom fields + import/export** | — | ✓ | ✓ | ✓ (set up for you) |
+| **REST API, XML feed, webhooks** | — | — | ✓ | ✓ |
+| **Full WordPress site build** (theme, branding, pages, hosting setup) | — | — | — | ✓ |
+| **MJB installed & configured** | Self | Self | Self | ✓ |
+| **Support** | Community | Email | Priority + 2 hrs dev/yr | Priority + 2 hrs dev/yr |
+| **Best for** | Testing the waters | Monetizing | Integrations | "I just want a working job board site" |
 
 ---
 
@@ -191,19 +198,20 @@ All blocks appear under **Modern Job Board** in the Gutenberg inserter.
 
 ---
 
-## Implementation status (as of v0.9.0-beta.1)
+## Implementation status (as of v0.9.0-beta.2)
 
 | Area | Status |
 |---|---|
-| All features listed above | **Built** in plugin codebase |
-| Marketing site pricing (`modern-job-board-website`) | **Updated** — 3-tier freemium |
+| All features listed above | **Built** in plugin codebase (plugin licenses only) |
+| Marketing site pricing (`modern-job-board-website`) | **Updated** — Free / Pro / Business / Complete Site |
 | `LICENSE.txt` | **Proprietary** freemium terms |
 | `readme.txt`, `composer.json`, plugin header | **Proprietary** (GPL removed) |
 | PHP license / plan gating | **Not implemented** |
-| Free-tier job count limit | **Not defined or enforced** |
+| Free-tier job count limit (10) | **Marketed; not enforced in code** |
+| Complete Site service delivery | **Sales/service process** (not a plugin SKU alone) |
 | License key validation | **Not implemented** |
 | Automated checkout | **Not implemented** (mailto CTAs only) |
-| PHPUnit test suite | **101 tests passing** |
+| PHPUnit test suite | **111 tests** |
 
 ### Suggested gating map for future implementation
 
@@ -211,9 +219,10 @@ When building enforcement, these are the natural cut points aligned with marketi
 
 | Plan constant | Features to gate |
 |---|---|
-| `free` | Default; enforce job count cap |
+| `free` | Default; enforce **10 active job listings** |
 | `pro` | WooCommerce class, custom fields admin tab, tools import/export, unlimited jobs |
 | `business` | REST API v1/v2, XML feed, webhooks + queue |
+| `complete_site` | Business features + service fulfillment (build, install, configure) |
 
 **Key PHP classes to wrap or guard:**
 
@@ -251,6 +260,7 @@ When building enforcement, these are the natural cut points aligned with marketi
 - Free: `Modern Job Board Free`
 - Pro: `Modern Job Board Pro`
 - Business: `Modern Job Board Business`
+- Complete Site: `Modern Job Board Complete Site`
 
 ---
 

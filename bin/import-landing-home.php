@@ -421,10 +421,31 @@ function mjb_build_developers_blocks($inner) {
  * @return string
  */
 function mjb_build_pricing_blocks($inner) {
+    // Balanced extraction: pricing cards nest .price / .price-features markup.
+    $cards = array();
+    $offset = 0;
+    $haystack = $inner;
+
+    while (true) {
+        $slice = substr($haystack, $offset);
+        $card = mjb_extract_element_by_class($slice, 'pricing-card');
+        if ($card === '') {
+            break;
+        }
+        $cards[] = $card;
+        $pos = strpos($haystack, $card, $offset);
+        if ($pos === false) {
+            break;
+        }
+        $offset = $pos + strlen($card);
+    }
+
+    $grid = $cards
+        ? '<div class="pricing-grid pricing-grid--4">' . implode("\n", $cards) . '</div>'
+        : mjb_rebuild_div_group_html($inner, 'pricing-card', 'pricing-grid pricing-grid--4');
+
     return mjb_container_wrap(
-        mjb_build_section_header_blocks($inner) . "\n\n" . mjb_html_block(
-            mjb_rebuild_div_group_html($inner, 'pricing-card', 'pricing-grid')
-        )
+        mjb_build_section_header_blocks($inner) . "\n\n" . mjb_html_block($grid)
     );
 }
 
