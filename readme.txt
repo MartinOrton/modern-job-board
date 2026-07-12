@@ -8,11 +8,11 @@ Stable tag: 0.9.0-beta.1
 License: Proprietary
 License URI: https://martinorton.com/modern-job-board
 
-A freemium WordPress job board with employer and candidate dashboards, applications, and optional WooCommerce monetization on paid plans.
+A proprietary freemium WordPress job board (not open source) with employer and candidate dashboards, applications, and optional WooCommerce monetization on paid plans.
 
 == Description ==
 
-Modern Job Board helps you run a professional recruitment site on WordPress without monthly SaaS fees. Employers can post jobs from the frontend, review applications, and track performance. Candidates can register, upload resumes, and apply to roles.
+Modern Job Board is a **proprietary freemium** plugin — free tier available, paid plans for advanced features. It is **not open source**. Run a professional recruitment site on WordPress without a SaaS platform; listing data lives on your site under your WordPress install. Employers can post jobs from the frontend, review applications, and track performance. Candidates can register, upload resumes, and apply to roles.
 
 = Key features =
 

@@ -104,7 +104,7 @@ Modern Job Board is a self-hosted WordPress job board product sold as **freemium
 
 ## Monetization (WooCommerce) — Pro and above
 
-Requires WooCommerce. Employer payments go through the site owner’s WooCommerce gateways; **site owner keeps 100% of revenue**.
+Requires WooCommerce. Employer payments go through the site’s WooCommerce gateways; **the site operator receives employer payments** (no platform cut from MJB).
 
 | Feature | Free | Pro | Business |
 |---|:---:|:---:|:---:|
@@ -171,17 +171,17 @@ All blocks appear under **Modern Job Board** in the Gutenberg inserter.
 
 ---
 
-## Support and ownership
+## Support and hosting model
 
-| | **Free** | **Pro** | **Business** |
-|---|:---:|:---:|:---:|
-| Self-hosted — 100% data ownership | ✓ | ✓ | ✓ |
-| No SaaS platform lock-in | ✓ | ✓ | ✓ |
-| Community support | ✓ | ✓ | ✓ |
-| Email support | — | ✓ | ✓ |
-| Priority support | — | — | ✓ |
-| Installation assistance | — | — | ✓ |
-| Custom development (2 hours/year) | — | — | ✓ |
+| | **Free** | **Pro** | **Business** | **Complete Site** |
+|---|:---:|:---:|:---:|:---:|
+| Runs on your WordPress (listing data on your site) | ✓ | ✓ | ✓ | ✓ |
+| Proprietary freemium license (not open source) | ✓ | ✓ | ✓ | ✓ |
+| Avoids renting a hosted SaaS job board | ✓ | ✓ | ✓ | ✓ |
+| Community support | ✓ | ✓ | ✓ | ✓ |
+| Email support | — | ✓ | ✓ | ✓ |
+| Priority support + 2 hrs dev/yr | — | — | ✓ | ✓ |
+| Full site build & MJB configured for you | — | — | — | ✓ |
 
 ---
 
@@ -190,9 +190,10 @@ All blocks appear under **Modern Job Board** in the Gutenberg inserter.
 | Dimension | Modern Job Board | Typical SaaS (e.g. NiceBoard) |
 |---|---|---|
 | **Hosting** | Self-hosted WordPress | Vendor-hosted |
-| **Cost model** | Freemium + optional annual plans | Recurring monthly subscription |
-| **Data ownership** | 100% on your server | Vendor servers |
-| **Customization** | Full WordPress + code access | Settings-limited |
+| **Cost model** | Freemium licenses + optional Complete Site | Recurring monthly subscription |
+| **Listing / applicant data** | Stored on your WordPress site | Vendor servers |
+| **Software license** | Proprietary freemium — not open source | SaaS terms |
+| **Customization** | Themes, hooks, WP plugins; paid tiers unlock more product features | Settings-limited |
 | **Employer monetization** | WooCommerce (Pro+) | Often Stripe Connect |
 | **Extensibility** | Hooks, filters, REST (Business) | Limited API on higher tiers |
 
