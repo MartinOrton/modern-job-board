@@ -12,6 +12,29 @@ class MJB_Shortcodes
     const JOB_FORM_PAGE_OPTION = 'mjb_job_form_page_id';
 
     /**
+     * HTML mark for a required field label (Elementor-style asterisk).
+     *
+     * @return string
+     */
+    public static function required_mark()
+    {
+        return ' <span class="mjb-required-mark" aria-hidden="true">*</span>';
+    }
+
+    /**
+     * Short note shown above forms that have required fields.
+     *
+     * @return string
+     */
+    public static function required_fields_note()
+    {
+        return '<p class="mjb-form-required-note">'
+            . '<span class="mjb-required-mark" aria-hidden="true">*</span> '
+            . esc_html(__('Required fields', 'modern-job-board'))
+            . '</p>';
+    }
+
+    /**
      * Initialize Shortcodes.
      */
     public function init()
@@ -186,6 +209,23 @@ class MJB_Shortcodes
     }
 
     /**
+     * Human-readable job count label for company cards/profiles.
+     *
+     * @param int $job_count
+     * @return string
+     */
+    public static function format_company_job_count_label($job_count)
+    {
+        $job_count = max(0, intval($job_count));
+
+        return sprintf(
+            /* translators: %d: number of jobs */
+            _n('%d job', '%d jobs', $job_count, 'modern-job-board'),
+            $job_count
+        );
+    }
+
+    /**
      * Build initials from a company name for avatar fallbacks.
      *
      * @param string $name
@@ -282,18 +322,27 @@ class MJB_Shortcodes
             return;
         }
 
-        echo '<div class="mjb-company-list">';
+        $rendered = 0;
+        $buffer = '';
 
         while ($companies->have_posts()) {
             $companies->the_post();
             $company_id = get_the_ID();
+            $job_count = self::get_company_job_count($company_id);
+
+            // Hide employers with no published listings (also enforced at archive query level).
+            if ($job_count < 1) {
+                continue;
+            }
+
             $permalink = get_permalink();
             $title = get_the_title();
-            $job_count = self::get_company_job_count($company_id);
             $excerpt = self::get_company_card_excerpt($company_id);
             $jobs_url = MJB_Job_Routes::build_url(array(
                 'search_company' => get_post_field('post_name', $company_id),
             ));
+
+            ob_start();
 
             // Feature-card style: icon/avatar on top, then title + body (matches homepage .feature-card).
             echo '<article class="mjb-company-card">';
@@ -301,29 +350,31 @@ class MJB_Shortcodes
             self::render_company_avatar($company_id);
             echo '<h2 class="mjb-company-card__title">' . esc_html($title) . '</h2>';
             echo '<p class="mjb-company-card__meta">';
-            echo esc_html(sprintf(
-                _n('%d open job', '%d open jobs', $job_count, 'modern-job-board'),
-                $job_count
-            ));
+            echo esc_html(self::format_company_job_count_label($job_count));
             echo '</p>';
 
             if ($excerpt !== '') {
                 echo '<p class="mjb-company-card__excerpt">' . esc_html($excerpt) . '</p>';
-            } else {
-                echo '<p class="mjb-company-card__excerpt mjb-company-card__excerpt--placeholder">';
-                echo esc_html__('Browse roles from this employer on Modern Job Board.', 'modern-job-board');
-                echo '</p>';
             }
 
-            if ($job_count > 0) {
-                echo '<a class="mjb-company-card__jobs-link" href="' . esc_url($jobs_url) . '">';
-                echo esc_html__('View open jobs', 'modern-job-board');
-                echo '</a>';
-            }
+            echo '<a class="mjb-company-card__jobs-link" href="' . esc_url($jobs_url) . '">';
+            echo esc_html__('View open jobs', 'modern-job-board');
+            echo '</a>';
 
             echo '</article>';
+
+            $buffer .= ob_get_clean();
+            $rendered++;
         }
 
+        if ($rendered < 1) {
+            echo '<p class="mjb-empty-state">' . esc_html__('No companies found.', 'modern-job-board') . '</p>';
+            return;
+        }
+
+        echo '<div class="mjb-company-list">';
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- card HTML is escaped as it is built.
+        echo $buffer;
         echo '</div>';
     }
 
@@ -879,25 +930,30 @@ class MJB_Shortcodes
         }
         ?>
         <?php do_action('mjb_before_job_submission_form'); ?>
-        <form method="post" class="mjb-job-form" enctype="multipart/form-data">
+        <form method="post" class="mjb-job-form" enctype="multipart/form-data" novalidate>
             <?php do_action('mjb_job_submission_form_start'); ?>
             <?php wp_nonce_field('mjb_submit_job', 'mjb_job_nonce'); ?>
             <?php if ($job_id): ?>
                 <input type="hidden" name="job_id" value="<?php echo esc_attr($job_id); ?>">
             <?php endif; ?>
 
+            <?php
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in helper.
+            echo self::required_fields_note();
+            ?>
+
             <p>
-                <label for="job_title"><?php esc_html_e('Job Title', 'modern-job-board'); ?></label>
-                <input type="text" name="job_title" id="job_title" value="<?php echo esc_attr($job_title); ?>" required>
+                <label for="job_title"><?php esc_html_e('Job Title', 'modern-job-board'); ?><?php echo self::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+                <input type="text" name="job_title" id="job_title" value="<?php echo esc_attr($job_title); ?>" required aria-required="true">
             </p>
             <p>
-                <label for="job_description"><?php esc_html_e('Description', 'modern-job-board'); ?></label>
+                <label for="job_description"><?php esc_html_e('Description', 'modern-job-board'); ?><?php echo self::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
                 <textarea name="job_description" id="job_description"
-                    required><?php echo esc_textarea($job_description); ?></textarea>
+                    required aria-required="true"><?php echo esc_textarea($job_description); ?></textarea>
             </p>
             <p>
-                <label for="company_selection"><?php esc_html_e('Company', 'modern-job-board'); ?></label>
-                <select name="company_selection" id="company_selection" required onchange="toggleCompanyInput()">
+                <label for="company_selection"><?php esc_html_e('Company', 'modern-job-board'); ?><?php echo self::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+                <select name="company_selection" id="company_selection" required aria-required="true" onchange="toggleCompanyInput()">
                     <option value="new"><?php esc_html_e('Create New Company', 'modern-job-board'); ?></option>
                     <?php foreach ($user_companies as $company) : ?>
                         <option value="<?php echo esc_attr($company->ID); ?>" <?php selected($selected_company_id, $company->ID); ?>>
@@ -907,8 +963,8 @@ class MJB_Shortcodes
                 </select>
             </p>
             <p id="new-company-field" class="<?php echo $selected_company_id ? 'mjb-is-hidden' : ''; ?>">
-                <label for="new_company_name"><?php esc_html_e('New Company Name', 'modern-job-board'); ?></label>
-                <input type="text" name="new_company_name" id="new_company_name" value="<?php echo empty($selected_company_id) ? esc_attr($company_name) : ''; ?>">
+                <label for="new_company_name"><?php esc_html_e('New Company Name', 'modern-job-board'); ?><?php echo self::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+                <input type="text" name="new_company_name" id="new_company_name" value="<?php echo empty($selected_company_id) ? esc_attr($company_name) : ''; ?>" <?php echo empty($selected_company_id) ? 'required aria-required="true"' : ''; ?>>
             </p>
             
             <!-- Application Method -->
@@ -926,12 +982,12 @@ class MJB_Shortcodes
             </p>
 
             <p id="app-email-field">
-                <label for="application_email"><?php esc_html_e('Notification Email', 'modern-job-board'); ?></label>
-                <input type="email" name="application_email" id="application_email" value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>">
+                <label for="application_email"><?php esc_html_e('Notification Email', 'modern-job-board'); ?><?php echo self::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+                <input type="email" name="application_email" id="application_email" value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>" required aria-required="true">
             </p>
 
             <p id="app-url-field" class="mjb-is-hidden">
-                <label for="application_url"><?php esc_html_e('External Application URL', 'modern-job-board'); ?></label>
+                <label for="application_url"><?php esc_html_e('External Application URL', 'modern-job-board'); ?><?php echo self::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
                 <input type="url" name="application_url" id="application_url" placeholder="https://...">
             </p>
 
@@ -939,12 +995,15 @@ class MJB_Shortcodes
                 function toggleCompanyInput() {
                     var select = document.getElementById('company_selection');
                     var input = document.getElementById('new-company-field');
+                    var nameInput = document.getElementById('new_company_name');
                     if (select.value === 'new') {
                         input.classList.remove('mjb-is-hidden');
-                        document.getElementById('new_company_name').required = true;
+                        nameInput.required = true;
+                        nameInput.setAttribute('aria-required', 'true');
                     } else {
                         input.classList.add('mjb-is-hidden');
-                        document.getElementById('new_company_name').required = false;
+                        nameInput.required = false;
+                        nameInput.removeAttribute('aria-required');
                     }
                 }
 
@@ -952,17 +1011,23 @@ class MJB_Shortcodes
                     var method = document.querySelector('input[name="application_method"]:checked').value;
                     var emailField = document.getElementById('app-email-field');
                     var urlField = document.getElementById('app-url-field');
+                    var emailInput = document.getElementById('application_email');
+                    var urlInput = document.getElementById('application_url');
                     
                     if (method === 'internal') {
                         emailField.classList.remove('mjb-is-hidden');
                         urlField.classList.add('mjb-is-hidden');
-                        document.getElementById('application_email').required = true;
-                        document.getElementById('application_url').required = false;
+                        emailInput.required = true;
+                        emailInput.setAttribute('aria-required', 'true');
+                        urlInput.required = false;
+                        urlInput.removeAttribute('aria-required');
                     } else {
                         emailField.classList.add('mjb-is-hidden');
                         urlField.classList.remove('mjb-is-hidden');
-                        document.getElementById('application_email').required = false;
-                        document.getElementById('application_url').required = true;
+                        emailInput.required = false;
+                        emailInput.removeAttribute('aria-required');
+                        urlInput.required = true;
+                        urlInput.setAttribute('aria-required', 'true');
                     }
                 }
 
@@ -980,15 +1045,22 @@ class MJB_Shortcodes
                 $fields = $mjb_custom_fields->get_fields('job');
                 foreach ($fields as $field) {
                     $value = $job_id ? get_post_meta($job_id, '_mjb_' . $field['key'], true) : '';
+                    $is_required = !empty($field['required']);
+                    $required_attr = $is_required ? 'required aria-required="true"' : '';
                     echo '<p>';
-                    echo '<label>' . esc_html($field['label']) . '</label>';
+                    echo '<label for="mjb_field_' . esc_attr($field['key']) . '">' . esc_html($field['label']);
+                    if ($is_required) {
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in helper.
+                        echo self::required_mark();
+                    }
+                    echo '</label>';
                     
                     if ($field['type'] === 'text' || $field['type'] === 'number') {
-                        echo '<input type="' . esc_attr($field['type']) . '" name="mjb_field_' . esc_attr($field['key']) . '" value="' . esc_attr($value) . '" ' . ($field['required'] ? 'required' : '') . '>';
+                        echo '<input type="' . esc_attr($field['type']) . '" name="mjb_field_' . esc_attr($field['key']) . '" id="mjb_field_' . esc_attr($field['key']) . '" value="' . esc_attr($value) . '" ' . $required_attr . '>';
                     } elseif ($field['type'] === 'textarea') {
-                        echo '<textarea name="mjb_field_' . esc_attr($field['key']) . '" ' . ($field['required'] ? 'required' : '') . '>' . esc_textarea($value) . '</textarea>';
+                        echo '<textarea name="mjb_field_' . esc_attr($field['key']) . '" id="mjb_field_' . esc_attr($field['key']) . '" ' . $required_attr . '>' . esc_textarea($value) . '</textarea>';
                     } elseif ($field['type'] === 'select') {
-                        echo '<select name="mjb_field_' . esc_attr($field['key']) . '" ' . ($field['required'] ? 'required' : '') . '>';
+                        echo '<select name="mjb_field_' . esc_attr($field['key']) . '" id="mjb_field_' . esc_attr($field['key']) . '" ' . $required_attr . '>';
                         $options = explode(',', $field['options']);
                         foreach ($options as $opt) {
                             $opt = trim($opt);
@@ -996,7 +1068,7 @@ class MJB_Shortcodes
                         }
                         echo '</select>';
                     } elseif ($field['type'] === 'checkbox') {
-                         echo '<input type="checkbox" name="mjb_field_' . esc_attr($field['key']) . '" value="1" ' . checked(1, $value, false) . '>';
+                         echo '<input type="checkbox" name="mjb_field_' . esc_attr($field['key']) . '" id="mjb_field_' . esc_attr($field['key']) . '" value="1" ' . checked(1, $value, false) . ' ' . $required_attr . '>';
                     }
                     echo '</p>';
                 }
@@ -1045,15 +1117,15 @@ class MJB_Shortcodes
             if (empty($company_name_text)) {
                 MJB_Notices::redirect($redirect_url, 'error_invalid_company');
             }
-            
-            // Create new Company
-            $company_post = array(
-                'post_title' => $company_name_text,
-                'post_type' => 'company',
-                'post_status' => 'publish',
-                'post_author' => get_current_user_id(),
-            );
-            $company_id = wp_insert_post($company_post);
+
+            // Reuse an existing company with the same name to prevent duplicates.
+            $company_id = MJB_Job_Importer::find_or_create_company($company_name_text, array(
+                'author_id' => get_current_user_id(),
+            ));
+            if (!$company_id) {
+                MJB_Notices::redirect($redirect_url, 'error_invalid_company');
+            }
+            $company_name_text = MJB_Job_Importer::normalize_company_name($company_name_text);
         } else {
             $company_id = intval($company_selection);
             // Verify ownership

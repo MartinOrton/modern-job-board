@@ -109,7 +109,23 @@ h6 {
 a {
     text-decoration: none;
     color: inherit;
-    transition: color 0.2s;
+    transition: color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .reveal {
+        opacity: 1;
+        transform: none;
+    }
 }
 
 /* Utilities */
@@ -186,8 +202,28 @@ a {
     font-weight: 600;
     font-size: 0.95rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     border: none;
+    will-change: transform;
+}
+
+.btn:active,
+.btn.is-pressed {
+    transform: scale(0.97) translateY(0);
+    box-shadow: none;
+}
+
+.job-item.is-active,
+.job-item:focus-visible {
+    background: var(--primary-surface);
+    border-color: rgba(15, 118, 110, 0.2);
+    outline: 2px solid rgba(15, 118, 110, 0.35);
+    outline-offset: 2px;
 }
 
 .btn-primary {
@@ -197,8 +233,12 @@ a {
 
 .btn-primary:hover {
     background-color: var(--primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(15, 118, 110, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px rgba(15, 118, 110, 0.35);
+}
+
+.btn-primary:active {
+    transform: scale(0.97) translateY(0);
 }
 
 .btn-outline {
@@ -210,6 +250,13 @@ a {
 .btn-outline:hover {
     border-color: var(--primary);
     background-color: var(--bg-neutral);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px -6px rgba(15, 118, 110, 0.18);
+    color: var(--primary);
+}
+
+.btn-outline:active {
+    transform: scale(0.97) translateY(0);
 }
 
 .btn-white {
@@ -219,8 +266,12 @@ a {
 
 .btn-white:hover {
     background-color: var(--bg-neutral);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.btn-white:active {
+    transform: scale(0.97) translateY(0);
 }
 
 .btn-sm {
@@ -271,6 +322,12 @@ a {
     font-family: var(--font-sans);
     font-size: 1.25rem;
     color: var(--text-primary);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.logo:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
 }
 
 .logo-icon {
@@ -299,13 +356,33 @@ a {
 }
 
 .nav-links a:not(.btn) {
+    position: relative;
     color: var(--text-secondary);
     font-weight: 500;
     font-size: 0.95rem;
+    transition: color 0.2s ease;
+}
+
+.nav-links a:not(.btn)::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -0.35rem;
+    width: 100%;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--primary);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nav-links a:not(.btn):hover {
     color: var(--primary);
+}
+
+.nav-links a:not(.btn):hover::after {
+    transform: scaleX(1);
 }
 
 .desktop-only {
@@ -628,13 +705,19 @@ body.mjb-demo .navbar {
     background: var(--bg-neutral);
     border-radius: 0.75rem;
     border: 1px solid transparent;
-    transition: all 0.2s;
+    transition:
+        background-color 0.25s ease,
+        border-color 0.25s ease,
+        transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.25s ease;
     cursor: pointer;
 }
 
 .job-item:hover {
     background: var(--primary-surface);
     border-color: rgba(15, 118, 110, 0.1);
+    transform: translateX(3px);
+    box-shadow: 0 4px 12px -6px rgba(15, 118, 110, 0.2);
 }
 
 .job-list .job-item:first-child .social-share {
@@ -645,6 +728,7 @@ body.mjb-demo .navbar {
 .job-icon {
     width: 2.5rem;
     height: 2.5rem;
+    flex: 0 0 2.5rem;
     background: white;
     border: 1px solid var(--border);
     border-radius: 0.5rem;
@@ -652,6 +736,7 @@ body.mjb-demo .navbar {
     align-items: center;
     justify-content: center;
     color: var(--text-secondary);
+    transition: color 0.25s ease, border-color 0.25s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .job-icon svg {
@@ -660,6 +745,8 @@ body.mjb-demo .navbar {
 
 .job-item:hover .job-icon {
     color: var(--primary);
+    border-color: rgba(15, 118, 110, 0.25);
+    transform: scale(1.06);
 }
 
 .job-info {
@@ -715,12 +802,24 @@ body.mjb-demo .navbar {
     border-radius: 4px;
     color: var(--primary);
     cursor: pointer;
-    transition: color 0.2s, border-color 0.2s;
+    transition:
+        color 0.2s ease,
+        border-color 0.2s ease,
+        background-color 0.2s ease,
+        transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.2s ease;
 }
 
 .share-btn:hover {
     color: var(--primary);
-    border-color: rgba(15, 118, 110, 0.25);
+    border-color: rgba(15, 118, 110, 0.35);
+    background: var(--primary-surface);
+    transform: scale(1.1);
+    box-shadow: 0 2px 6px rgba(15, 118, 110, 0.15);
+}
+
+.share-btn:active {
+    transform: scale(0.95);
 }
 
 .job-tag {
@@ -747,17 +846,23 @@ body.mjb-demo .navbar {
 
 .stat-block {
     text-center;
-    transition: transform 0.3s;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .stat-block:hover {
-    transform: translateY(-5px);
+    transform: translateY(-6px);
 }
 
 .stat-block h3 {
     font-size: 2.5rem;
     color: var(--primary);
     margin-bottom: 0.25rem;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-block;
+}
+
+.stat-block:hover h3 {
+    transform: scale(1.06);
 }
 
 .stat-block p {
@@ -806,13 +911,17 @@ body.mjb-demo .navbar {
     padding: 1.75rem;
     border-radius: 1rem;
     border: 1px solid var(--border);
-    transition: all 0.3s;
+    transition:
+        border-color 0.3s ease,
+        box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     height: 100%;
 }
 
 .feature-card:hover {
-    border-color: rgba(15, 118, 110, 0.5);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border-color: rgba(15, 118, 110, 0.45);
+    box-shadow: 0 14px 28px -12px rgba(15, 118, 110, 0.18);
+    transform: translateY(-5px);
 }
 
 .feature-icon {
@@ -825,11 +934,16 @@ body.mjb-demo .navbar {
     align-items: center;
     justify-content: center;
     margin-bottom: 1.25rem;
-    transition: transform 0.3s;
+    transition:
+        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        background-color 0.25s ease,
+        box-shadow 0.3s ease;
 }
 
 .feature-card:hover .feature-icon {
-    transform: scale(1.1);
+    transform: scale(1.12) rotate(-3deg);
+    background: rgba(15, 118, 110, 0.14);
+    box-shadow: 0 6px 14px -6px rgba(15, 118, 110, 0.35);
 }
 
 .feature-card h3 {
@@ -864,10 +978,19 @@ body.mjb-demo .navbar {
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
     width: 100%;
     border-bottom: 1px solid var(--border);
+    transition: background-color 0.25s ease;
 }
 
 .comparison-table .row:last-child {
     border-bottom: none;
+}
+
+.comparison-table .row:not(.header-row):hover {
+    background-color: rgba(15, 118, 110, 0.035);
+}
+
+.comparison-table .row:not(.header-row):hover .col.mjb {
+    background: rgba(15, 118, 110, 0.14);
 }
 
 .comparison-table .header-row {
@@ -923,6 +1046,11 @@ body.mjb-demo .navbar {
 
 .dev-item {
     margin-bottom: 2.5rem;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dev-item:hover {
+    transform: translateX(4px);
 }
 
 .dev-item h3 {
@@ -930,6 +1058,11 @@ body.mjb-demo .navbar {
     font-size: 1.25rem;
     margin-bottom: 0.75rem;
     color: var(--text-primary);
+    transition: color 0.2s ease;
+}
+
+.dev-item:hover h3 {
+    color: var(--primary);
 }
 
 .dev-item p {
@@ -951,6 +1084,14 @@ body.mjb-demo .navbar {
     border-radius: 1rem;
     overflow: hidden;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    transition:
+        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.4s ease;
+}
+
+.code-window:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 28px 40px -12px rgba(0, 0, 0, 0.35);
 }
 
 .window-controls {
@@ -1037,6 +1178,16 @@ body.mjb-demo .navbar {
     position: relative;
     display: flex;
     flex-direction: column;
+    transition:
+        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.25s ease;
+}
+
+.pricing-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 36px -16px rgba(15, 118, 110, 0.22);
+    border-color: rgba(15, 118, 110, 0.35);
 }
 
 .pricing-card.pro {
@@ -1045,9 +1196,18 @@ body.mjb-demo .navbar {
     transform: scale(1.02);
 }
 
+.pricing-card.pro:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 20px 40px -14px rgba(15, 118, 110, 0.32);
+}
+
 .pricing-card--complete {
     border-color: rgba(15, 118, 110, 0.35);
     background: linear-gradient(180deg, #ffffff 0%, var(--primary-surface) 160%);
+}
+
+.pricing-card--complete:hover {
+    border-color: rgba(15, 118, 110, 0.55);
 }
 
 .recommended-badge {
@@ -1062,6 +1222,20 @@ body.mjb-demo .navbar {
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.03em;
+    box-shadow: 0 4px 12px -2px rgba(15, 118, 110, 0.4);
+    animation: badge-soft-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes badge-soft-pulse {
+    0%,
+    100% {
+        box-shadow: 0 4px 12px -2px rgba(15, 118, 110, 0.35);
+    }
+
+    50% {
+        box-shadow: 0 6px 18px -2px rgba(15, 118, 110, 0.55);
+    }
 }
 
 .pricing-card h3 {
@@ -1118,10 +1292,19 @@ body.mjb-demo .navbar {
     font-size: 0.8125rem;
     color: var(--text-secondary);
     line-height: 1.45;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.price-features li:hover {
+    color: var(--text-primary);
 }
 
 .price-features li.is-unavailable {
     opacity: 0.55;
+}
+
+.price-features li.is-unavailable:hover {
+    color: var(--text-secondary);
 }
 
 .price-features li.is-unavailable .check-icon {
@@ -1129,17 +1312,85 @@ body.mjb-demo .navbar {
     background: rgba(100, 116, 139, 0.12);
 }
 
+.price-features li.is-unavailable .check-icon::after {
+    /* Fixed-size minus glyph so unavailable icons match check width */
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3C/svg%3E");
+}
+
+/* Even check/minus circles: fixed flex basis, SVG mask (no glyph-width skew) */
 .check-icon {
     color: var(--success);
     background: rgba(34, 197, 94, 0.1);
     width: 1.25rem;
     height: 1.25rem;
+    min-width: 1.25rem;
+    min-height: 1.25rem;
+    flex: 0 0 1.25rem;
     border-radius: 50%;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
-    font-weight: bold;
+    font-size: 0;
+    line-height: 0;
+    overflow: hidden;
+    transition:
+        transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+        background-color 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.25s ease;
+}
+
+.check-icon::after {
+    content: "";
+    display: block;
+    width: 0.7rem;
+    height: 0.7rem;
+    flex: 0 0 0.7rem;
+    background-color: currentColor;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+.price-features li:hover .check-icon {
+    transform: scale(1.12);
+    box-shadow: 0 2px 8px -2px rgba(34, 197, 94, 0.45);
+}
+
+.price-features li.is-unavailable:hover .check-icon {
+    box-shadow: none;
+}
+
+/* Stagger feature rows when pricing card scrolls into view */
+.pricing-card.reveal.visible .price-features li {
+    animation: price-feature-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.pricing-card.reveal.visible .price-features li:nth-child(1) { animation-delay: 0.04s; }
+.pricing-card.reveal.visible .price-features li:nth-child(2) { animation-delay: 0.08s; }
+.pricing-card.reveal.visible .price-features li:nth-child(3) { animation-delay: 0.12s; }
+.pricing-card.reveal.visible .price-features li:nth-child(4) { animation-delay: 0.16s; }
+.pricing-card.reveal.visible .price-features li:nth-child(5) { animation-delay: 0.2s; }
+.pricing-card.reveal.visible .price-features li:nth-child(6) { animation-delay: 0.24s; }
+.pricing-card.reveal.visible .price-features li:nth-child(7) { animation-delay: 0.28s; }
+.pricing-card.reveal.visible .price-features li:nth-child(8) { animation-delay: 0.32s; }
+
+@keyframes price-feature-in {
+    from {
+        opacity: 0;
+        transform: translateX(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 /* CTA */
@@ -1202,13 +1453,32 @@ footer {
 }
 
 .footer-links a {
+    position: relative;
     color: var(--text-secondary);
     font-size: 0.875rem;
     font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.footer-links a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -0.2rem;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .footer-links a:hover {
     color: var(--primary);
+}
+
+.footer-links a:hover::after {
+    transform: scaleX(1);
 }
 
 .footer-copy {
@@ -1305,6 +1575,10 @@ footer {
 
     .pricing-card.pro {
         transform: none;
+    }
+
+    .pricing-card.pro:hover {
+        transform: translateY(-6px);
     }
 }
 

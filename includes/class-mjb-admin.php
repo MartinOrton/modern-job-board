@@ -144,7 +144,7 @@ class MJB_Admin
             <div class="mjb-dashboard-wrap mjb-admin-shell">
                 <header class="mjb-dashboard-header">
                     <h1><?php esc_html_e('Modern Job Board', 'modern-job-board'); ?> <span class="mjb-badge">v<?php echo esc_html(MJB_VERSION); ?></span></h1>
-                    <p class="subtitle"><?php esc_html_e('Manage your job board with complete control.', 'modern-job-board'); ?></p>
+                    <p class="subtitle"><?php esc_html_e('Manage your job board settings, listings, and tools.', 'modern-job-board'); ?></p>
                 </header>
 
                 <?php MJB_Admin_Tabs::render_tab_nav($active_tab); ?>
@@ -177,11 +177,22 @@ class MJB_Admin
      */
     public function register_settings()
     {
-        register_setting('mjb_settings_group', 'mjb_currency', array('default' => 'USD'));
-        register_setting('mjb_settings_group', 'mjb_listing_duration', array('default' => 30));
-        register_setting('mjb_settings_group', 'mjb_google_maps_api_key');
+        register_setting('mjb_settings_group', 'mjb_currency', array(
+            'type' => 'string',
+            'default' => 'USD',
+            'sanitize_callback' => array($this, 'sanitize_currency'),
+        ));
+        register_setting('mjb_settings_group', 'mjb_listing_duration', array(
+            'type' => 'integer',
+            'default' => 30,
+            'sanitize_callback' => array($this, 'sanitize_listing_duration'),
+        ));
+        register_setting('mjb_settings_group', 'mjb_google_maps_api_key', array(
+            'type' => 'string',
+            'default' => '',
+            'sanitize_callback' => 'sanitize_text_field',
+        ));
 
-        // Listing Settings Section
         add_settings_section(
             'mjb_listing_section',
             __('Listing Settings', 'modern-job-board'),
@@ -204,9 +215,7 @@ class MJB_Admin
             'mjb-settings',
             'mjb_listing_section'
         );
-        
-        // Payment Settings (WooCommerce only)
-        // Re-using Payment Section but purely for Logic toggle?
+
         add_settings_section(
             'mjb_payment_section',
             __('Monetization Settings', 'modern-job-board'),
@@ -214,17 +223,32 @@ class MJB_Admin
             'mjb-settings'
         );
 
-        register_setting('mjb_settings_group', 'mjb_payment_required');
+        register_setting('mjb_settings_group', 'mjb_payment_required', array(
+            'type' => 'boolean',
+            'default' => false,
+            'sanitize_callback' => array($this, 'sanitize_checkbox'),
+        ));
         add_settings_field('mjb_payment_required', __('Require Payment', 'modern-job-board'), array($this, 'payment_required_callback'), 'mjb-settings', 'mjb_payment_section');
 
-        register_setting('mjb_settings_group', 'mjb_submission_product_id');
+        register_setting('mjb_settings_group', 'mjb_submission_product_id', array(
+            'type' => 'integer',
+            'default' => 0,
+            'sanitize_callback' => array($this, 'sanitize_product_id'),
+        ));
         add_settings_field('mjb_submission_product_id', __('Submission Product ID', 'modern-job-board'), array($this, 'submission_product_id_callback'), 'mjb-settings', 'mjb_payment_section');
 
-        // CV Unlock settings (if they existed, keeping consistent)
-        register_setting('mjb_settings_group', 'mjb_cv_unlock_product_id');
+        register_setting('mjb_settings_group', 'mjb_cv_unlock_product_id', array(
+            'type' => 'integer',
+            'default' => 0,
+            'sanitize_callback' => array($this, 'sanitize_product_id'),
+        ));
         add_settings_field('mjb_cv_unlock_product_id', __('CV Unlock Product ID', 'modern-job-board'), array($this, 'cv_unlock_product_id_callback'), 'mjb-settings', 'mjb_payment_section');
 
-        register_setting('mjb_settings_group', 'mjb_paid_cv_access');
+        register_setting('mjb_settings_group', 'mjb_paid_cv_access', array(
+            'type' => 'boolean',
+            'default' => false,
+            'sanitize_callback' => array($this, 'sanitize_checkbox'),
+        ));
         add_settings_field('mjb_paid_cv_access', __('Paid CV Access', 'modern-job-board'), array($this, 'paid_cv_access_callback'), 'mjb-settings', 'mjb_payment_section');
 
         add_settings_section(
@@ -234,7 +258,11 @@ class MJB_Admin
             'mjb-settings'
         );
 
-        register_setting('mjb_settings_group', 'mjb_webhook_urls');
+        register_setting('mjb_settings_group', 'mjb_webhook_urls', array(
+            'type' => 'string',
+            'default' => '',
+            'sanitize_callback' => array($this, 'sanitize_webhook_urls'),
+        ));
         add_settings_field(
             'mjb_webhook_urls',
             __('Webhook URLs', 'modern-job-board'),
@@ -243,7 +271,11 @@ class MJB_Admin
             'mjb_integrations_section'
         );
 
-        register_setting('mjb_settings_group', 'mjb_webhook_secret');
+        register_setting('mjb_settings_group', 'mjb_webhook_secret', array(
+            'type' => 'string',
+            'default' => '',
+            'sanitize_callback' => 'sanitize_text_field',
+        ));
         add_settings_field(
             'mjb_webhook_secret',
             __('Webhook Secret', 'modern-job-board'),
@@ -259,14 +291,193 @@ class MJB_Admin
             'mjb-settings'
         );
 
-        register_setting('mjb_settings_group', 'mjb_recaptcha_enabled');
+        register_setting('mjb_settings_group', 'mjb_recaptcha_enabled', array(
+            'type' => 'boolean',
+            'default' => false,
+            'sanitize_callback' => array($this, 'sanitize_checkbox'),
+        ));
         add_settings_field('mjb_recaptcha_enabled', __('Enable reCAPTCHA', 'modern-job-board'), array($this, 'recaptcha_enabled_callback'), 'mjb-settings', 'mjb_security_section');
 
-        register_setting('mjb_settings_group', 'mjb_recaptcha_site_key');
+        register_setting('mjb_settings_group', 'mjb_recaptcha_site_key', array(
+            'type' => 'string',
+            'default' => '',
+            'sanitize_callback' => array($this, 'sanitize_recaptcha_site_key'),
+        ));
         add_settings_field('mjb_recaptcha_site_key', __('reCAPTCHA Site Key', 'modern-job-board'), array($this, 'recaptcha_site_key_callback'), 'mjb-settings', 'mjb_security_section');
 
-        register_setting('mjb_settings_group', 'mjb_recaptcha_secret_key');
+        register_setting('mjb_settings_group', 'mjb_recaptcha_secret_key', array(
+            'type' => 'string',
+            'default' => '',
+            'sanitize_callback' => array($this, 'sanitize_recaptcha_secret_key'),
+        ));
         add_settings_field('mjb_recaptcha_secret_key', __('reCAPTCHA Secret Key', 'modern-job-board'), array($this, 'recaptcha_secret_key_callback'), 'mjb-settings', 'mjb_security_section');
+    }
+
+    /**
+     * Sanitize checkbox option (0/1).
+     *
+     * @param mixed $value
+     * @return int
+     */
+    public function sanitize_checkbox($value)
+    {
+        return empty($value) ? 0 : 1;
+    }
+
+    /**
+     * Sanitize listing duration days.
+     *
+     * @param mixed $value
+     * @return int
+     */
+    public function sanitize_listing_duration($value)
+    {
+        $value = absint($value);
+        if ($value < 1) {
+            add_settings_error(
+                'mjb_settings_group',
+                'mjb_listing_duration_min',
+                __('Listing duration must be at least 1 day.', 'modern-job-board'),
+                'error'
+            );
+            return (int) get_option('mjb_listing_duration', 30);
+        }
+        if ($value > 3650) {
+            add_settings_error(
+                'mjb_settings_group',
+                'mjb_listing_duration_max',
+                __('Listing duration cannot exceed 3650 days.', 'modern-job-board'),
+                'error'
+            );
+            return 3650;
+        }
+        return $value;
+    }
+
+    /**
+     * Sanitize currency code.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    public function sanitize_currency($value)
+    {
+        $value = strtoupper(sanitize_text_field((string) $value));
+        if ($value === '' || !preg_match('/^[A-Z]{3}$/', $value)) {
+            add_settings_error(
+                'mjb_settings_group',
+                'mjb_currency_invalid',
+                __('Currency must be a 3-letter ISO code (e.g. USD).', 'modern-job-board'),
+                'error'
+            );
+            return (string) get_option('mjb_currency', 'USD');
+        }
+        return $value;
+    }
+
+    /**
+     * Sanitize WooCommerce product ID.
+     *
+     * @param mixed $value
+     * @return int
+     */
+    public function sanitize_product_id($value)
+    {
+        $value = absint($value);
+        if ($value < 0) {
+            return 0;
+        }
+        return $value;
+    }
+
+    /**
+     * Sanitize webhook URL list (one valid URL per line).
+     *
+     * @param mixed $value
+     * @return string
+     */
+    public function sanitize_webhook_urls($value)
+    {
+        $raw = is_string($value) ? $value : '';
+        $lines = preg_split('/\r\n|\r|\n/', $raw);
+        $valid = array();
+        $invalid = 0;
+
+        foreach ((array) $lines as $line) {
+            $line = trim(sanitize_text_field($line));
+            if ($line === '') {
+                continue;
+            }
+            if (wp_http_validate_url($line)) {
+                $valid[] = esc_url_raw($line);
+            } else {
+                $invalid++;
+            }
+        }
+
+        if ($invalid > 0) {
+            add_settings_error(
+                'mjb_settings_group',
+                'mjb_webhook_urls_invalid',
+                sprintf(
+                    /* translators: %d: number of invalid webhook URLs */
+                    _n(
+                        '%d webhook URL was invalid and was removed. Use full http(s) URLs, one per line.',
+                        '%d webhook URLs were invalid and were removed. Use full http(s) URLs, one per line.',
+                        $invalid,
+                        'modern-job-board'
+                    ),
+                    $invalid
+                ),
+                'error'
+            );
+        }
+
+        return implode("\n", $valid);
+    }
+
+    /**
+     * Sanitize reCAPTCHA site key; require when enabled.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    public function sanitize_recaptcha_site_key($value)
+    {
+        $value = sanitize_text_field((string) $value);
+        $enabled = !empty($_POST['mjb_recaptcha_enabled']); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Settings API nonce already verified.
+        if ($enabled && $value === '') {
+            add_settings_error(
+                'mjb_settings_group',
+                'mjb_recaptcha_site_key_required',
+                __('reCAPTCHA Site Key is required when reCAPTCHA is enabled.', 'modern-job-board'),
+                'error'
+            );
+            return (string) get_option('mjb_recaptcha_site_key', '');
+        }
+        return $value;
+    }
+
+    /**
+     * Sanitize reCAPTCHA secret key; require when enabled.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    public function sanitize_recaptcha_secret_key($value)
+    {
+        $value = sanitize_text_field((string) $value);
+        $enabled = !empty($_POST['mjb_recaptcha_enabled']); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Settings API nonce already verified.
+        if ($enabled && $value === '') {
+            add_settings_error(
+                'mjb_settings_group',
+                'mjb_recaptcha_secret_key_required',
+                __('reCAPTCHA Secret Key is required when reCAPTCHA is enabled.', 'modern-job-board'),
+                'error'
+            );
+            return (string) get_option('mjb_recaptcha_secret_key', '');
+        }
+        return $value;
     }
 
     /**
@@ -275,40 +486,46 @@ class MJB_Admin
     public function listing_duration_callback()
     {
         $value = get_option('mjb_listing_duration', 30);
-        echo '<input type="number" name="mjb_listing_duration" value="' . esc_attr($value) . '" class="small-text"> ' . esc_html__('days', 'modern-job-board');
+        echo '<input type="number" name="mjb_listing_duration" id="mjb_listing_duration" value="' . esc_attr($value) . '" class="small-text" min="1" max="3650" step="1" required> ';
+        echo esc_html__('days', 'modern-job-board');
+        echo '<p class="description">' . esc_html__('How long new job listings stay active (1–3650 days).', 'modern-job-board') . '</p>';
     }
 
     public function google_maps_api_key_callback()
     {
         $api_key = get_option('mjb_google_maps_api_key');
-        echo '<input type="text" name="mjb_google_maps_api_key" value="' . esc_attr($api_key) . '" class="regular-text">';
+        echo '<input type="text" name="mjb_google_maps_api_key" id="mjb_google_maps_api_key" value="' . esc_attr($api_key) . '" class="regular-text" autocomplete="off">';
+        echo '<p class="description">' . esc_html__('Optional. Used for map embeds on job pages.', 'modern-job-board') . '</p>';
     }
 
     public function payment_required_callback()
     {
         $required = get_option('mjb_payment_required');
-        echo '<input type="checkbox" name="mjb_payment_required" value="1" ' . checked(1, $required, false) . '> ' . esc_html__('Enable Pay-Per-Post', 'modern-job-board');
+        echo '<input type="hidden" name="mjb_payment_required" value="0">';
+        echo '<label><input type="checkbox" name="mjb_payment_required" value="1" ' . checked(1, $required, false) . '> ';
+        echo esc_html__('Enable Pay-Per-Post', 'modern-job-board') . '</label>';
     }
 
     public function submission_product_id_callback()
     {
         $id = get_option('mjb_submission_product_id');
-        echo '<input type="number" name="mjb_submission_product_id" value="' . esc_attr($id) . '" class="small-text">';
-        echo '<p class="description">' . esc_html__('Enter the WooCommerce Product ID for the job listing fee.', 'modern-job-board') . '</p>';
+        echo '<input type="number" name="mjb_submission_product_id" id="mjb_submission_product_id" value="' . esc_attr($id) . '" class="small-text" min="0" step="1">';
+        echo '<p class="description">' . esc_html__('WooCommerce Product ID for the job listing fee (required when Pay-Per-Post is enabled).', 'modern-job-board') . '</p>';
     }
 
     public function cv_unlock_product_id_callback()
     {
         $id = get_option('mjb_cv_unlock_product_id');
-        echo '<input type="number" name="mjb_cv_unlock_product_id" value="' . esc_attr($id) . '" class="small-text">';
-        echo '<p class="description">' . esc_html__('Enter the WooCommerce Product ID for unlocking a single application.', 'modern-job-board') . '</p>';
+        echo '<input type="number" name="mjb_cv_unlock_product_id" id="mjb_cv_unlock_product_id" value="' . esc_attr($id) . '" class="small-text" min="0" step="1">';
+        echo '<p class="description">' . esc_html__('WooCommerce Product ID for unlocking a single application.', 'modern-job-board') . '</p>';
     }
 
     public function paid_cv_access_callback()
     {
         $enabled = get_option('mjb_paid_cv_access');
-        echo '<input type="checkbox" name="mjb_paid_cv_access" value="1" ' . checked(1, $enabled, false) . '> ';
-        echo esc_html__('Require payment before employers can view candidate details and resumes.', 'modern-job-board');
+        echo '<input type="hidden" name="mjb_paid_cv_access" value="0">';
+        echo '<label><input type="checkbox" name="mjb_paid_cv_access" value="1" ' . checked(1, $enabled, false) . '> ';
+        echo esc_html__('Require payment before employers can view candidate details and resumes.', 'modern-job-board') . '</label>';
     }
 
     public function integrations_section_callback()
@@ -319,8 +536,8 @@ class MJB_Admin
     public function webhook_urls_callback()
     {
         $value = get_option('mjb_webhook_urls', '');
-        echo '<textarea name="mjb_webhook_urls" rows="4" class="large-text code">' . esc_textarea($value) . '</textarea>';
-        echo '<p class="description">' . esc_html__('Events: application.submitted, application.status_updated, job.submitted', 'modern-job-board') . '</p>';
+        echo '<textarea name="mjb_webhook_urls" id="mjb_webhook_urls" rows="4" class="large-text code" placeholder="https://example.com/hooks/mjb">' . esc_textarea($value) . '</textarea>';
+        echo '<p class="description">' . esc_html__('Full https:// URLs only. Events: application.submitted, application.status_updated, job.submitted', 'modern-job-board') . '</p>';
         $pending = MJB_Webhook_Queue::get_pending_count();
         if ($pending > 0) {
             echo '<p class="description">' . esc_html(sprintf(
@@ -333,7 +550,7 @@ class MJB_Admin
     public function webhook_secret_callback()
     {
         $value = get_option('mjb_webhook_secret', '');
-        echo '<input type="password" name="mjb_webhook_secret" value="' . esc_attr($value) . '" class="regular-text" autocomplete="off">';
+        echo '<input type="password" name="mjb_webhook_secret" id="mjb_webhook_secret" value="' . esc_attr($value) . '" class="regular-text" autocomplete="new-password">';
         echo '<p class="description">' . esc_html__('Optional HMAC secret sent as the X-MJB-Signature header (SHA-256).', 'modern-job-board') . '</p>';
     }
 
@@ -345,21 +562,23 @@ class MJB_Admin
     public function recaptcha_enabled_callback()
     {
         $enabled = get_option('mjb_recaptcha_enabled');
-        echo '<input type="checkbox" name="mjb_recaptcha_enabled" value="1" ' . checked(1, $enabled, false) . '> ';
-        echo esc_html__('Require Google reCAPTCHA v2 on internal application forms.', 'modern-job-board');
+        echo '<input type="hidden" name="mjb_recaptcha_enabled" value="0">';
+        echo '<label><input type="checkbox" name="mjb_recaptcha_enabled" id="mjb_recaptcha_enabled" value="1" ' . checked(1, $enabled, false) . '> ';
+        echo esc_html__('Require Google reCAPTCHA v2 on internal application forms.', 'modern-job-board') . '</label>';
     }
 
     public function recaptcha_site_key_callback()
     {
         $value = get_option('mjb_recaptcha_site_key', '');
-        echo '<input type="text" name="mjb_recaptcha_site_key" value="' . esc_attr($value) . '" class="regular-text">';
+        echo '<input type="text" name="mjb_recaptcha_site_key" id="mjb_recaptcha_site_key" value="' . esc_attr($value) . '" class="regular-text" autocomplete="off">';
+        echo '<p class="description">' . esc_html__('Required when reCAPTCHA is enabled.', 'modern-job-board') . '</p>';
     }
 
     public function recaptcha_secret_key_callback()
     {
         $value = get_option('mjb_recaptcha_secret_key', '');
-        echo '<input type="password" name="mjb_recaptcha_secret_key" value="' . esc_attr($value) . '" class="regular-text" autocomplete="off">';
-        echo '<p class="description">' . esc_html__('Create keys at google.com/recaptcha/admin (reCAPTCHA v2, "I\'m not a robot" checkbox).', 'modern-job-board') . '</p>';
+        echo '<input type="password" name="mjb_recaptcha_secret_key" id="mjb_recaptcha_secret_key" value="' . esc_attr($value) . '" class="regular-text" autocomplete="new-password">';
+        echo '<p class="description">' . esc_html__('Create keys at google.com/recaptcha/admin (reCAPTCHA v2, "I\'m not a robot" checkbox). Required when reCAPTCHA is enabled.', 'modern-job-board') . '</p>';
     }
 
     /**

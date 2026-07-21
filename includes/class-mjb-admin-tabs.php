@@ -603,12 +603,21 @@ class MJB_Admin_Tabs
      */
     private static function render_settings_tab()
     {
+        // When settings are loaded via admin-ajax, settings_fields() stamps _wp_http_referer
+        // as admin-ajax.php. options.php then redirects there and the browser shows "0".
+        $settings_return = self::get_tab_url('settings');
         ?>
         <div class="mjb-tab-panel mjb-tab-panel--settings">
             <h2 class="mjb-section-title"><?php esc_html_e('Settings', 'modern-job-board'); ?></h2>
-            <form action="options.php" method="post" class="mjb-settings-form">
+            <?php
+            // Surfaces Settings API success/error notices after options.php redirect.
+            settings_errors();
+            ?>
+            <form action="<?php echo esc_url(admin_url('options.php')); ?>" method="post" class="mjb-settings-form">
                 <?php
                 settings_fields('mjb_settings_group');
+                // Override AJAX referer so save redirects back to this Settings tab.
+                echo '<input type="hidden" name="_wp_http_referer" value="' . esc_attr(wp_unslash($settings_return)) . '" />';
                 do_settings_sections('mjb-settings');
                 submit_button(__('Save Settings', 'modern-job-board'), 'primary mjb-btn mjb-btn-primary');
                 ?>

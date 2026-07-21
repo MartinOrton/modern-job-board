@@ -21,10 +21,71 @@ class MJB_CPT
         add_filter('insert_term_data', array($this, 'normalize_term_slug'), 10, 3);
         add_filter('wp_update_term_data', array($this, 'normalize_term_slug'), 10, 3);
         add_filter('term_link', array($this, 'filter_term_link'), 10, 3);
+        add_action('pre_get_posts', array($this, 'filter_company_archive_query'));
 
         // Frontend hooks
         add_filter('the_content', array($this, 'append_job_map'));
         add_action('wp_head', array($this, 'output_job_schema'));
+    }
+
+    /**
+     * Hide companies with zero published jobs from the public Companies archive.
+     *
+     * @param WP_Query $query
+     */
+    public function filter_company_archive_query($query)
+    {
+        if (is_admin() || !$query->is_main_query()) {
+            return;
+        }
+
+        if (!$query->is_post_type_archive('company')) {
+            return;
+        }
+
+        $company_ids = self::get_company_ids_with_published_jobs();
+        if (empty($company_ids)) {
+            // Force an empty result set (empty post__in returns all posts in WP_Query).
+            $query->set('post__in', array(0));
+            return;
+        }
+
+        $query->set('post__in', $company_ids);
+        // Keep natural archive ordering rather than post__in order.
+        if (!$query->get('orderby')) {
+            $query->set('orderby', 'title');
+            $query->set('order', 'ASC');
+        }
+    }
+
+    /**
+     * Company post IDs that have at least one published job listing.
+     *
+     * @return int[]
+     */
+    public static function get_company_ids_with_published_jobs()
+    {
+        global $wpdb;
+
+        $ids = $wpdb->get_col(
+            "SELECT DISTINCT CAST(pm.meta_value AS UNSIGNED)
+            FROM {$wpdb->postmeta} pm
+            INNER JOIN {$wpdb->posts} jobs ON jobs.ID = pm.post_id
+            INNER JOIN {$wpdb->posts} companies ON companies.ID = CAST(pm.meta_value AS UNSIGNED)
+            WHERE pm.meta_key = '_company_id'
+              AND pm.meta_value <> ''
+              AND CAST(pm.meta_value AS UNSIGNED) > 0
+              AND jobs.post_type = 'job_listing'
+              AND jobs.post_status = 'publish'
+              AND companies.post_type = 'company'
+              AND companies.post_status = 'publish'"
+        );
+
+        if (empty($ids)) {
+            return array();
+        }
+
+        return array_values(array_unique(array_map('intval', $ids)));
     }
 
     /**

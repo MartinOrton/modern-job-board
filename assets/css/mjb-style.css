@@ -589,7 +589,8 @@
 }
 
 .mjb-application-form,
-.mjb-job-form {
+.mjb-job-form,
+.mjb-form {
     max-width: 640px;
     margin: 1rem 0 0;
     padding: 1.5rem;
@@ -598,35 +599,150 @@
     background: var(--mjb-bg);
 }
 
-.mjb-job-form p {
-    margin-bottom: 15px;
+.mjb-application-form p,
+.mjb-job-form p,
+.mjb-form p {
+    margin: 0 0 1rem;
 }
 
-.mjb-job-form label {
+.mjb-application-form p:last-child,
+.mjb-job-form p:last-child,
+.mjb-form p:last-child {
+    margin-bottom: 0;
+}
+
+.mjb-application-form label,
+.mjb-job-form label,
+.mjb-form label {
     display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--mjb-text);
+    line-height: 1.35;
+}
+
+/* Inline labels for radios/checkboxes */
+.mjb-application-form label:has(> input[type="checkbox"]),
+.mjb-application-form label:has(> input[type="radio"]),
+.mjb-job-form label:has(> input[type="checkbox"]),
+.mjb-job-form label:has(> input[type="radio"]),
+.mjb-form label:has(> input[type="checkbox"]),
+.mjb-form label:has(> input[type="radio"]) {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    font-weight: 500;
+    margin-bottom: 0.35rem;
 }
 
 .mjb-job-form input[type="text"],
-.mjb-job-form textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-.mjb-job-form input[type="text"],
+.mjb-job-form input[type="email"],
+.mjb-job-form input[type="url"],
+.mjb-job-form input[type="password"],
+.mjb-job-form input[type="number"],
+.mjb-job-form input[type="file"],
+.mjb-job-form select,
 .mjb-job-form textarea,
 .mjb-application-form input[type="text"],
 .mjb-application-form input[type="email"],
+.mjb-application-form input[type="url"],
+.mjb-application-form input[type="password"],
+.mjb-application-form input[type="number"],
 .mjb-application-form input[type="file"],
-.mjb-application-form textarea {
+.mjb-application-form select,
+.mjb-application-form textarea,
+.mjb-form input[type="text"],
+.mjb-form input[type="email"],
+.mjb-form input[type="url"],
+.mjb-form input[type="password"],
+.mjb-form input[type="number"],
+.mjb-form input[type="file"],
+.mjb-form select,
+.mjb-form textarea {
     width: 100%;
+    max-width: 100%;
     padding: 0.65rem 0.85rem;
     border: 1px solid var(--mjb-border);
     border-radius: 8px;
     font-family: inherit;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    color: var(--mjb-text);
+    background: var(--mjb-surface, #fff);
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mjb-application-form input:focus,
+.mjb-job-form input:focus,
+.mjb-form input:focus,
+.mjb-application-form select:focus,
+.mjb-job-form select:focus,
+.mjb-form select:focus,
+.mjb-application-form textarea:focus,
+.mjb-job-form textarea:focus,
+.mjb-form textarea:focus {
+    outline: none;
+    border-color: var(--mjb-primary);
+    box-shadow: 0 0 0 3px var(--mjb-primary-light);
+}
+
+/* Elementor-style required asterisk + legend */
+.mjb-required-mark {
+    color: #dc2626;
+    font-weight: 700;
+    margin-left: 0.15em;
+    line-height: 1;
+}
+
+.mjb-form-required-note {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 1.15rem !important;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--mjb-text-muted);
+    background: rgba(220, 38, 38, 0.04);
+    border: 1px solid rgba(220, 38, 38, 0.12);
+    border-radius: 8px;
+}
+
+.mjb-form-required-note .mjb-required-mark {
+    margin-left: 0;
+}
+
+/* Inline field error (Elementor-style, under the control) */
+.mjb-field-error {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: #dc2626;
+}
+
+.mjb-application-form .mjb-field-invalid,
+.mjb-job-form .mjb-field-invalid,
+.mjb-form .mjb-field-invalid,
+.mjb-application-form input.mjb-field-invalid,
+.mjb-job-form input.mjb-field-invalid,
+.mjb-form input.mjb-field-invalid,
+.mjb-application-form select.mjb-field-invalid,
+.mjb-job-form select.mjb-field-invalid,
+.mjb-form select.mjb-field-invalid,
+.mjb-application-form textarea.mjb-field-invalid,
+.mjb-job-form textarea.mjb-field-invalid,
+.mjb-form textarea.mjb-field-invalid {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+}
+
+.mjb-field-has-error > label {
+    color: #b91c1c;
 }
 
 .mjb-success {
@@ -974,8 +1090,12 @@ body.mjb-jobs-loading {
     margin-top: 5px;
 }
 
-.mjb-container--company-archive,
-.mjb-container--company {
+.mjb-container--company-archive {
+    padding-bottom: 4rem;
+}
+
+/* Company single reuses the jobs listing layout (sidebar filters + results). */
+.mjb-container--company.mjb-container--listing {
     padding-bottom: 4rem;
 }
 
@@ -1139,8 +1259,9 @@ body.mjb-jobs-loading {
     display: inline-flex;
     align-items: center;
     margin-top: auto;
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
     font-weight: 600;
+    line-height: 1.4;
     color: var(--mjb-primary);
     text-decoration: none;
 }

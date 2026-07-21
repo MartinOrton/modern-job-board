@@ -107,36 +107,41 @@ class MJB_Candidate_Registration
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is escaped in MJB_Notices::render().
             echo MJB_Notices::render();
             ?>
-            <form method="post" action="" class="mjb-form">
+            <form method="post" action="" class="mjb-form" novalidate>
                 <?php wp_nonce_field('mjb_candidate_action', 'mjb_candidate_nonce'); ?>
                 <div class="mjb-hp-field" aria-hidden="true">
                     <label for="mjb_hp_website_candidate"><?php esc_html_e('Website', 'modern-job-board'); ?></label>
                     <input type="text" name="<?php echo esc_attr(MJB_Application_Guard::HONEYPOT_FIELD); ?>" id="mjb_hp_website_candidate" tabindex="-1" autocomplete="off">
                 </div>
 
+                <?php
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in helper.
+                echo MJB_Shortcodes::required_fields_note();
+                ?>
+
                 <p>
-                    <label for="mjb_username"><?php esc_html_e('Username', 'modern-job-board'); ?></label>
-                    <input type="text" name="mjb_username" id="mjb_username" required>
+                    <label for="mjb_username"><?php esc_html_e('Username', 'modern-job-board'); ?><?php echo MJB_Shortcodes::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+                    <input type="text" name="mjb_username" id="mjb_username" required aria-required="true">
                 </p>
 
                 <p>
-                    <label for="mjb_email"><?php esc_html_e('Email Address', 'modern-job-board'); ?></label>
-                    <input type="email" name="mjb_email" id="mjb_email" required>
+                    <label for="mjb_email"><?php esc_html_e('Email Address', 'modern-job-board'); ?><?php echo MJB_Shortcodes::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+                    <input type="email" name="mjb_email" id="mjb_email" required aria-required="true">
                 </p>
 
                 <p>
-                    <label for="mjb_password"><?php esc_html_e('Password', 'modern-job-board'); ?></label>
-                    <input type="password" name="mjb_password" id="mjb_password" required>
+                    <label for="mjb_password"><?php esc_html_e('Password', 'modern-job-board'); ?><?php echo MJB_Shortcodes::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+                    <input type="password" name="mjb_password" id="mjb_password" required aria-required="true">
                 </p>
 
                 <p>
-                    <label for="mjb_first_name"><?php esc_html_e('First Name', 'modern-job-board'); ?></label>
-                    <input type="text" name="mjb_first_name" id="mjb_first_name" required>
+                    <label for="mjb_first_name"><?php esc_html_e('First Name', 'modern-job-board'); ?><?php echo MJB_Shortcodes::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+                    <input type="text" name="mjb_first_name" id="mjb_first_name" required aria-required="true">
                 </p>
 
                 <p>
-                    <label for="mjb_last_name"><?php esc_html_e('Last Name', 'modern-job-board'); ?></label>
-                    <input type="text" name="mjb_last_name" id="mjb_last_name" required>
+                    <label for="mjb_last_name"><?php esc_html_e('Last Name', 'modern-job-board'); ?><?php echo MJB_Shortcodes::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+                    <input type="text" name="mjb_last_name" id="mjb_last_name" required aria-required="true">
                 </p>
 
                 <p>

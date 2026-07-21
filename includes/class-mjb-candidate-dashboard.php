@@ -150,19 +150,24 @@ class MJB_Candidate_Dashboard
 
             <div class="mjb-dashboard-section">
                 <h3><?php esc_html_e('Profile Details', 'modern-job-board'); ?></h3>
-                <form method="post" action="" class="mjb-form">
+                <form method="post" action="" class="mjb-form" novalidate>
                     <?php wp_nonce_field('mjb_profile_action', 'mjb_profile_nonce'); ?>
 
+                    <?php
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in helper.
+                    echo MJB_Shortcodes::required_fields_note();
+                    ?>
+
                     <p>
-                        <label for="mjb_first_name"><?php esc_html_e('First Name', 'modern-job-board'); ?></label>
+                        <label for="mjb_first_name"><?php esc_html_e('First Name', 'modern-job-board'); ?><?php echo MJB_Shortcodes::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
                         <input type="text" name="mjb_first_name" id="mjb_first_name"
-                            value="<?php echo esc_attr($first_name); ?>" required>
+                            value="<?php echo esc_attr($first_name); ?>" required aria-required="true">
                     </p>
 
                     <p>
-                        <label for="mjb_last_name"><?php esc_html_e('Last Name', 'modern-job-board'); ?></label>
+                        <label for="mjb_last_name"><?php esc_html_e('Last Name', 'modern-job-board'); ?><?php echo MJB_Shortcodes::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
                         <input type="text" name="mjb_last_name" id="mjb_last_name" value="<?php echo esc_attr($last_name); ?>"
-                            required>
+                            required aria-required="true">
                     </p>
 
                     <p>
@@ -197,11 +202,15 @@ class MJB_Candidate_Dashboard
                     <p><?php esc_html_e('No resume uploaded yet.', 'modern-job-board'); ?></p>
                 <?php endif; ?>
 
-                <form method="post" action="" enctype="multipart/form-data" class="mjb-form">
+                <form method="post" action="" enctype="multipart/form-data" class="mjb-form" novalidate>
                     <?php wp_nonce_field('mjb_resume_action', 'mjb_resume_nonce'); ?>
+                    <?php
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in helper.
+                    echo MJB_Shortcodes::required_fields_note();
+                    ?>
                     <p>
-                        <label for="mjb_resume"><?php esc_html_e('Upload Resume (PDF/Docx)', 'modern-job-board'); ?></label>
-                        <input type="file" name="mjb_resume" id="mjb_resume" accept=".pdf,.doc,.docx" required>
+                        <label for="mjb_resume"><?php esc_html_e('Upload Resume (PDF/Docx)', 'modern-job-board'); ?><?php echo MJB_Shortcodes::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+                        <input type="file" name="mjb_resume" id="mjb_resume" accept=".pdf,.doc,.docx" required aria-required="true">
                     </p>
                     <p>
                         <input type="submit" name="mjb_upload_resume" value="<?php esc_attr_e('Upload Resume', 'modern-job-board'); ?>">

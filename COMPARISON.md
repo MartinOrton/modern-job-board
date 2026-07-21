@@ -11,7 +11,7 @@
 | **Candidate System** | Profile, Secure Resume Storage, Dashboard | Profile, Dashboard |
 | **Listing data** | Stored on your WordPress site / server | Hosted on NiceBoard servers |
 | **Extensibility** | High (hooks, filters, REST on Business) | Low (API available on higher tiers) |
-| **License** | Proprietary freemium — **not open source** | SaaS terms of service |
+| **License** | Proprietary freemium | SaaS terms of service |
 | **SEO** | Full Control (Yoast, RankMath, Schema) | Automated / Black Box |
 | **Secure Resumes**| **Yes** (Admin-only Access) | Yes |
 

@@ -3,7 +3,7 @@
  * Plugin Name: Modern Job Board
  * Plugin URI: https://martinorton.com/modern-job-board
  * Description: A freemium job board plugin for WordPress (pre-stable beta — not 1.0).
- * Version: 0.9.0-beta.2
+ * Version: 0.9.0-beta.6
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
  * License: Proprietary
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '0.9.0-beta.2');
+define('MJB_VERSION', '0.9.0-beta.6');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
 
@@ -96,6 +96,7 @@ class Modern_Job_Board
         MJB_Webhook_Queue::init();
         MJB_Import_Scheduler::init();
         MJB_Blocks::init();
+        MJB_Job_Importer::init();
         $this->init_hooks();
     }
 
@@ -303,6 +304,22 @@ class Modern_Job_Board
             'nonce' => wp_create_nonce('mjb_search_nonce'),
             'jobs_search_base' => trailingslashit(MJB_Job_Routes::build_url()),
             'jobs_api_search_base' => trailingslashit(MJB_Job_Routes::build_url(array(), array('rest' => true))),
+        ));
+
+        wp_enqueue_script(
+            'mjb-form-validation',
+            MJB_URL . 'assets/js/mjb-form-validation.js',
+            array(),
+            MJB_VERSION,
+            true
+        );
+        wp_localize_script('mjb-form-validation', 'mjbFormValidation', array(
+            'required' => __('This field is required.', 'modern-job-board'),
+            'email' => __('Please enter a valid email address.', 'modern-job-board'),
+            'url' => __('Please enter a valid URL.', 'modern-job-board'),
+            'number' => __('Please enter a valid number.', 'modern-job-board'),
+            'requiredLegend' => __('Required fields are marked with *', 'modern-job-board'),
+            'requiredLegendShort' => __('Required fields', 'modern-job-board'),
         ));
     }
 }

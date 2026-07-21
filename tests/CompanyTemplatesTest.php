@@ -21,4 +21,15 @@ class CompanyTemplatesTest extends TestCase
     {
         $this->assertSame('?', MJB_Shortcodes::get_company_initials(''));
     }
+
+    public function test_format_company_job_count_label_singular()
+    {
+        $this->assertSame('1 job', MJB_Shortcodes::format_company_job_count_label(1));
+    }
+
+    public function test_format_company_job_count_label_plural()
+    {
+        $this->assertSame('3 jobs', MJB_Shortcodes::format_company_job_count_label(3));
+        $this->assertSame('0 jobs', MJB_Shortcodes::format_company_job_count_label(0));
+    }
 }

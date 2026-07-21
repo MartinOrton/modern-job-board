@@ -94,7 +94,7 @@ rewind_posts();
                                     }
                                 }
                                 ?>
-                                <form method="post" action="" enctype="multipart/form-data" class="mjb-application-form">
+                                <form method="post" action="" enctype="multipart/form-data" class="mjb-application-form" novalidate>
                                     <?php wp_nonce_field('mjb_submit_application', 'mjb_application_nonce'); ?>
                                     <input type="hidden" name="job_id" value="<?php echo get_the_ID(); ?>">
                                     <div class="mjb-hp-field" aria-hidden="true">
@@ -102,20 +102,25 @@ rewind_posts();
                                         <input type="text" name="<?php echo esc_attr(MJB_Application_Guard::HONEYPOT_FIELD); ?>" id="mjb_hp_website" tabindex="-1" autocomplete="off">
                                     </div>
 
+                                    <?php
+                                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in helper.
+                                    echo MJB_Shortcodes::required_fields_note();
+                                    ?>
+
                                     <p>
-                                        <label for="candidate_name"><?php _e('Full Name', 'modern-job-board'); ?></label>
+                                        <label for="candidate_name"><?php _e('Full Name', 'modern-job-board'); ?><?php echo MJB_Shortcodes::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
                                         <input type="text" name="candidate_name" id="candidate_name"
-                                            value="<?php echo esc_attr(trim($candidate_name)); ?>" required>
+                                            value="<?php echo esc_attr(trim($candidate_name)); ?>" required aria-required="true">
                                     </p>
 
                                     <p>
-                                        <label for="candidate_email"><?php _e('Email Address', 'modern-job-board'); ?></label>
+                                        <label for="candidate_email"><?php _e('Email Address', 'modern-job-board'); ?><?php echo MJB_Shortcodes::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
                                         <input type="email" name="candidate_email" id="candidate_email"
-                                            value="<?php echo esc_attr($candidate_email); ?>" required>
+                                            value="<?php echo esc_attr($candidate_email); ?>" required aria-required="true">
                                     </p>
 
                                     <p>
-                                        <label for="candidate_resume"><?php _e('Resume (PDF/Doc)', 'modern-job-board'); ?></label>
+                                        <label for="candidate_resume"><?php _e('Resume (PDF/Doc)', 'modern-job-board'); ?><?php echo MJB_Shortcodes::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
                                         <?php if ($resume_label): ?>
                                         <div class="mjb-profile-resume-option">
                                             <label>
@@ -126,7 +131,7 @@ rewind_posts();
                                         </div>
                                         <div id="mjb-upload-resume-container">
                                             <input type="file" name="candidate_resume" id="candidate_resume" accept=".pdf,.doc,.docx"
-                                                required>
+                                                required aria-required="true">
                                             <span class="description mjb-upload-hint"><?php _e('Or upload a different one:', 'modern-job-board'); ?></span>
                                         </div>
                                         <script>
@@ -135,23 +140,25 @@ rewind_posts();
                                                 var container = document.getElementById('mjb-upload-resume-container');
                                                 if (this.checked) {
                                                     uploadInput.removeAttribute('required');
+                                                    uploadInput.removeAttribute('aria-required');
                                                     container.classList.add('mjb-is-hidden');
                                                 } else {
                                                     uploadInput.setAttribute('required', 'required');
+                                                    uploadInput.setAttribute('aria-required', 'true');
                                                     container.classList.remove('mjb-is-hidden');
                                                 }
                                             });
                                         </script>
                                     <?php else: ?>
                                         <input type="file" name="candidate_resume" id="candidate_resume" accept=".pdf,.doc,.docx"
-                                            required>
+                                            required aria-required="true">
                                     <?php endif; ?>
                                     </p>
 
                                     <p>
                                         <label
-                                            for="candidate_message"><?php _e('Message / Cover Letter', 'modern-job-board'); ?></label>
-                                        <textarea name="candidate_message" id="candidate_message" rows="5" required></textarea>
+                                            for="candidate_message"><?php _e('Message / Cover Letter', 'modern-job-board'); ?><?php echo MJB_Shortcodes::required_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+                                        <textarea name="candidate_message" id="candidate_message" rows="5" required aria-required="true"></textarea>
                                     </p>
 
                                     <?php
@@ -159,11 +166,17 @@ rewind_posts();
                                     if (isset($mjb_custom_fields)) {
                                         $fields = $mjb_custom_fields->get_fields('application');
                                         foreach ($fields as $field) {
+                                            $is_required = !empty($field['required']);
                                             echo '<p>';
-                                            echo '<label for="mjb_app_field_' . esc_attr($field['key']) . '">' . esc_html($field['label']) . '</label>';
+                                            echo '<label for="mjb_app_field_' . esc_attr($field['key']) . '">' . esc_html($field['label']);
+                                            if ($is_required) {
+                                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in helper.
+                                                echo MJB_Shortcodes::required_mark();
+                                            }
+                                            echo '</label>';
 
                                             $field_name = 'mjb_app_field_' . $field['key'];
-                                            $required = !empty($field['required']) ? 'required' : '';
+                                            $required = $is_required ? 'required aria-required="true"' : '';
 
                                             if ($field['type'] === 'text' || $field['type'] === 'number') {
                                                 echo '<input type="' . esc_attr($field['type']) . '" name="' . esc_attr($field_name) . '" id="' . esc_attr($field_name) . '" ' . $required . '>';

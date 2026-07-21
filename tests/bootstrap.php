@@ -48,6 +48,13 @@ if (!function_exists('__')) {
     }
 }
 
+if (!function_exists('_n')) {
+    function _n($single, $plural, $number, $domain = null)
+    {
+        return ((int) $number === 1) ? $single : $plural;
+    }
+}
+
 if (!function_exists('apply_filters')) {
     function apply_filters($hook, $value)
     {
@@ -61,6 +68,56 @@ if (!function_exists('do_action')) {
         if ($hook === 'mjb_application_status_updated' && count($args) === 3) {
             $GLOBALS['mjb_test_status_updates'][] = $args;
         }
+    }
+}
+
+if (!function_exists('add_action')) {
+    function add_action($hook, $callback, $priority = 10, $accepted_args = 1)
+    {
+        unset($hook, $callback, $priority, $accepted_args);
+        return true;
+    }
+}
+
+if (!function_exists('remove_action')) {
+    function remove_action($hook, $callback, $priority = 10)
+    {
+        unset($hook, $callback, $priority);
+        return true;
+    }
+}
+
+if (!function_exists('add_filter')) {
+    function add_filter($hook, $callback, $priority = 10, $accepted_args = 1)
+    {
+        unset($hook, $callback, $priority, $accepted_args);
+        return true;
+    }
+}
+
+if (!function_exists('remove_filter')) {
+    function remove_filter($hook, $callback, $priority = 10)
+    {
+        unset($hook, $callback, $priority);
+        return true;
+    }
+}
+
+if (!function_exists('wp_slash')) {
+    function wp_slash($value)
+    {
+        if (is_array($value)) {
+            return array_map('wp_slash', $value);
+        }
+
+        return is_string($value) ? addslashes($value) : $value;
+    }
+}
+
+if (!function_exists('clean_post_cache')) {
+    function clean_post_cache($post_id)
+    {
+        unset($post_id);
     }
 }
 
@@ -250,10 +307,66 @@ if (!function_exists('get_post')) {
 
         return (object) array(
             'ID' => $post_id,
+            'post_title' => $GLOBALS['mjb_test_titles'][$post_id] ?? '',
             'post_content' => $GLOBALS['mjb_test_post_content'][$post_id] ?? '',
             'post_type' => $GLOBALS['mjb_test_post_types'][$post_id] ?? 'page',
+            'post_status' => $GLOBALS['mjb_test_post_status'][$post_id] ?? 'publish',
             'post_author' => $GLOBALS['mjb_test_post_authors'][$post_id] ?? 0,
         );
+    }
+}
+
+if (!function_exists('wp_update_post')) {
+    function wp_update_post($postarr, $wp_error = false)
+    {
+        $post_id = intval($postarr['ID'] ?? 0);
+        if ($post_id < 1 || !isset($GLOBALS['mjb_test_post_status'][$post_id])) {
+            return $wp_error ? new WP_Error('invalid_post', 'Invalid post') : 0;
+        }
+
+        if (isset($postarr['post_title'])) {
+            $GLOBALS['mjb_test_titles'][$post_id] = $postarr['post_title'];
+        }
+        if (isset($postarr['post_content'])) {
+            $GLOBALS['mjb_test_post_content'][$post_id] = $postarr['post_content'];
+        }
+        if (isset($postarr['post_status'])) {
+            $GLOBALS['mjb_test_post_status'][$post_id] = $postarr['post_status'];
+        }
+
+        return $post_id;
+    }
+}
+
+if (!function_exists('wp_delete_post')) {
+    function wp_delete_post($post_id, $force_delete = false)
+    {
+        unset($force_delete);
+        $post_id = intval($post_id);
+        unset(
+            $GLOBALS['mjb_test_post_status'][$post_id],
+            $GLOBALS['mjb_test_post_types'][$post_id],
+            $GLOBALS['mjb_test_titles'][$post_id],
+            $GLOBALS['mjb_test_post_content'][$post_id],
+            $GLOBALS['mjb_test_post_authors'][$post_id],
+            $GLOBALS['mjb_test_post_meta'][$post_id],
+            $GLOBALS['mjb_test_inserted_posts'][$post_id]
+        );
+
+        foreach (($GLOBALS['mjb_test_companies_by_title'] ?? array()) as $key => $id) {
+            if (intval($id) === $post_id) {
+                unset($GLOBALS['mjb_test_companies_by_title'][$key]);
+            }
+        }
+
+        $GLOBALS['mjb_test_posts'] = array_values(array_filter(
+            $GLOBALS['mjb_test_posts'] ?? array(),
+            static function ($id) use ($post_id) {
+                return intval($id) !== $post_id;
+            }
+        ));
+
+        return (object) array('ID' => $post_id);
     }
 }
 
@@ -523,26 +636,69 @@ if (!function_exists('wp_remote_retrieve_body')) {
 if (!function_exists('get_posts')) {
     function get_posts($args = array())
     {
-        $posts = $GLOBALS['mjb_test_posts'] ?? array();
+        $post_type = $args['post_type'] ?? '';
 
-        if (!empty($args['meta_key']) && !empty($args['meta_value'])) {
+        if ($post_type === 'company') {
+            $posts = array();
+            foreach (($GLOBALS['mjb_test_post_types'] ?? array()) as $post_id => $type) {
+                if ($type === 'company') {
+                    $posts[] = intval($post_id);
+                }
+            }
+            foreach (array_values($GLOBALS['mjb_test_companies_by_title'] ?? array()) as $post_id) {
+                $posts[] = intval($post_id);
+            }
+            $posts = array_values(array_unique($posts));
+        } else {
+            $posts = $GLOBALS['mjb_test_posts'] ?? array();
+        }
+
+        if (!empty($args['meta_key']) && array_key_exists('meta_value', $args)) {
             $posts = array_values(array_filter($posts, static function ($post_id) use ($args) {
                 $meta_value = get_post_meta(intval($post_id), $args['meta_key'], true);
                 return (string) $meta_value === (string) $args['meta_value'];
             }));
         }
 
-        if (!empty($args['post_type'])) {
+        if (!empty($args['post_type']) && $post_type !== 'company') {
             $posts = array_values(array_filter($posts, static function ($post_id) use ($args) {
                 return get_post_type($post_id) === $args['post_type'];
             }));
+        }
+
+        if (!empty($args['post_status'])) {
+            $statuses = (array) $args['post_status'];
+            $posts = array_values(array_filter($posts, static function ($post_id) use ($statuses) {
+                $status = $GLOBALS['mjb_test_post_status'][intval($post_id)] ?? 'publish';
+                return in_array($status, $statuses, true);
+            }));
+        }
+
+        if (!empty($args['name'])) {
+            $name = (string) $args['name'];
+            $posts = array_values(array_filter($posts, static function ($post_id) use ($name) {
+                $title = $GLOBALS['mjb_test_titles'][intval($post_id)] ?? '';
+                return sanitize_title($title) === $name;
+            }));
+        }
+
+        if (!empty($args['posts_per_page']) && intval($args['posts_per_page']) > 0) {
+            $posts = array_slice($posts, 0, intval($args['posts_per_page']));
         }
 
         if (!empty($args['fields']) && $args['fields'] === 'ids') {
             return $posts;
         }
 
-        return $posts;
+        return array_map(static function ($post_id) {
+            $post_id = intval($post_id);
+            return (object) array(
+                'ID' => $post_id,
+                'post_title' => $GLOBALS['mjb_test_titles'][$post_id] ?? '',
+                'post_type' => $GLOBALS['mjb_test_post_types'][$post_id] ?? 'post',
+                'post_status' => $GLOBALS['mjb_test_post_status'][$post_id] ?? 'publish',
+            );
+        }, $posts);
     }
 }
 
@@ -561,6 +717,12 @@ if (!function_exists('wp_insert_post')) {
 
         if (($postarr['post_type'] ?? '') === 'company' && !empty($postarr['post_title'])) {
             $GLOBALS['mjb_test_companies_by_title'][$postarr['post_title']] = $post_id;
+            $normalized_key = function_exists('mb_strtolower')
+                ? mb_strtolower(trim(html_entity_decode(wp_strip_all_tags($postarr['post_title']), ENT_QUOTES | ENT_HTML5, 'UTF-8')), 'UTF-8')
+                : strtolower(trim(html_entity_decode(wp_strip_all_tags($postarr['post_title']), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+            if ($normalized_key !== '') {
+                $GLOBALS['mjb_test_companies_by_title'][$normalized_key] = $post_id;
+            }
         }
 
         if (($postarr['post_type'] ?? '') === 'job_listing') {

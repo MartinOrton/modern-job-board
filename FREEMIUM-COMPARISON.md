@@ -2,7 +2,7 @@
 
 **Product:** Modern Job Board (WordPress plugin)  
 **Version:** 0.9.0-beta.2  
-**Model:** Freemium (proprietary — not open source) + Complete Site service  
+**Model:** Freemium (proprietary) + Complete Site service  
 **Last updated:** July 12, 2026  
 **Purpose:** Handoff document for AI or human reviewers planning licensing, gating, marketing, or product decisions.
 
@@ -176,7 +176,7 @@ All blocks appear under **Modern Job Board** in the Gutenberg inserter.
 | | **Free** | **Pro** | **Business** | **Complete Site** |
 |---|:---:|:---:|:---:|:---:|
 | Runs on your WordPress (listing data on your site) | ✓ | ✓ | ✓ | ✓ |
-| Proprietary freemium license (not open source) | ✓ | ✓ | ✓ | ✓ |
+| Proprietary freemium license | ✓ | ✓ | ✓ | ✓ |
 | Avoids renting a hosted SaaS job board | ✓ | ✓ | ✓ | ✓ |
 | Community support | ✓ | ✓ | ✓ | ✓ |
 | Email support | — | ✓ | ✓ | ✓ |
@@ -192,7 +192,7 @@ All blocks appear under **Modern Job Board** in the Gutenberg inserter.
 | **Hosting** | Self-hosted WordPress | Vendor-hosted |
 | **Cost model** | Freemium licenses + optional Complete Site | Recurring monthly subscription |
 | **Listing / applicant data** | Stored on your WordPress site | Vendor servers |
-| **Software license** | Proprietary freemium — not open source | SaaS terms |
+| **Software license** | Proprietary freemium | SaaS terms |
 | **Customization** | Themes, hooks, WP plugins; paid tiers unlock more product features | Settings-limited |
 | **Employer monetization** | WooCommerce (Pro+) | Often Stripe Connect |
 | **Extensibility** | Hooks, filters, REST (Business) | Limited API on higher tiers |
