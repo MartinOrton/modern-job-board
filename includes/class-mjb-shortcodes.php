@@ -1046,7 +1046,6 @@ class MJB_Shortcodes
                 foreach ($fields as $field) {
                     $value = $job_id ? get_post_meta($job_id, '_mjb_' . $field['key'], true) : '';
                     $is_required = !empty($field['required']);
-                    $required_attr = $is_required ? 'required aria-required="true"' : '';
                     echo '<p>';
                     echo '<label for="mjb_field_' . esc_attr($field['key']) . '">' . esc_html($field['label']);
                     if ($is_required) {
@@ -1056,11 +1055,11 @@ class MJB_Shortcodes
                     echo '</label>';
                     
                     if ($field['type'] === 'text' || $field['type'] === 'number') {
-                        echo '<input type="' . esc_attr($field['type']) . '" name="mjb_field_' . esc_attr($field['key']) . '" id="mjb_field_' . esc_attr($field['key']) . '" value="' . esc_attr($value) . '" ' . $required_attr . '>';
+                        echo '<input type="' . esc_attr($field['type']) . '" name="mjb_field_' . esc_attr($field['key']) . '" id="mjb_field_' . esc_attr($field['key']) . '" value="' . esc_attr($value) . '"' . ($is_required ? ' required aria-required="true"' : '') . '>';
                     } elseif ($field['type'] === 'textarea') {
-                        echo '<textarea name="mjb_field_' . esc_attr($field['key']) . '" id="mjb_field_' . esc_attr($field['key']) . '" ' . $required_attr . '>' . esc_textarea($value) . '</textarea>';
+                        echo '<textarea name="mjb_field_' . esc_attr($field['key']) . '" id="mjb_field_' . esc_attr($field['key']) . '"' . ($is_required ? ' required aria-required="true"' : '') . '>' . esc_textarea($value) . '</textarea>';
                     } elseif ($field['type'] === 'select') {
-                        echo '<select name="mjb_field_' . esc_attr($field['key']) . '" id="mjb_field_' . esc_attr($field['key']) . '" ' . $required_attr . '>';
+                        echo '<select name="mjb_field_' . esc_attr($field['key']) . '" id="mjb_field_' . esc_attr($field['key']) . '"' . ($is_required ? ' required aria-required="true"' : '') . '>';
                         $options = explode(',', $field['options']);
                         foreach ($options as $opt) {
                             $opt = trim($opt);
@@ -1068,7 +1067,7 @@ class MJB_Shortcodes
                         }
                         echo '</select>';
                     } elseif ($field['type'] === 'checkbox') {
-                         echo '<input type="checkbox" name="mjb_field_' . esc_attr($field['key']) . '" id="mjb_field_' . esc_attr($field['key']) . '" value="1" ' . checked(1, $value, false) . ' ' . $required_attr . '>';
+                        echo '<input type="checkbox" name="mjb_field_' . esc_attr($field['key']) . '" id="mjb_field_' . esc_attr($field['key']) . '" value="1" ' . checked(1, $value, false) . ($is_required ? ' required aria-required="true"' : '') . '>';
                     }
                     echo '</p>';
                 }
