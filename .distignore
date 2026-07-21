@@ -1,0 +1,37 @@
+# Files excluded from distribution / release zips (wp-cli, build scripts).
+# Versioned source stays in git unless listed in .gitignore.
+
+# VCS / tooling
+.git
+.github
+.gitignore
+.gitattributes
+.distignore
+.phpunit.result.cache
+phpunit.xml.dist
+phpcs.xml.dist
+composer.json
+composer.lock
+vendor
+tests
+bin
+
+# Dev / product docs not needed on customer sites
+*.md
+!readme.txt
+DEMO.md
+REMOTE_SETUP.md
+COMPARISON.md
+FREEMIUM-COMPARISON.md
+CHANGELOG.md
+
+# Binary feature breakdowns (live under sibling product-docs/)
+*.docx
+*.pdf
+product-docs
+
+# Local IDE / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db

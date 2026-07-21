@@ -1,9 +1,9 @@
 # Modern Job Board — Freemium Feature Comparison
 
 **Product:** Modern Job Board (WordPress plugin)  
-**Version:** 0.9.0-beta.2  
+**Version:** 0.9.0-beta.6  
 **Model:** Freemium (proprietary) + Complete Site service  
-**Last updated:** July 12, 2026  
+**Last updated:** July 21, 2026  
 **Purpose:** Handoff document for AI or human reviewers planning licensing, gating, marketing, or product decisions.
 
 ---
@@ -199,7 +199,7 @@ All blocks appear under **Modern Job Board** in the Gutenberg inserter.
 
 ---
 
-## Implementation status (as of v0.9.0-beta.2)
+## Implementation status (as of v0.9.0-beta.6)
 
 | Area | Status |
 |---|---|

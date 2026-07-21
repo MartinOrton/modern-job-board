@@ -4,7 +4,7 @@ Tags: jobs, job board, careers, recruitment, woocommerce
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 0.9.0-beta.1
+Stable tag: 0.9.0-beta.6
 License: Proprietary
 License URI: https://martinorton.com/modern-job-board
 
@@ -73,17 +73,16 @@ Yes. Public job search is available at `/wp-json/mjb/v1/jobs`. Authenticated emp
 
 == Changelog ==
 
+= 0.9.0-beta.6 =
+* Form validation, company import dedupe tooling, and related tests
+* Version strings aligned (plugin header is source of truth)
+* Feature-breakdown binary docs removed from the plugin package
+* PHPCS EscapeOutput fix on job form custom fields
+
 = 0.9.0-beta.1 =
 * Pre-stable beta versioning. Treat as beta until 1.0.0 stable.
 
-
-= 1.9.0 =
-* Frontend template and stylesheet refresh
-* Gutenberg blocks for all core shortcodes
-* Documentation, demo seed script, and wordpress.org readme
-* Local development sync tooling
-
 == Upgrade Notice ==
 
-= 1.9.0 =
-Adds Gutenberg blocks, polished frontend templates, and documentation for public demos.
+= 0.9.0-beta.6 =
+Pre-stable beta. Keep test installs updated; not a production 1.0 release.

@@ -2,13 +2,49 @@
 
 All notable changes to the Modern Job Board plugin will be documented in this file.
 
+## Version source of truth
+
+**Canonical version:** `Version` header and `MJB_VERSION` in `modern-job-board.php`.
+
+Those two strings must stay identical. Mirror them in:
+
+- `readme.txt` → `Stable tag`
+- `README.md` → current version line
+- `composer.json` → description version (if present)
+- product docs that quote a version (e.g. `FREEMIUM-COMPARISON.md`)
+
+Never bump a secondary file without updating `modern-job-board.php` first.
+
+**Public line:** `0.9.0-beta.N` until stable `1.0.0`. WordPress update comparison uses only the plugin header / Stable tag — not this file’s historical section.
+
+**Internal history:** Entries under “Internal pre-beta history” used temporary `1.x` labels during private development. They are **not** public releases and must not be treated as newer than `0.9.0-beta.*`.
+
+## [0.9.0-beta.6] - 2026-07-21
+
+### Added
+- Shared frontend form validation (`assets/js/mjb-form-validation.js`) for application and job forms.
+- Job importer company normalize/match/dedupe helpers and CLI tooling (`bin/dedupe-companies.php`, `bin/populate-test-jobs.php`).
+- Tests for form validation helpers and job importer company handling.
+
+### Changed
+- Version strings aligned to `0.9.0-beta.6` across plugin header, `readme.txt`, README, and product docs.
+- Product feature-breakdown `.docx`/`.pdf` files moved out of the plugin package to `product-docs/modern-job-board/`.
+- Marketing copy no longer uses “not open source” phrasing; remains proprietary freemium.
+
+### Fixed
+- PHPCS `EscapeOutput` failures on custom-field required attributes in job submission shortcode.
+
 ## [0.9.0-beta.1] - 2026-07-11
 
 ### Changed
 - Switched to pre-stable beta versioning (`0.9.0-beta.1`). Stable target remains `1.0.0`.
 - Theme aligned to the same beta channel (`0.9.0-beta.1`).
 
-## [1.9.0] - 2026-06-10
+## Internal pre-beta history (formerly labeled 1.x)
+
+> Not part of the public version line. Labels below are historical development markers only.
+
+### internal-1.9.0 - 2026-06-10
 ### Added
 - **Gutenberg blocks**: All six core shortcodes available in the block inserter under **Modern Job Board**.
 - **Documentation**: `docs/getting-started.md`, `docs/developers.md`, `readme.txt`, and `DEMO.md`.
@@ -17,22 +53,22 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 ### Improved
 - **Frontend templates**: Refreshed archive and single job layouts with updated cards, filters, and typography.
 - **Frontend styles**: Design tokens aligned with the marketing site (DM Sans, teal palette, modern cards).
-- **Landing site**: Documentation page, live demo links, and version bump to v1.9.0.
+- **Landing site**: Documentation page, live demo links, and version bump (internal 1.9.0 label).
 
-## [1.8.5] - 2026-06-10
+### internal-1.8.5 - 2026-06-10
 ### Changed
 - **Chart styles in separate file**: Admin performance chart layout and bar widths moved to `assets/css/mjb-charts.css` (utility classes `mjb-chart-w-0` … `mjb-chart-w-100`); embedded `<style>` blocks removed.
 
 ### Added
 - **`composer make-charts-css`**: Regenerates `mjb-charts.css` from `bin/make-charts-css.php`.
 
-## [1.8.4] - 2026-06-10
+### internal-1.8.4 - 2026-06-10
 ### Changed
 - **No inline CSS**: Removed all `style=""` attributes from templates and PHP output; styles moved to `mjb-style.css`, `mjb-admin.css`, and new `mjb-shared.css`.
 - **Class-based UI toggles**: Job form, application form, and AJAX search now show/hide elements via CSS classes instead of JavaScript `style` manipulation.
 - **Chart bar widths**: Admin chart bars use scoped stylesheet rules instead of per-element inline widths.
 
-## [1.8.3] - 2026-06-10
+### internal-1.8.3 - 2026-06-10
 ### Changed
 - **Div-based data grids**: Replaced all HTML tables with accessible div grids across employer/candidate dashboards, custom fields admin, and setup wizard.
 - **Performance overview**: Employer dashboard totals now use stat cards instead of a summary table.
@@ -40,7 +76,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 ### Added
 - **`MJB_Data_Grid` helper**: Shared renderer for consistent grid markup and responsive mobile layouts.
 
-## [1.8.2] - 2026-06-10
+### internal-1.8.2 - 2026-06-10
 ### Added
 - **Webhook retry queue**: Failed deliveries retry up to 5 times with exponential backoff (cron every 5 minutes).
 - **Admin performance charts**: Bar charts for top jobs by views and applications on the Modern Job Board dashboard.
@@ -50,7 +86,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 - **WPCS escaping pass**: Output escaping fixes across admin, dashboard, shortcodes, tools, feeds, and registration templates.
 - **PHPCS ruleset**: Added `WordPress.Security.EscapeOutput` alongside SQL and safe-redirect checks.
 
-## [1.8.1] - 2026-06-10
+### internal-1.8.1 - 2026-06-10
 ### Added
 - **Candidate status emails**: Applicants receive an email when employers change application workflow status.
 - **Outbound webhooks**: Configure webhook URLs and optional HMAC secret in Settings → Integrations.
@@ -62,7 +98,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 - **Page resolver fallbacks**: Registration, applications, job forms, and resume downloads use resolved shortcode pages instead of `home_url('/')`.
 - **PHPCS ruleset**: Expanded to include safe redirect checks alongside SQL safety rules.
 
-## [1.8.0] - 2026-06-10
+### internal-1.8.0 - 2026-06-10
 ### Added
 - **Application workflow statuses**: Employers can track applications as New, Reviewed, Shortlisted, Rejected, or Hired from the dashboard.
 - **REST API v2 (authenticated)**: Employer endpoints for listing/updating applications; candidate endpoints for reading/updating profile.
@@ -75,7 +111,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 - **Candidate dashboard**: Application status column shows workflow labels instead of WordPress post status.
 - **New applications**: Default workflow status is `new` on submission.
 
-## [1.7.2] - 2026-06-10
+### internal-1.7.2 - 2026-06-10
 ### Added
 - **XML / RSS job import**: Bulk import from MJB feed XML, compatible RSS files, or remote feed URLs (Tools → Import).
 - **Duplicate-safe imports**: XML items matched by GUID or link are skipped on re-import.
@@ -87,7 +123,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 - **Page resolver**: `[mjb_jobs]` page is now tracked via `mjb_jobs_page_id`.
 - **Admin dashboard**: Quick link to the Setup wizard.
 
-## [1.7.1] - 2026-06-10
+### internal-1.7.1 - 2026-06-10
 ### Added
 - **Pretty search URLs**: Path-based job search routes instead of exposed query strings.
 - **REST search paths**: Canonical API endpoint at `/wp-json/mjb/v1/jobs/search/...`.
@@ -97,7 +133,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 - **Job filter forms** submit to `/jobs/in/{location}/category/{category}/type/{type}/keyword/{keyword}/page/{n}/`.
 - **REST responses** include a `Link: rel="canonical"` header pointing at the pretty search URL.
 
-## [1.7.0] - 2026-06-10
+### internal-1.7.0 - 2026-06-10
 ### Added
 - **Candidate "My Applications"**: Application history table on the candidate dashboard matched by email.
 - **REST API filters**: `/wp-json/mjb/v1/jobs` supports keywords, location, category, type, `page`, and `per_page` via `MJB_Search`.
@@ -114,7 +150,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 - **CSV application export**: Uses stable admin edit links instead of expiring resume nonce URLs.
 - **Archive template**: Reuses shared `MJB_Shortcodes::render_job_loop()` for consistent featured styling and expiry display.
 
-## [1.6.0] - 2026-06-10
+### internal-1.6.0 - 2026-06-10
 ### Added
 - **GitHub Actions CI**: PHPUnit workflow runs on push and pull requests to `main`.
 - **Registration spam protection**: Honeypot, optional reCAPTCHA, and IP rate limiting on employer and candidate registration forms.
@@ -135,7 +171,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 - **Candidate registration redirect**: Sends new candidates to the resolved candidate dashboard page.
 - **reCAPTCHA loading**: Also enqueues on registration shortcode pages when enabled.
 
-## [1.5.0] - 2026-06-10
+### internal-1.5.0 - 2026-06-10
 ### Added
 - **Application honeypot**: Hidden honeypot field on internal application forms to block basic bot submissions.
 - **Optional reCAPTCHA v2**: Admin settings for site/secret keys; checkbox widget on job application forms when enabled.
@@ -148,7 +184,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 - **Dashboard application counts**: Single batched SQL query replaces per-job `get_posts()` loops (N+1 fix).
 - **Dashboard URL resolution**: Delegates to shared `MJB_Page_Resolver`.
 
-## [1.4.0] - 2026-06-09
+### internal-1.4.0 - 2026-06-09
 ### Added
 - **Centralized search builder**: Shared `MJB_Search::build_query_args()` used by shortcodes, AJAX, archives, and main query filtering.
 - **Application abuse prevention**: Duplicate-application checks and IP-based rate limiting (5 submissions per hour).
@@ -165,7 +201,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 - **Archive location filter**: Reuses the shared location dropdown renderer.
 - **Employer registration redirect**: Uses resolved dashboard page URL instead of a hardcoded path.
 
-## [1.3.0] - 2026-06-09
+### internal-1.3.0 - 2026-06-09
 ### Security
 - **Protected resume downloads**: Resumes are blocked from direct public access via `.htaccess` and served through authenticated, nonce-protected download endpoints.
 - **Resume upload validation**: Server-side file type and size checks (PDF, DOC, DOCX; max 5 MB) on all resume uploads.
@@ -186,7 +222,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 - **Paid CV access setting**: Admin toggle to require payment before employers can view candidate details.
 - **Conditional asset loading**: Frontend CSS/JS only loads on job board pages and shortcodes.
 
-## [1.2.1] - 2025-12-28
+### internal-1.2.1 - 2025-12-28
 ### Improved
 - **Resume Management**:
   - Moved Resumes to a dedicated "Resumes" Custom Post Type for better organization.
@@ -194,7 +230,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
   - Implemented custom upload directory (`/wp-content/uploads/mjb-resumes/`) to keep candidate files separate from the main Media Library.
   - Updated "Apply with Profile" to support the new secure resume objects.
 
-## [1.2.0] - 2025-12-21
+### internal-1.2.0 - 2025-12-21
 ### Added
 - **Custom Fields Builder**: Admin UI to create custom fields for Job Listings and Applications.
 - **CSV Import/Export Tools**: 
@@ -207,7 +243,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
   - **WooCommerce Lifecycle**: Automatic job unpublishing and credit/access revocation on order refund or cancellation.
 - **Security Hardening**: Added `index.php` files to all directories to prevent directory listing.
 
-## [1.1.0] - 2025-12-15
+### internal-1.1.0 - 2025-12-15
 ### Added
 - **Monetization System**:
   - Paid Job Listings via WooCommerce.
@@ -220,7 +256,7 @@ All notable changes to the Modern Job Board plugin will be documented in this fi
 - **Employer Management**:
   - Frontend Employer Registration.
 
-## [1.0.0] - 2025-11-20
+### internal-1.0.0 - 2025-11-20
 ### Added
 - Initial release.
 - Job Listings and Company CPTs.

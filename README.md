@@ -2,7 +2,9 @@
 
 A feature-rich WordPress job board plugin with employer and candidate dashboards, applications, WooCommerce monetization, REST API, webhooks, and Gutenberg blocks.
 
-**Current version:** 0.9.0-beta.2 (pre-stable beta — not a production/stable release)
+**Current version:** 0.9.0-beta.6 (pre-stable beta — not a production/stable release)
+
+**Version source of truth:** `Version` + `MJB_VERSION` in [`modern-job-board.php`](modern-job-board.php). Keep `readme.txt` Stable tag and this line in sync with that constant.
 
 Modern Job Board is **proprietary freemium**. There is a free tier; Pro, Business, and Complete Site are paid. The free license does **not** grant ownership of the plugin software. See [LICENSE.txt](LICENSE.txt) and the [pricing page](../modern-job-board-website/index.html#pricing).
 
@@ -22,6 +24,10 @@ composer seed-demo
 ```
 
 See [DEMO.md](DEMO.md) for details. The marketing site in `modern-job-board-website/` links to the local demo URL configured in `js/script.js`.
+
+## Product docs (not shipped)
+
+Feature breakdown `.docx`/`.pdf` files live outside this repo at `../product-docs/modern-job-board/` so they are not included in plugin zips. See `.distignore` for other distribution exclusions.
 
 ## Shortcodes & blocks
 
