@@ -52,22 +52,26 @@ class MJB_Custom_Fields
     public function handle_save_logic()
     {
         if (isset($_POST['mjb_save_custom_field']) && check_admin_referer('mjb_save_custom_field_nonce')) {
+            if (!current_user_can('manage_options')) {
+                wp_die(esc_html__('You do not have permission to manage custom fields.', 'modern-job-board'), 403);
+            }
+
             $fields = $this->get_fields();
 
             $new_field = array(
-                'label' => sanitize_text_field($_POST['field_label']),
-                'key' => sanitize_title($_POST['field_label']), // Auto-generate key from label
-                'type' => sanitize_text_field($_POST['field_type']),
-                'location' => sanitize_text_field($_POST['field_location']),
+                'label' => sanitize_text_field(wp_unslash($_POST['field_label'])),
+                'key' => sanitize_title(wp_unslash($_POST['field_label'])), // Auto-generate key from label
+                'type' => sanitize_text_field(wp_unslash($_POST['field_type'])),
+                'location' => sanitize_text_field(wp_unslash($_POST['field_location'])),
                 'required' => isset($_POST['field_required']) ? 1 : 0,
-                'options' => sanitize_textarea_field($_POST['field_options']), // For select types
+                'options' => sanitize_textarea_field(wp_unslash($_POST['field_options'])), // For select types
             );
 
             // Append
             $fields[] = $new_field;
             update_option($this->option_name, $fields);
 
-            wp_redirect(add_query_arg(
+            wp_safe_redirect(add_query_arg(
                 array(
                     'page' => 'modern-job-board',
                     'tab' => 'custom-fields',
@@ -80,13 +84,17 @@ class MJB_Custom_Fields
 
         // Handle Delete
         if (isset($_GET['action']) && $_GET['action'] === 'delete_field' && isset($_GET['index']) && check_admin_referer('delete_field_' . $_GET['index'])) {
+            if (!current_user_can('manage_options')) {
+                wp_die(esc_html__('You do not have permission to manage custom fields.', 'modern-job-board'), 403);
+            }
+
             $fields = $this->get_fields();
             $index = intval($_GET['index']);
             if (isset($fields[$index])) {
                 unset($fields[$index]);
                 update_option($this->option_name, array_values($fields)); // Re-index
             }
-            wp_redirect(add_query_arg(
+            wp_safe_redirect(add_query_arg(
                 array(
                     'page' => 'modern-job-board',
                     'tab' => 'custom-fields',

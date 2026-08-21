@@ -46,12 +46,23 @@ function mjb_normalize_landing_urls($content) {
         "href='docs/index.html'" => "href='/docs/'",
         'href="../index.html"' => 'href="/"',
         'href="../index.html#features"' => 'href="/#features"',
+        'href="../index.html#pricing"' => 'href="/#pricing"',
         'href="index.html"' => 'href="/docs/"',
         'href="/jobs/" data-demo-path="/jobs/"' => 'href="/jobs/"',
         "href='/jobs/' data-demo-path='/jobs/'" => "href='/jobs/'",
     );
 
-    return str_replace(array_keys($replacements), array_values($replacements), $content);
+    $content = str_replace(array_keys($replacements), array_values($replacements), $content);
+
+    // Escape MJB shortcodes so WordPress does not execute code samples on docs
+    // (e.g. [mjb_jobs]). Skip already-escaped [[shortcode]] forms.
+    $content = preg_replace(
+        '/(?<!\[)\[(\/?mjb_[a-z0-9_]+)([^\]]*)\](?!\])/i',
+        '[[$1$2]]',
+        $content
+    );
+
+    return $content;
 }
 
 /**
@@ -95,9 +106,9 @@ function mjb_serialize_parsed_blocks($markup) {
  * @return string Outer HTML or empty string.
  */
 function mjb_extract_element_by_class($html, $class_name, $tag = 'div') {
-    $tag = preg_quote($tag, '/');
-    $class_name = preg_quote($class_name, '/');
-    $open_pattern = '/<' . $tag . '\b[^>]*class="[^"]*\b' . $class_name . '\b[^"]*"[^>]*>/is';
+    $tag_q = preg_quote($tag, '/');
+    $class_q = preg_quote($class_name, '/');
+    $open_pattern = '/<' . $tag_q . '\b[^>]*class="[^"]*\b' . $class_q . '\b[^"]*"[^>]*>/is';
 
     if (!preg_match($open_pattern, $html, $open_match, PREG_OFFSET_CAPTURE)) {
         return '';
@@ -107,18 +118,22 @@ function mjb_extract_element_by_class($html, $class_name, $tag = 'div') {
     $pos = $start + strlen($open_match[0][0]);
     $depth = 1;
     $length = strlen($html);
+    $tag_lower = strtolower($tag);
 
     while ($pos < $length && $depth > 0) {
-        if (!preg_match('/<\/?' . $tag . '\b[^>]*>/is', $html, $tag_match, PREG_OFFSET_CAPTURE, $pos)) {
+        if (!preg_match('/<\/?' . $tag_q . '\b[^>]*>/is', $html, $tag_match, PREG_OFFSET_CAPTURE, $pos)) {
             break;
         }
 
         $token = $tag_match[0][0];
         $token_pos = $tag_match[0][1];
+        $token_l = strtolower(ltrim($token));
 
-        if (preg_match('/^<\//' . $tag . '\b/i', $token)) {
+        // Closing tag: </div ...>
+        if (str_starts_with($token_l, '</' . $tag_lower)) {
             $depth--;
         } elseif (!preg_match('/\/\s*>$/', $token)) {
+            // Opening tag (ignore self-closing).
             $depth++;
         }
 
@@ -204,7 +219,7 @@ function mjb_build_dev_grid_html($inner) {
     }
 
     $dev_content = $items ? '<div class="dev-content">' . implode("\n", $items) . '</div>' : '';
-    $dev_code    = mjb_extract_element_by_class($inner, 'dev-code');
+    $dev_code = mjb_extract_element_by_class($inner, 'dev-code');
 
     return '<div class="dev-grid">' . $dev_content . ( $dev_code ? "\n" . $dev_code : '' ) . '</div>';
 }
@@ -502,6 +517,9 @@ function mjb_build_home_block_markup($main_html) {
             $content = mjb_build_pricing_blocks($inner);
         } elseif (mjb_section_has_class($section['attrs'], 'cta-section')) {
             $content = mjb_build_cta_blocks($inner);
+        } elseif ('faq' === $anchor || mjb_section_has_class($section['attrs'], 'faq-section')) {
+            // Keep accordion markup intact (buttons + regions).
+            $content = mjb_html_block($inner);
         } else {
             $content = mjb_html_block($inner);
         }

@@ -173,8 +173,9 @@ class MJB_CPT
             'exclude_from_search' => false,
             'publicly_queryable' => true,
             'capability_type' => 'post',
+            // Nested under the demo jobs base so board URLs stay under /jobs/.
             'rewrite' => array(
-                'slug' => 'company',
+                'slug' => 'jobs/companies',
                 'with_front' => false,
             ),
         );
@@ -186,9 +187,14 @@ class MJB_CPT
             'singular_name' => _x('Resume', 'Post Type Singular Name', 'modern-job-board'),
             'menu_name' => __('Resumes', 'modern-job-board'),
             'all_items' => __('All Resumes', 'modern-job-board'),
-            'add_new_item' => __('Add New Resume', 'modern-job-board'), // Usually handled via frontend, but allowing admin add
+            'add_new' => __('Add New', 'modern-job-board'),
+            'add_new_item' => __('Add New Resume', 'modern-job-board'),
             'edit_item' => __('Edit Resume', 'modern-job-board'),
+            'new_item' => __('New Resume', 'modern-job-board'),
             'view_item' => __('View Resume', 'modern-job-board'),
+            'search_items' => __('Search Resumes', 'modern-job-board'),
+            'not_found' => __('No resumes found', 'modern-job-board'),
+            'not_found_in_trash' => __('No resumes found in Trash', 'modern-job-board'),
         );
         $args_resume = array(
             'label' => __('Resume', 'modern-job-board'),
@@ -207,10 +213,8 @@ class MJB_CPT
             'has_archive' => false,
             'exclude_from_search' => true,
             'publicly_queryable' => false,
+            // Standard post caps so Add New works for admins/editors (create was previously blocked).
             'capability_type' => 'post',
-            'capabilities' => array(
-                'create_posts' => 'do_not_allow', // Admins can manage, but maybe not create manually easily? Let's treat like Contact Form 7 entries.
-            ),
             'map_meta_cap' => true,
         );
         register_post_type('mjb_resume', $args_resume);
@@ -365,6 +369,10 @@ class MJB_CPT
      */
     public function append_job_map($content)
     {
+        // Skip while related-job cards render (their excerpt path can re-enter the_content).
+        if (class_exists('MJB_Job_Ops') && method_exists('MJB_Job_Ops', 'is_rendering_related') && MJB_Job_Ops::is_rendering_related()) {
+            return $content;
+        }
         if (!is_singular('job_listing') || !in_the_loop() || !is_main_query()) {
             return $content;
         }
@@ -468,6 +476,15 @@ class MJB_CPT
             $schema['employmentType'] = $employment_type;
         }
 
+        /**
+         * Filter JobPosting JSON-LD before output (Google Jobs mapper applies here).
+         *
+         * @param array $schema
+         * @param int   $post_id
+         */
+        $schema = apply_filters('mjb_job_schema', $schema, (int) $post->ID);
+
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD from structured array.
         echo '<script type="application/ld+json">' . wp_json_encode($schema) . '</script>';
     }
 }

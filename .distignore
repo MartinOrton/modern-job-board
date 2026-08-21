@@ -35,3 +35,7 @@ product-docs
 .idea
 .DS_Store
 Thumbs.db
+.grok
+
+# Generated city-prefix shards (rebuild with bin/build-world-cities.php)
+assets/data/cities-by-prefix

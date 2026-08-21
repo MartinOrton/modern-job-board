@@ -1,6 +1,8 @@
 <?php
 /**
  * Modern Job Board Resume Storage & Protected Downloads
+ *
+ * Resumes are stored via MJB_Private_Uploads (never in the Media Library).
  */
 
 if (!defined('ABSPATH')) {
@@ -18,7 +20,7 @@ class MJB_Resumes
     public function init()
     {
         add_action('init', array($this, 'handle_download_request'), 1);
-        add_filter('upload_dir', array($this, 'custom_upload_dir'));
+        // upload_dir filter is owned by MJB_Private_Uploads.
     }
 
     /**
@@ -26,6 +28,11 @@ class MJB_Resumes
      */
     public static function ensure_secure_directory()
     {
+        if (class_exists('MJB_Private_Uploads')) {
+            MJB_Private_Uploads::ensure_directories();
+            return;
+        }
+
         $upload_dir = wp_upload_dir();
         if (!empty($upload_dir['error'])) {
             return;
@@ -41,7 +48,7 @@ class MJB_Resumes
     }
 
     /**
-     * Write index.php and .htaccess to block direct access.
+     * Write index.php and .htaccess to block direct access (legacy path).
      *
      * @param string $dir
      */
@@ -49,59 +56,16 @@ class MJB_Resumes
     {
         $index_file = trailingslashit($dir) . 'index.php';
         if (!file_exists($index_file)) {
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
             file_put_contents($index_file, "<?php\n// Silence is golden.\n");
         }
 
         $htaccess_file = trailingslashit($dir) . '.htaccess';
         if (!file_exists($htaccess_file)) {
             $rules = "<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nOrder deny,allow\nDeny from all\n</IfModule>\n";
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
             file_put_contents($htaccess_file, $rules);
         }
-    }
-
-    /**
-     * Redirect uploads into the protected resume directory.
-     *
-     * @param array $path
-     * @return array
-     */
-    public function custom_upload_dir($path)
-    {
-        if (empty($path['basedir']) || !self::is_resume_upload_context()) {
-            return $path;
-        }
-
-        if (!empty($path['error'])) {
-            return $path;
-        }
-
-        $subdir = isset($path['subdir']) ? $path['subdir'] : '';
-        $resume_path = trailingslashit($path['basedir']) . 'mjb-resumes' . $subdir;
-        $resume_url = trailingslashit($path['baseurl']) . 'mjb-resumes' . $subdir;
-
-        if (!file_exists($resume_path)) {
-            wp_mkdir_p($resume_path);
-            self::write_protection_files(trailingslashit($path['basedir']) . 'mjb-resumes');
-        }
-
-        $path['path'] = $resume_path;
-        $path['url'] = $resume_url;
-        $path['subdir'] = '/mjb-resumes' . $subdir;
-
-        return $path;
-    }
-
-    /**
-     * Whether the current request is uploading a resume.
-     *
-     * @return bool
-     */
-    private static function is_resume_upload_context()
-    {
-        return (
-            (isset($_POST['mjb_upload_resume']) && isset($_POST['mjb_resume_nonce']))
-            || (isset($_POST['mjb_submit_application']) && isset($_FILES['candidate_resume']['name']) && !empty($_FILES['candidate_resume']['name']))
-        );
     }
 
     /**
@@ -112,11 +76,25 @@ class MJB_Resumes
      */
     public static function validate_file($file)
     {
+        if (class_exists('MJB_Private_Uploads')) {
+            return MJB_Private_Uploads::validate_file($file, MJB_Private_Uploads::TYPE_RESUME);
+        }
+
         if (empty($file['name']) || empty($file['tmp_name'])) {
             return new WP_Error('missing_file', __('No file was uploaded.', 'modern-job-board'));
         }
 
-        if (!empty($file['size']) && intval($file['size']) > self::MAX_FILE_SIZE) {
+        $size = isset($file['size']) ? intval($file['size']) : 0;
+        if ($size <= 0 && !empty($file['tmp_name']) && is_readable($file['tmp_name'])) {
+            $measured = @filesize($file['tmp_name']); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+            if ($measured !== false) {
+                $size = intval($measured);
+            }
+        }
+        if ($size <= 0) {
+            return new WP_Error('missing_file', __('No file was uploaded.', 'modern-job-board'));
+        }
+        if ($size > self::MAX_FILE_SIZE) {
             return new WP_Error('file_too_large', __('Resume file is too large. Maximum size is 5 MB.', 'modern-job-board'));
         }
 
@@ -126,26 +104,38 @@ class MJB_Resumes
             'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         ));
 
-        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
         if (empty($check['ext']) || !in_array($check['ext'], self::ALLOWED_EXTENSIONS, true)) {
-            if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
-                return new WP_Error('invalid_type', __('Invalid resume file type. Allowed types: PDF, DOC, DOCX.', 'modern-job-board'));
-            }
+            return new WP_Error('invalid_type', __('Invalid resume file type. Allowed types: PDF, DOC, DOCX.', 'modern-job-board'));
         }
 
         return true;
     }
 
     /**
-     * Upload a resume file to the protected directory.
+     * Upload a resume file to the protected directory (never Media Library).
      *
-     * @param array $file
-     * @return array|WP_Error Keys: file, url
+     * @param array  $file
+     * @param string $context Optional context label for filters/actions.
+     * @return array|WP_Error Keys: file, url, relative
      */
     public static function upload_file($file, $context = 'application')
     {
         $file = apply_filters('mjb_resume_upload_file', $file, $context);
+
+        if (class_exists('MJB_Private_Uploads')) {
+            $uploaded = MJB_Private_Uploads::upload($file, MJB_Private_Uploads::TYPE_RESUME);
+            if (is_wp_error($uploaded)) {
+                return $uploaded;
+            }
+
+            do_action('mjb_resume_uploaded', $uploaded, $context);
+
+            return array(
+                'file'     => $uploaded['file'],
+                'url'      => '',
+                'relative' => isset($uploaded['relative']) ? $uploaded['relative'] : '',
+            );
+        }
 
         $validation = self::validate_file($file);
         if (is_wp_error($validation)) {
@@ -175,6 +165,216 @@ class MJB_Resumes
     }
 
     /**
+     * Create an mjb_resume post for a candidate from an uploaded file result.
+     *
+     * @param int    $user_id
+     * @param array  $uploaded Result from upload_file().
+     * @param string $original_name Optional original filename for the post title.
+     * @return int|WP_Error Resume post ID.
+     */
+    public static function create_resume_post($user_id, $uploaded, $original_name = '')
+    {
+        $user_id = intval($user_id);
+        $user = get_userdata($user_id);
+        if (!$user) {
+            return new WP_Error('invalid_user', __('Invalid user.', 'modern-job-board'));
+        }
+
+        $title_name = $original_name !== '' ? $original_name : basename($uploaded['file']);
+        $resume_post = array(
+            'post_title'  => sanitize_file_name($title_name) . ' - ' . $user->display_name,
+            'post_type'   => 'mjb_resume',
+            'post_status' => 'publish',
+            'post_author' => $user_id,
+        );
+
+        $resume_id = wp_insert_post($resume_post, true);
+        if (!$resume_id || is_wp_error($resume_id)) {
+            return is_wp_error($resume_id) ? $resume_id : new WP_Error('resume_create_failed', __('Could not save resume.', 'modern-job-board'));
+        }
+
+        $resume_id = intval($resume_id);
+        $path = isset($uploaded['file']) ? $uploaded['file'] : '';
+        $relative = isset($uploaded['relative']) ? $uploaded['relative'] : '';
+
+        update_post_meta($resume_id, '_resume_file_path', $path);
+        if ($relative !== '') {
+            update_post_meta($resume_id, '_resume_file_relative', $relative);
+        }
+        update_post_meta($resume_id, '_candidate_user_id', $user_id);
+        update_user_meta($user_id, '_candidate_resume_id', $resume_id);
+
+        return $resume_id;
+    }
+
+    /**
+     * Copy a candidate profile resume into a new private file for one application.
+     *
+     * Never returns the profile file path itself — applications must own an
+     * independent copy so later profile replacements cannot break downloads.
+     *
+     * @param int $resume_post_id Profile mjb_resume post ID.
+     * @return array|WP_Error {
+     *     @type string $path           Path to store on the application (prefer relative).
+     *     @type string $relative       Relative path under storage root (may be empty).
+     *     @type int    $resume_post_id Source profile resume post (informational).
+     * }
+     */
+    public static function copy_profile_resume_for_application($resume_post_id)
+    {
+        $resume_post_id = intval($resume_post_id);
+        if ($resume_post_id <= 0) {
+            return new WP_Error(
+                'error_resume_required',
+                __('Upload a resume on your candidate profile before applying.', 'modern-job-board')
+            );
+        }
+
+        $source_path = self::get_resume_post_file_path($resume_post_id);
+        if ($source_path === '') {
+            return new WP_Error(
+                'error_resume_required',
+                __('Upload a resume on your candidate profile before applying.', 'modern-job-board')
+            );
+        }
+
+        if (!class_exists('MJB_Private_Uploads')) {
+            return new WP_Error(
+                'error_resume_copy',
+                __('Could not attach your resume to this application. Please try again.', 'modern-job-board')
+            );
+        }
+
+        $copied = MJB_Private_Uploads::copy_as_type($source_path, MJB_Private_Uploads::TYPE_RESUME);
+        if (is_wp_error($copied)) {
+            return new WP_Error(
+                'error_resume_copy',
+                __('Could not attach your resume to this application. Please try again.', 'modern-job-board'),
+                array('original' => $copied)
+            );
+        }
+
+        $relative = isset($copied['relative']) ? (string) $copied['relative'] : '';
+        $path = $relative !== '' ? $relative : (isset($copied['file']) ? (string) $copied['file'] : '');
+        if ($path === '') {
+            return new WP_Error(
+                'error_resume_copy',
+                __('Could not attach your resume to this application. Please try again.', 'modern-job-board')
+            );
+        }
+
+        return array(
+            'path' => $path,
+            'relative' => $relative,
+            'resume_post_id' => $resume_post_id,
+        );
+    }
+
+    /**
+     * Whether any job application still references this resume file or profile post.
+     *
+     * Used when replacing a profile resume so we do not delete files still needed
+     * by historical applications (including legacy shared profile paths).
+     *
+     * @param int    $resume_post_id Profile resume post ID (0 if none).
+     * @param string $file_path      Absolute or relative path for the old file.
+     * @return bool
+     */
+    public static function is_resume_still_referenced($resume_post_id, $file_path = '')
+    {
+        $resume_post_id = intval($resume_post_id);
+        $file_path = is_string($file_path) ? $file_path : '';
+
+        $absolute = '';
+        $relative = '';
+        if ($file_path !== '' && class_exists('MJB_Private_Uploads')) {
+            $absolute = MJB_Private_Uploads::resolve_path($file_path);
+            if ($absolute !== '') {
+                $relative = MJB_Private_Uploads::absolute_to_relative($absolute);
+            }
+        } elseif ($file_path !== '' && file_exists($file_path)) {
+            $absolute = wp_normalize_path($file_path);
+        }
+
+        $meta_query = array('relation' => 'OR');
+        if ($resume_post_id > 0) {
+            $meta_query[] = array(
+                'key' => '_candidate_resume_id',
+                'value' => $resume_post_id,
+                'compare' => '=',
+                'type' => 'NUMERIC',
+            );
+        }
+        if ($file_path !== '') {
+            $meta_query[] = array(
+                'key' => '_candidate_resume_path',
+                'value' => $file_path,
+                'compare' => '=',
+            );
+        }
+        if ($absolute !== '') {
+            $meta_query[] = array(
+                'key' => '_candidate_resume_path',
+                'value' => $absolute,
+                'compare' => '=',
+            );
+        }
+        if ($relative !== '') {
+            $meta_query[] = array(
+                'key' => '_candidate_resume_path',
+                'value' => $relative,
+                'compare' => '=',
+            );
+            $meta_query[] = array(
+                'key' => '_candidate_resume_relative',
+                'value' => $relative,
+                'compare' => '=',
+            );
+        }
+
+        // Only the relation key means nothing to match.
+        if (count($meta_query) < 2) {
+            return false;
+        }
+
+        $found = get_posts(array(
+            'post_type' => 'job_application',
+            'post_status' => 'any',
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'meta_query' => $meta_query,
+        ));
+
+        return !empty($found);
+    }
+
+    /**
+     * Retire a previous profile resume only when no application still needs it.
+     *
+     * @param int $resume_post_id
+     * @return void
+     */
+    public static function maybe_retire_profile_resume($resume_post_id)
+    {
+        $resume_post_id = intval($resume_post_id);
+        if ($resume_post_id <= 0) {
+            return;
+        }
+
+        $old_path = self::get_resume_post_file_path($resume_post_id);
+        if (self::is_resume_still_referenced($resume_post_id, $old_path)) {
+            // Leave the post and file for historical application downloads.
+            return;
+        }
+
+        if ($old_path && class_exists('MJB_Private_Uploads')) {
+            MJB_Private_Uploads::delete($old_path);
+        }
+
+        wp_delete_post($resume_post_id, true);
+    }
+
+    /**
      * Get the file path stored on an application.
      *
      * @param int $application_id
@@ -183,8 +383,13 @@ class MJB_Resumes
     public static function get_application_file_path($application_id)
     {
         $path = get_post_meta($application_id, '_candidate_resume_path', true);
-        if ($path && file_exists($path)) {
-            return $path;
+        if ($path) {
+            $resolved = class_exists('MJB_Private_Uploads')
+                ? MJB_Private_Uploads::resolve_path($path)
+                : (file_exists($path) ? $path : '');
+            if ($resolved) {
+                return $resolved;
+            }
         }
 
         $legacy_url = get_post_meta($application_id, '_candidate_resume', true);
@@ -215,8 +420,21 @@ class MJB_Resumes
     public static function get_resume_post_file_path($resume_post_id)
     {
         $path = get_post_meta($resume_post_id, '_resume_file_path', true);
-        if ($path && file_exists($path)) {
-            return $path;
+        if ($path) {
+            $resolved = class_exists('MJB_Private_Uploads')
+                ? MJB_Private_Uploads::resolve_path($path)
+                : (file_exists($path) ? $path : '');
+            if ($resolved) {
+                return $resolved;
+            }
+        }
+
+        $relative = get_post_meta($resume_post_id, '_resume_file_relative', true);
+        if ($relative && class_exists('MJB_Private_Uploads')) {
+            $resolved = MJB_Private_Uploads::resolve_path($relative);
+            if ($resolved) {
+                return $resolved;
+            }
         }
 
         $legacy_url = get_post_meta($resume_post_id, '_resume_file_url', true);
@@ -354,7 +572,15 @@ class MJB_Resumes
             wp_die(esc_html__('Resume file not found.', 'modern-job-board'), 404);
         }
 
-        $filename = basename($file_path);
+        // Never stream arbitrary paths from poisoned meta — only MJB storage roots.
+        if (class_exists('MJB_Private_Uploads') && !MJB_Private_Uploads::path_is_under_allowed_storage($file_path)) {
+            wp_die(esc_html__('Resume file not found.', 'modern-job-board'), 404);
+        }
+
+        $filename = sanitize_file_name(basename($file_path));
+        if ($filename === '' || $filename === '.' || $filename === '..') {
+            $filename = 'resume.bin';
+        }
         $mime = wp_check_filetype($filename);
         $content_type = !empty($mime['type']) ? $mime['type'] : 'application/octet-stream';
 
@@ -362,9 +588,12 @@ class MJB_Resumes
 
         nocache_headers();
         header('Content-Type: ' . $content_type);
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Content-Length: ' . filesize($file_path));
+        // Prevent header injection via poisoned basenames; ASCII fallback + RFC 5987.
+        header('Content-Disposition: attachment; filename="' . str_replace(array('"', '\\'), '', $filename) . '"; filename*=UTF-8\'\'' . rawurlencode($filename));
+        header('Content-Length: ' . (string) filesize($file_path));
+        header('X-Content-Type-Options: nosniff');
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
         readfile($file_path);
         exit;
     }

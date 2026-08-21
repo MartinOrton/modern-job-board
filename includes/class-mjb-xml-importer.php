@@ -81,6 +81,110 @@ class MJB_Xml_Importer
     }
 
     /**
+     * Whether a URL is safe to fetch for admin feed import (SSRF hardening).
+     *
+     * Allows only http(s) to public hosts. Blocks loopback, private, link-local,
+     * and cloud metadata ranges. Filterable for controlled environments.
+     *
+     * @param string $url
+     * @return true|WP_Error
+     */
+    public static function validate_remote_feed_url($url)
+    {
+        $url = esc_url_raw((string) $url);
+        if ($url === '' || !wp_http_validate_url($url)) {
+            return new WP_Error('mjb_invalid_url', __('Please provide a valid feed URL.', 'modern-job-board'));
+        }
+
+        $parts = wp_parse_url($url);
+        if (!is_array($parts) || empty($parts['host']) || empty($parts['scheme'])) {
+            return new WP_Error('mjb_invalid_url', __('Please provide a valid feed URL.', 'modern-job-board'));
+        }
+
+        $scheme = strtolower((string) $parts['scheme']);
+        if (!in_array($scheme, array('http', 'https'), true)) {
+            return new WP_Error('mjb_invalid_url', __('Feed URL must use http or https.', 'modern-job-board'));
+        }
+
+        // Userinfo in URLs can hide intent; reject.
+        if (isset($parts['user']) || isset($parts['pass'])) {
+            return new WP_Error('mjb_invalid_url', __('Feed URL must not include credentials.', 'modern-job-board'));
+        }
+
+        $host = strtolower((string) $parts['host']);
+        $host = trim($host, '[]'); // IPv6 literals
+
+        $blocked_hosts = array(
+            'localhost',
+            'localhost.localdomain',
+            'metadata.google.internal',
+            'metadata',
+        );
+        if (in_array($host, $blocked_hosts, true) || preg_match('/\.local$/', $host) || preg_match('/\.internal$/', $host)) {
+            return new WP_Error(
+                'mjb_url_not_public',
+                __('Feed URL must point to a public host (private or local addresses are not allowed).', 'modern-job-board')
+            );
+        }
+
+        $ips = array();
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            $ips[] = $host;
+        } elseif (function_exists('gethostbynamel')) {
+            // When DNS resolves, reject private targets (blocks "public name → 10.x" tricks).
+            // If DNS fails (offline CI / new domains), fall through — host denylist still applies.
+            $resolved = @gethostbynamel($host); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+            if (is_array($resolved) && !empty($resolved)) {
+                $ips = $resolved;
+            }
+        }
+
+        foreach ($ips as $ip) {
+            if (self::is_non_public_ip($ip)) {
+                return new WP_Error(
+                    'mjb_url_not_public',
+                    __('Feed URL must point to a public host (private or local addresses are not allowed).', 'modern-job-board')
+                );
+            }
+        }
+
+        /**
+         * Filter remote feed URL validation result.
+         *
+         * @param true|WP_Error $result
+         * @param string        $url
+         */
+        return apply_filters('mjb_validate_remote_feed_url', true, $url);
+    }
+
+    /**
+     * Whether an IP is loopback, private, link-local, or otherwise non-public.
+     *
+     * @param string $ip
+     * @return bool
+     */
+    public static function is_non_public_ip($ip)
+    {
+        $ip = (string) $ip;
+        if ($ip === '' || !filter_var($ip, FILTER_VALIDATE_IP)) {
+            return true;
+        }
+
+        // FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE rejects private/reserved.
+        $flags = FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE;
+        if (!filter_var($ip, FILTER_VALIDATE_IP, $flags)) {
+            return true;
+        }
+
+        // Explicit cloud metadata / link-local extras.
+        if (strpos($ip, '169.254.') === 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Fetch a remote feed URL and import jobs.
      *
      * @param string $url
@@ -89,14 +193,17 @@ class MJB_Xml_Importer
      */
     public static function import_from_url($url, $args = array())
     {
-        $url = esc_url_raw($url);
-        if ($url === '' || !wp_http_validate_url($url)) {
-            return new WP_Error('mjb_invalid_url', __('Please provide a valid feed URL.', 'modern-job-board'));
+        $safe = self::validate_remote_feed_url($url);
+        if (is_wp_error($safe)) {
+            return $safe;
         }
+
+        $url = esc_url_raw($url);
 
         $response = wp_remote_get($url, array(
             'timeout' => 30,
             'redirection' => 3,
+            'limit_response_size' => 5 * 1024 * 1024,
         ));
 
         if (is_wp_error($response)) {

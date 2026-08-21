@@ -39,3 +39,10 @@ All shortcodes are also available as Gutenberg blocks under **Modern Job Board**
 2. Post a test job from the frontend job form.
 3. Register a candidate account and submit a test application.
 4. Configure WooCommerce products if you plan to monetize listings or CV access.
+5. On production (or nginx Local sites), deny web access to private CV storage — see [deploy.md](deploy.md).
+
+## Storage & privacy (short)
+
+- CVs: `wp-content/mjb-private/` (must not be publicly downloadable)
+- Logos/photos: `wp-content/mjb-brand/` (public hashed files)
+- Full server and cache notes: [deploy.md](deploy.md)

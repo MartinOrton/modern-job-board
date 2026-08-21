@@ -2,7 +2,7 @@
 
 A feature-rich WordPress job board plugin with employer and candidate dashboards, applications, WooCommerce monetization, REST API, webhooks, and Gutenberg blocks.
 
-**Current version:** 0.9.0-beta.6 (pre-stable beta — not a production/stable release)
+**Current version:** 0.9.0-beta.88 (pre-stable beta — not a production/stable release)
 
 **Version source of truth:** `Version` + `MJB_VERSION` in [`modern-job-board.php`](modern-job-board.php). Keep `readme.txt` Stable tag and this line in sync with that constant.
 
@@ -45,7 +45,9 @@ All shortcodes are available as Gutenberg blocks under **Modern Job Board**.
 ## Developer docs
 
 - [docs/developers.md](docs/developers.md) — REST, webhooks, hooks
-- [REMOTE_SETUP.md](REMOTE_SETUP.md) — nginx resume protection and SSH workflow
+- [docs/deploy.md](docs/deploy.md) — local/prod storage, nginx private files, cache, backups
+- [REMOTE_SETUP.md](REMOTE_SETUP.md) — SSH workflow + nginx pointer
+- [docs/purchase.md](docs/purchase.md) — licenses and SA-friendly checkout
 
 ## Development
 

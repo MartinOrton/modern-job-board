@@ -1,59 +1,63 @@
-# Setting up Remote Development via SSH
+# Remote development & server notes
 
-Since you cannot run the plugin locally due to domain dependencies, the best way to work is using **VS Code Remote - SSH**. This allows you to edit files directly on the server as if they were local.
+## A. Private file protection & deploy (canonical)
 
-## Prerequisites
+**See [docs/deploy.md](docs/deploy.md)** for:
 
-1.  **VS Code Extension**: Install the [Remote - SSH](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh) extension by Microsoft.
+- Durable storage under `wp-content/mjb-private/` and `mjb-brand/`
+- nginx / Apache / IIS / Local WP deny rules
+- Cache and CDN guidance
+- Update and backup workflow
+- Verification checklist
 
-## Step 1: Configure SSH Host
-
-1.  Open VS Code Command Palette (`Ctrl+Shift+P`).
-2.  Type **"Remote-SSH: Open Configuration File"** and select it.
-3.  Choose your personal config file (usually `C:\Users\YOUR_USER\.ssh\config`).
-4.  Add the following entry (replace placeholders with your actual details):
-
-```ssh
-Host my-plugin-server
-    HostName <YOUR_SERVER_IP_OR_DOMAIN>
-    User <YOUR_SSH_USERNAME>
-    # If using a key file:
-    # IdentityFile "C:\Path\To\Your\private_key.pem"
-    # If using password, you will be prompted on connection.
-```
-
-## Step 2: Connect
-
-1.  Open the Command Palette (`Ctrl+Shift+P`).
-2.  Type **"Remote-SSH: Connect to Host..."**.
-3.  Select `my-plugin-server`.
-4.  A new VS Code window will open connected to the server.
-
-## Step 3: Open the Remote Folder
-
-1.  In the new remote window, go to **File > Open Folder**.
-2.  Navigate to the path where your WordPress plugin is installed on the server (e.g., `/var/www/html/wp-content/plugins/modern-job-board`).
-3.  Click **OK**.
-
-You are now editing files directly on the server!
-
-## Securing Resume Uploads on nginx
-
-The plugin stores resumes in `/wp-content/uploads/mjb-resumes/` and blocks direct access via `.htaccess` on Apache. **nginx ignores `.htaccess`**, so you must deny direct access in your server config.
-
-Add a `location` block inside your site's `server { }` block (adjust the path if WordPress is in a subdirectory):
+Quick nginx snippet (full context in deploy.md):
 
 ```nginx
-location ~* /wp-content/uploads/mjb-resumes/ {
+location ~* /wp-content/mjb-private/ {
+    deny all;
+    return 403;
+}
+location ~* /wp-content/plugins/modern-job-board/mjb-private/ {
+    deny all;
+    return 403;
+}
+location ~* /wp-content/uploads/mjb-(private|resumes)/ {
     deny all;
     return 403;
 }
 ```
 
-Reload nginx after editing:
-
 ```bash
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-Resumes remain available through the plugin's authenticated download endpoint (`?mjb_download=resume&mjb_id=...&mjb_nonce=...`). Test by visiting a resume file URL directly — it should return **403 Forbidden**.
+Resumes are only available via the plugin’s authenticated download endpoint (`?mjb_download=…`). A direct private file URL must return **403**.
+
+---
+
+## B. Remote development via SSH (VS Code)
+
+Useful when editing production/staging over SSH.
+
+### Prerequisites
+
+1. VS Code extension: [Remote - SSH](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh)
+
+### Configure host
+
+1. Command Palette → **Remote-SSH: Open Configuration File**
+2. Add (replace placeholders):
+
+```ssh
+Host my-plugin-server
+    HostName <YOUR_SERVER_IP_OR_DOMAIN>
+    User <YOUR_SSH_USERNAME>
+    # IdentityFile "C:\Path\To\Your\private_key.pem"
+```
+
+### Connect
+
+1. **Remote-SSH: Connect to Host…** → `my-plugin-server`
+2. **File → Open Folder** → e.g. `/var/www/html/wp-content/plugins/modern-job-board`
+
+You are editing files on the server. Prefer git deploys over live-editing production when possible.

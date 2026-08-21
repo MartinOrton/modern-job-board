@@ -39,42 +39,70 @@ class MJB_Page_Wizard
                 'title' => __('Jobs', 'modern-job-board'),
                 'shortcode' => 'mjb_jobs',
                 'option_key' => 'mjb_jobs_page_id',
+                'parent' => '',
             ),
             array(
                 'slug' => 'post-a-job',
                 'title' => __('Post a Job', 'modern-job-board'),
                 'shortcode' => 'mjb_job_form',
                 'option_key' => 'mjb_job_form_page_id',
+                'parent' => 'jobs',
             ),
             array(
-                'slug' => 'employer-dashboard',
-                'title' => __('Employer Dashboard', 'modern-job-board'),
+                'slug' => 'recruiter-dashboard',
+                'title' => __('Recruiter Dashboard', 'modern-job-board'),
                 'shortcode' => 'mjb_dashboard',
                 'option_key' => 'mjb_employer_dashboard_page_id',
+                'parent' => 'jobs',
             ),
             array(
                 'slug' => 'candidate-dashboard',
                 'title' => __('Candidate Dashboard', 'modern-job-board'),
                 'shortcode' => 'mjb_candidate_dashboard',
                 'option_key' => 'mjb_candidate_dashboard_page_id',
+                'parent' => 'jobs',
             ),
             array(
-                'slug' => 'employer-registration',
-                'title' => __('Employer Registration', 'modern-job-board'),
+                'slug' => 'recruiter-registration',
+                'title' => __('Recruiter Registration', 'modern-job-board'),
                 'shortcode' => 'mjb_employer_registration',
                 'option_key' => 'mjb_employer_registration_page_id',
+                'parent' => 'jobs',
             ),
             array(
                 'slug' => 'candidate-registration',
                 'title' => __('Candidate Registration', 'modern-job-board'),
                 'shortcode' => 'mjb_candidate_registration',
                 'option_key' => 'mjb_candidate_registration_page_id',
+                'parent' => 'jobs',
+            ),
+            array(
+                'slug' => 'recruiter-login',
+                'title' => __('Recruiter Login', 'modern-job-board'),
+                'shortcode' => 'mjb_employer_login',
+                'option_key' => 'mjb_employer_login_page_id',
+                'parent' => 'jobs',
+            ),
+            array(
+                'slug' => 'candidate-login',
+                'title' => __('Candidate Login', 'modern-job-board'),
+                'shortcode' => 'mjb_candidate_login',
+                'option_key' => 'mjb_candidate_login_page_id',
+                'parent' => 'jobs',
+            ),
+            array(
+                'slug' => 'blog',
+                'title' => __('Blog', 'modern-job-board'),
+                'shortcode' => '',
+                'option_key' => 'mjb_blog_page_id',
+                'parent' => 'jobs',
+                'content' => "<!-- wp:latest-posts {\"postsToShow\":10,\"displayPostContent\":false} /-->",
             ),
         );
     }
 
     /**
-     * Create any missing setup pages.
+     * Create any missing setup pages and nest demo pages under /jobs/.
      *
      * @return array{created:int, existing:int}
      */
@@ -84,7 +112,16 @@ class MJB_Page_Wizard
         $existing = 0;
 
         foreach (self::get_page_definitions() as $definition) {
-            $page_id = MJB_Page_Resolver::resolve_page_id($definition['shortcode'], $definition['option_key']);
+            $page_id = 0;
+            if (!empty($definition['shortcode']) && !empty($definition['option_key'])) {
+                $page_id = MJB_Page_Resolver::resolve_page_id($definition['shortcode'], $definition['option_key']);
+            } elseif (!empty($definition['option_key'])) {
+                $page_id = intval(get_option($definition['option_key']));
+                if ($page_id && get_post_status($page_id) !== 'publish') {
+                    $page_id = 0;
+                }
+            }
+
             if ($page_id) {
                 $existing++;
                 continue;
@@ -92,15 +129,94 @@ class MJB_Page_Wizard
 
             $new_id = self::create_page($definition);
             if ($new_id) {
-                update_option($definition['option_key'], $new_id, false);
+                if (!empty($definition['option_key'])) {
+                    update_option($definition['option_key'], $new_id, false);
+                }
                 $created++;
             }
         }
+
+        self::ensure_jobs_page_hierarchy();
 
         return array(
             'created' => $created,
             'existing' => $existing,
         );
+    }
+
+    /**
+     * Nest demo shortcode pages under the Jobs page so URLs are /jobs/{slug}/.
+     *
+     * @return int Number of pages updated.
+     */
+    public static function ensure_jobs_page_hierarchy()
+    {
+        $jobs_id = MJB_Page_Resolver::resolve_page_id('mjb_jobs', 'mjb_jobs_page_id');
+        if (!$jobs_id) {
+            $jobs_page = get_page_by_path('jobs');
+            $jobs_id = $jobs_page ? intval($jobs_page->ID) : 0;
+        }
+        if (!$jobs_id) {
+            return 0;
+        }
+
+        // Jobs board stays at top-level /jobs/.
+        if (intval(get_post_field('post_parent', $jobs_id)) !== 0) {
+            wp_update_post(array(
+                'ID' => $jobs_id,
+                'post_parent' => 0,
+                'post_name' => 'jobs',
+            ));
+        }
+
+        $updated = 0;
+
+        foreach (self::get_page_definitions() as $definition) {
+            if (empty($definition['parent']) || $definition['parent'] !== 'jobs') {
+                continue;
+            }
+
+            $page_id = 0;
+            if (!empty($definition['shortcode']) && !empty($definition['option_key'])) {
+                $page_id = MJB_Page_Resolver::resolve_page_id($definition['shortcode'], $definition['option_key']);
+            } elseif (!empty($definition['option_key'])) {
+                $page_id = intval(get_option($definition['option_key']));
+            }
+
+            if (!$page_id) {
+                $by_path = get_page_by_path($definition['slug']);
+                if ($by_path) {
+                    $page_id = intval($by_path->ID);
+                    if (!empty($definition['option_key'])) {
+                        update_option($definition['option_key'], $page_id, false);
+                    }
+                }
+            }
+
+            if (!$page_id) {
+                continue;
+            }
+
+            $needs = array();
+            if (intval(get_post_field('post_parent', $page_id)) !== $jobs_id) {
+                $needs['post_parent'] = $jobs_id;
+            }
+            if (get_post_field('post_name', $page_id) !== $definition['slug']) {
+                $needs['post_name'] = $definition['slug'];
+            }
+
+            if (!empty($needs)) {
+                $needs['ID'] = $page_id;
+                wp_update_post($needs);
+                $updated++;
+            }
+
+            if (!empty($definition['option_key'])) {
+                update_option($definition['option_key'], $page_id, false);
+            }
+        }
+
+        return $updated;
     }
 
     /**
@@ -111,8 +227,21 @@ class MJB_Page_Wizard
      */
     public static function create_page($definition)
     {
-        $shortcode = $definition['shortcode'];
-        $content = '[' . $shortcode . ']';
+        $content = '';
+        if (!empty($definition['content'])) {
+            $content = $definition['content'];
+        } elseif (!empty($definition['shortcode'])) {
+            $content = '[' . $definition['shortcode'] . ']';
+        }
+
+        $parent_id = 0;
+        if (!empty($definition['parent']) && $definition['parent'] === 'jobs') {
+            $parent_id = MJB_Page_Resolver::resolve_page_id('mjb_jobs', 'mjb_jobs_page_id');
+            if (!$parent_id) {
+                $jobs_page = get_page_by_path('jobs');
+                $parent_id = $jobs_page ? intval($jobs_page->ID) : 0;
+            }
+        }
 
         $page_id = wp_insert_post(array(
             'post_title' => $definition['title'],
@@ -120,6 +249,7 @@ class MJB_Page_Wizard
             'post_content' => $content,
             'post_type' => 'page',
             'post_status' => 'publish',
+            'post_parent' => $parent_id,
         ), true);
 
         return (!$page_id || is_wp_error($page_id)) ? 0 : intval($page_id);
@@ -135,10 +265,19 @@ class MJB_Page_Wizard
         $rows = array();
 
         foreach (self::get_page_definitions() as $definition) {
-            $page_id = MJB_Page_Resolver::resolve_page_id($definition['shortcode'], $definition['option_key']);
+            $page_id = 0;
+            if (!empty($definition['shortcode'])) {
+                $page_id = MJB_Page_Resolver::resolve_page_id($definition['shortcode'], $definition['option_key']);
+            } elseif (!empty($definition['option_key'])) {
+                $page_id = intval(get_option($definition['option_key']));
+                if ($page_id && get_post_status($page_id) !== 'publish') {
+                    $page_id = 0;
+                }
+            }
+
             $rows[] = array(
                 'title' => $definition['title'],
-                'shortcode' => $definition['shortcode'],
+                'shortcode' => !empty($definition['shortcode']) ? $definition['shortcode'] : '—',
                 'slug' => $definition['slug'],
                 'page_id' => $page_id,
                 'status' => $page_id ? 'ready' : 'missing',
@@ -335,7 +474,7 @@ class MJB_Page_Wizard
                     <button type="submit" class="mjb-btn mjb-btn-primary">
                         <?php
                         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
-                        echo MJB_Icons::render('sparkles', 16);
+                        echo MJB_Icons::render('wand-sparkles', 16);
                         ?>
                         <?php esc_html_e('Create Missing Pages', 'modern-job-board'); ?>
                     </button>

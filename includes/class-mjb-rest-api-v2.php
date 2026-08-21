@@ -149,7 +149,7 @@ class MJB_REST_API_V2
             return true;
         }
 
-        return new WP_Error('mjb_rest_forbidden', __('Employer access required.', 'modern-job-board'), array('status' => 403));
+        return new WP_Error('mjb_rest_forbidden', __('Recruiter access required.', 'modern-job-board'), array('status' => 403));
     }
 
     /**
@@ -174,6 +174,10 @@ class MJB_REST_API_V2
     /**
      * Build employer job IDs for the current user.
      *
+     * Admins are not scoped by author; callers must use
+     * resolve_applications_scope() (or an explicit manage_options check)
+     * rather than treating an empty array as "unscoped".
+     *
      * @return array<int>
      */
     public static function get_current_employer_job_ids()
@@ -194,6 +198,88 @@ class MJB_REST_API_V2
     }
 
     /**
+     * Resolve which applications the current user may list.
+     *
+     * Non-admin employers with zero jobs must get an empty result set, never
+     * an unscoped query of all applications. Admins remain unscoped.
+     *
+     * @param int $job_id Optional job filter from the request.
+     * @return array|WP_Error {
+     *     @type bool     $empty_result Force empty response without querying.
+     *     @type int      $job_filter   Single job ID to filter on, or 0.
+     *     @type int[]    $job_ids      Employer job IDs for an IN filter (non-admin list).
+     * }
+     */
+    public static function resolve_applications_scope($job_id = 0)
+    {
+        $job_id = intval($job_id);
+        $is_admin = user_can(get_current_user_id(), 'manage_options');
+        $employer_job_ids = self::get_current_employer_job_ids();
+
+        if ($job_id > 0) {
+            if (!$is_admin && !in_array($job_id, $employer_job_ids, true)) {
+                return new WP_Error(
+                    'mjb_rest_forbidden',
+                    __('You do not have access to this job.', 'modern-job-board'),
+                    array('status' => 403)
+                );
+            }
+
+            return array(
+                'empty_result' => false,
+                'job_filter' => $job_id,
+                'job_ids' => array(),
+            );
+        }
+
+        if ($is_admin) {
+            return array(
+                'empty_result' => false,
+                'job_filter' => 0,
+                'job_ids' => array(),
+            );
+        }
+
+        if (empty($employer_job_ids)) {
+            return array(
+                'empty_result' => true,
+                'job_filter' => 0,
+                'job_ids' => array(),
+            );
+        }
+
+        return array(
+            'empty_result' => false,
+            'job_filter' => 0,
+            'job_ids' => $employer_job_ids,
+        );
+    }
+
+    /**
+     * Whether the current viewer may see candidate PII for an application.
+     *
+     * Mirrors the employer dashboard paid-CV gate.
+     *
+     * @param int $application_id
+     * @return bool
+     */
+    public static function can_view_application_pii($application_id)
+    {
+        $application_id = intval($application_id);
+        $user_id = get_current_user_id();
+
+        if (user_can($user_id, 'manage_options')) {
+            return true;
+        }
+
+        if (!get_option('mjb_paid_cv_access')) {
+            return true;
+        }
+
+        return MJB_Resumes::employer_has_cv_access($user_id, $application_id);
+    }
+
+    /**
      * Format an application for API output.
      *
      * @param int $application_id
@@ -204,19 +290,31 @@ class MJB_REST_API_V2
         $application_id = intval($application_id);
         $job_id = intval(get_post_meta($application_id, '_job_applied_for', true));
         $status = MJB_Application_Status::get_status($application_id);
+        $can_view = self::can_view_application_pii($application_id);
 
-        return array(
+        $payload = array(
             'id' => $application_id,
             'job_id' => $job_id,
             'job_title' => $job_id ? get_the_title($job_id) : '',
-            'candidate_name' => get_post_meta($application_id, '_candidate_name', true),
-            'candidate_email' => get_post_meta($application_id, '_candidate_email', true),
             'status' => $status,
             'status_label' => MJB_Application_Status::get_label($status),
             'date' => get_the_date('Y-m-d H:i:s', $application_id),
-            'message' => wp_strip_all_tags(get_post_field('post_content', $application_id)),
-            'resume_url' => MJB_Resumes::get_application_download_url($application_id),
+            'cv_access' => $can_view,
         );
+
+        if ($can_view) {
+            $payload['candidate_name'] = get_post_meta($application_id, '_candidate_name', true);
+            $payload['candidate_email'] = get_post_meta($application_id, '_candidate_email', true);
+            $payload['message'] = wp_strip_all_tags(get_post_field('post_content', $application_id));
+            $payload['resume_url'] = MJB_Resumes::get_application_download_url($application_id);
+        } else {
+            $payload['candidate_name'] = '';
+            $payload['candidate_email'] = '';
+            $payload['message'] = '';
+            $payload['resume_url'] = '';
+        }
+
+        return $payload;
     }
 
     /**
@@ -270,22 +368,30 @@ class MJB_REST_API_V2
         $job_id = intval($request->get_param('job_id'));
         $status = sanitize_key($request->get_param('status'));
 
+        $scope = self::resolve_applications_scope($job_id);
+        if (is_wp_error($scope)) {
+            return $scope;
+        }
+
+        if (!empty($scope['empty_result'])) {
+            $response = new WP_REST_Response(array(), 200);
+            $response->header('X-WP-Total', 0);
+            $response->header('X-WP-TotalPages', 0);
+
+            return $response;
+        }
+
         $meta_query = array();
-        $employer_job_ids = self::get_current_employer_job_ids();
 
-        if ($job_id) {
-            if (!empty($employer_job_ids) && !in_array($job_id, $employer_job_ids, true)) {
-                return new WP_Error('mjb_rest_forbidden', __('You do not have access to this job.', 'modern-job-board'), array('status' => 403));
-            }
-
+        if (!empty($scope['job_filter'])) {
             $meta_query[] = array(
                 'key' => '_job_applied_for',
-                'value' => $job_id,
+                'value' => intval($scope['job_filter']),
             );
-        } elseif (!empty($employer_job_ids)) {
+        } elseif (!empty($scope['job_ids'])) {
             $meta_query[] = array(
                 'key' => '_job_applied_for',
-                'value' => $employer_job_ids,
+                'value' => array_map('intval', $scope['job_ids']),
                 'compare' => 'IN',
             );
         }

@@ -14,3 +14,20 @@ Thumbs.db
 # PHP dependencies
 /vendor/
 .phpunit.result.cache
+.test-wp-content/
+
+# Runtime user uploads (durable under wp-content; never Media Library)
+# Legacy plugin-local dirs may still exist on older installs.
+/mjb-private/**
+!/mjb-private/index.php
+!/mjb-private/.htaccess
+!/mjb-private/web.config
+/mjb-brand/**
+!/mjb-brand/index.php
+!/mjb-brand/.htaccess
+
+# Local agent tooling
+.grok/
+
+# Generated GeoNames city-prefix shards (~90MB). Rebuild with bin/build-world-cities.php
+/assets/data/cities-by-prefix/

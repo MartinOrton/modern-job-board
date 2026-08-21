@@ -20,6 +20,18 @@ class PageResolverTest extends TestCase
         $this->assertSame(12, MJB_Page_Resolver::resolve_page_id('mjb_dashboard', 'mjb_test_page_id'));
     }
 
+    public function test_resolve_page_id_ignores_trashed_cached_page()
+    {
+        $GLOBALS['mjb_test_options']['mjb_test_page_id'] = 12;
+        $GLOBALS['mjb_test_post_status'][12] = 'trash';
+        $GLOBALS['mjb_test_posts'] = array(8);
+        $GLOBALS['mjb_test_post_status'][8] = 'publish';
+        $GLOBALS['mjb_test_post_content'][8] = '[mjb_dashboard]';
+
+        $this->assertSame(8, MJB_Page_Resolver::resolve_page_id('mjb_dashboard', 'mjb_test_page_id'));
+        $this->assertSame(8, $GLOBALS['mjb_test_options']['mjb_test_page_id']);
+    }
+
     public function test_resolve_page_id_scans_pages_for_shortcode()
     {
         $GLOBALS['mjb_test_posts'] = array(5, 8);
@@ -47,6 +59,19 @@ class PageResolverTest extends TestCase
         $url = MJB_Page_Resolver::get_page_url('mjb_job_form', 'mjb_missing_page', array(), '/post-job/');
 
         $this->assertSame('https://example.test/post-job/', $url);
+    }
+
+    public function test_get_page_url_string_third_arg_is_treated_as_fallback_path()
+    {
+        // Historical footgun: callers passed fallback path as query_args.
+        $url = MJB_Page_Resolver::get_page_url(
+            'mjb_candidate_dashboard',
+            'mjb_missing_candidate_dash',
+            '/candidate-dashboard/'
+        );
+
+        $this->assertSame('https://example.test/candidate-dashboard/', $url);
+        $this->assertStringNotContainsString('?', $url);
     }
 
     public function test_invalidate_if_cached_page_clears_matching_option()

@@ -70,4 +70,41 @@ class JobImporterCompanyTest extends TestCase
 
         $this->assertSame(intval($legacy_id), $found);
     }
+
+    public function test_find_or_create_company_only_own_does_not_attach_foreign_company()
+    {
+        $foreign_id = wp_insert_post(array(
+            'post_title' => 'Shared Name Co',
+            'post_type' => 'company',
+            'post_status' => 'publish',
+            'post_author' => 50,
+        ));
+
+        $own_id = MJB_Job_Importer::find_or_create_company('Shared Name Co', array(
+            'author_id' => 7,
+            'only_own' => true,
+        ));
+
+        $this->assertGreaterThan(0, $own_id);
+        $this->assertNotSame(intval($foreign_id), intval($own_id));
+        $this->assertSame(7, intval($GLOBALS['mjb_test_post_authors'][$own_id] ?? 0));
+    }
+
+    public function test_find_or_create_company_only_own_reuses_own_company()
+    {
+        $own_id = wp_insert_post(array(
+            'post_title' => 'My Co',
+            'post_type' => 'company',
+            'post_status' => 'publish',
+            'post_author' => 7,
+        ));
+        update_post_meta($own_id, MJB_Job_Importer::COMPANY_NAME_KEY_META, MJB_Job_Importer::company_name_key('My Co'));
+
+        $found = MJB_Job_Importer::find_or_create_company('My Co', array(
+            'author_id' => 7,
+            'only_own' => true,
+        ));
+
+        $this->assertSame(intval($own_id), intval($found));
+    }
 }

@@ -19,7 +19,7 @@ $robocopyArgs = @(
     $PluginSource,
     $destination,
     "/MIR",
-    "/XD", ".git", "vendor", "node_modules", "website", ".phpunit.result.cache",
+    "/XD", ".git", "vendor", "node_modules", "website", ".phpunit.result.cache", "mjb-private", "mjb-brand",
     "/XF", ".gitignore"
 )
 

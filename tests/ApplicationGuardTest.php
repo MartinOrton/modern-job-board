@@ -8,8 +8,14 @@ class ApplicationGuardTest extends TestCase
     {
         $GLOBALS['mjb_test_transients'] = array();
         $GLOBALS['mjb_test_posts'] = array();
+        $GLOBALS['mjb_test_options'] = array(
+            MJB_Application_Guard::OPTION_MIN_SECONDS => 0,
+            MJB_Application_Guard::OPTION_BANNED_IPS => '',
+            MJB_Application_Guard::OPTION_SPAM_LOG => array(),
+        );
         $GLOBALS['mjb_test_duplicate_exists'] = null;
         unset($_POST[MJB_Application_Guard::HONEYPOT_FIELD]);
+        unset($_POST[MJB_Application_Guard::TIME_TRAP_FIELD]);
     }
 
     public function test_rate_limit_key_is_stable_for_ip()
@@ -72,5 +78,28 @@ class ApplicationGuardTest extends TestCase
     public function test_honeypot_is_triggered_when_filled()
     {
         $this->assertTrue(MJB_Application_Guard::is_honeypot_triggered('https://spam.example'));
+    }
+
+    public function test_time_trap_rejects_too_fast()
+    {
+        $GLOBALS['mjb_test_options'][MJB_Application_Guard::OPTION_MIN_SECONDS] = 5;
+        $this->assertTrue(MJB_Application_Guard::is_time_trap_triggered(time()));
+        $this->assertFalse(MJB_Application_Guard::is_time_trap_triggered(time() - 10));
+    }
+
+    public function test_banned_ip_detected()
+    {
+        $GLOBALS['mjb_test_options'][MJB_Application_Guard::OPTION_BANNED_IPS] = "203.0.113.9\n198.51.100.1";
+        $this->assertTrue(MJB_Application_Guard::is_ip_banned('203.0.113.9'));
+        $this->assertFalse(MJB_Application_Guard::is_ip_banned('203.0.113.10'));
+    }
+
+    public function test_spam_log_records_entry()
+    {
+        MJB_Application_Guard::log_spam('honeypot', 'application', '203.0.113.7');
+        $log = MJB_Application_Guard::get_spam_log();
+        $this->assertNotEmpty($log);
+        $this->assertSame('honeypot', $log[0]['reason']);
+        $this->assertSame('203.0.113.7', $log[0]['ip']);
     }
 }

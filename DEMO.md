@@ -70,7 +70,7 @@ After seeding:
 
 - `https://mjb.local/jobs/`
 - `https://mjb.local/post-a-job/`
-- `https://mjb.local/employer-dashboard/`
+- `https://mjb.local/jobs/recruiter-dashboard/`
 - `https://mjb.local/candidate-dashboard/`
 
 Update `MJB_DEMO_BASE` in `modern-job-board-website/js/script.js` if your hostname differs.

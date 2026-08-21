@@ -29,25 +29,37 @@ class MJB_Blocks
         'job-form' => array(
             'shortcode' => 'mjb_job_form',
             'title' => 'Job Submission Form',
-            'description' => 'Frontend form for employers to post jobs.',
+            'description' => 'Frontend form for recruiters to post jobs.',
             'attributes' => array(),
         ),
-        'employer-dashboard' => array(
+        'recruiter-dashboard' => array(
             'shortcode' => 'mjb_dashboard',
-            'title' => 'Employer Dashboard',
-            'description' => 'Employer dashboard for jobs and applications.',
+            'title' => 'Recruiter Dashboard',
+            'description' => 'Recruiter dashboard for jobs and applications.',
             'attributes' => array(),
         ),
-        'employer-registration' => array(
+        'recruiter-registration' => array(
             'shortcode' => 'mjb_employer_registration',
-            'title' => 'Employer Registration',
-            'description' => 'Registration form for employer accounts.',
+            'title' => 'Recruiter Registration',
+            'description' => 'Registration form for recruiter accounts.',
             'attributes' => array(),
         ),
         'candidate-registration' => array(
             'shortcode' => 'mjb_candidate_registration',
             'title' => 'Candidate Registration',
             'description' => 'Registration form for candidate accounts.',
+            'attributes' => array(),
+        ),
+        'recruiter-login' => array(
+            'shortcode' => 'mjb_employer_login',
+            'title' => 'Recruiter Login',
+            'description' => 'Login form for recruiters with a link to registration.',
+            'attributes' => array(),
+        ),
+        'candidate-login' => array(
+            'shortcode' => 'mjb_candidate_login',
+            'title' => 'Candidate Login',
+            'description' => 'Login form for job seekers with a link to registration.',
             'attributes' => array(),
         ),
         'candidate-dashboard' => array(
@@ -97,23 +109,28 @@ class MJB_Blocks
         }
 
         foreach (self::$blocks as $slug => $block) {
-            register_block_type(
-                'modern-job-board/' . $slug,
-                array(
-                    'api_version' => 3,
-                    'title' => __($block['title'], 'modern-job-board'),
-                    'category' => 'modern-job-board',
-                    'icon' => 'portfolio',
-                    'description' => __($block['description'], 'modern-job-board'),
-                    'attributes' => $block['attributes'],
-                    'supports' => array(
-                        'html' => false,
-                    ),
-                    'render_callback' => static function ($attributes) use ($block) {
-                        return self::render_block($block['shortcode'], $attributes);
-                    },
-                )
+            $args = array(
+                'api_version' => 3,
+                'title' => __($block['title'], 'modern-job-board'),
+                'category' => 'modern-job-board',
+                'icon' => 'portfolio',
+                'description' => __($block['description'], 'modern-job-board'),
+                'attributes' => $block['attributes'],
+                'supports' => array(
+                    'html' => false,
+                ),
+                'render_callback' => static function ($attributes) use ($block) {
+                    return self::render_block($block['shortcode'], $attributes);
+                },
             );
+
+            register_block_type('modern-job-board/' . $slug, $args);
+
+            // Legacy employer-* block names (pre-recruiter rename) still render.
+            if (strpos($slug, 'recruiter-') === 0) {
+                $legacy = 'employer-' . substr($slug, strlen('recruiter-'));
+                register_block_type('modern-job-board/' . $legacy, $args);
+            }
         }
     }
 

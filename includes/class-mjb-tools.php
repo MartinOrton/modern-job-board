@@ -106,6 +106,20 @@ class MJB_Tools
                             </button>
                         </p>
                     </form>
+
+                    <hr>
+
+                    <h3><?php esc_html_e('Full board XML backup', 'modern-job-board'); ?></h3>
+                    <p><?php esc_html_e('Export jobs, companies, applications, resumes, and taxonomies as one XML file for migration or disaster recovery.', 'modern-job-board'); ?></p>
+                    <form method="post" action="">
+                        <?php wp_nonce_field('mjb_export_board_xml_nonce'); ?>
+                        <input type="hidden" name="mjb_action" value="export_board_xml">
+                        <p>
+                            <button type="submit" class="mjb-btn mjb-btn-outline">
+                                <?php esc_html_e('Download XML backup', 'modern-job-board'); ?>
+                            </button>
+                        </p>
+                    </form>
                 </div>
             <?php endif; ?>
 

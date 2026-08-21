@@ -291,9 +291,15 @@ class MJB_Job_Importer
     /**
      * Find or create a company post (never creates a second company for the same name).
      *
+     * When only_own is true and author_id is set, an existing company with the same
+     * name is reused only if it is owned by that author; otherwise a new company is
+     * created for the author (prevents frontend "new company" from attaching to
+     * another employer's company).
+     *
      * @param string $company_name
      * @param array  $args {
-     *     @type int $author_id Optional post author for newly created companies.
+     *     @type int  $author_id Optional post author for newly created companies.
+     *     @type bool $only_own  When true, only reuse companies owned by author_id.
      * }
      * @return int
      */
@@ -301,6 +307,7 @@ class MJB_Job_Importer
     {
         $args = wp_parse_args($args, array(
             'author_id' => 0,
+            'only_own'  => false,
         ));
 
         $company_name = self::normalize_company_name($company_name);
@@ -308,10 +315,22 @@ class MJB_Job_Importer
             return 0;
         }
 
+        $author_id = intval($args['author_id']);
+        $only_own = !empty($args['only_own']);
+
         $existing_id = self::find_company_by_name($company_name);
         if ($existing_id > 0) {
-            self::sync_company_name_key($existing_id);
-            return $existing_id;
+            if ($only_own && $author_id > 0) {
+                $existing = get_post($existing_id);
+                if ($existing && intval($existing->post_author) === $author_id) {
+                    self::sync_company_name_key($existing_id);
+                    return $existing_id;
+                }
+                // Same name owned by someone else — create a new company for this author.
+            } else {
+                self::sync_company_name_key($existing_id);
+                return $existing_id;
+            }
         }
 
         $postarr = array(
@@ -320,8 +339,8 @@ class MJB_Job_Importer
             'post_status' => 'publish',
         );
 
-        if (intval($args['author_id']) > 0) {
-            $postarr['post_author'] = intval($args['author_id']);
+        if ($author_id > 0) {
+            $postarr['post_author'] = $author_id;
         }
 
         $company_id = wp_insert_post($postarr, true);

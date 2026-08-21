@@ -37,7 +37,18 @@ class MJB_Job_Routes
      */
     public static function maybe_flush_rewrites()
     {
-        if (get_option('mjb_routes_version') !== MJB_VERSION) {
+        // Bump when page slugs under /jobs/ change (e.g. employer-* → recruiter-*).
+        $hierarchy_version = 'recruiter-urls-1';
+        $needs_hierarchy = get_option('mjb_jobs_hierarchy_version') !== $hierarchy_version;
+        $needs_routes = get_option('mjb_routes_version') !== MJB_VERSION;
+
+        if ($needs_hierarchy && class_exists('MJB_Page_Wizard')) {
+            MJB_Page_Wizard::create_missing_pages();
+            MJB_Page_Wizard::ensure_jobs_page_hierarchy();
+            update_option('mjb_jobs_hierarchy_version', $hierarchy_version, false);
+        }
+
+        if ($needs_routes || $needs_hierarchy) {
             flush_rewrite_rules(false);
             update_option('mjb_routes_version', MJB_VERSION);
         }
@@ -54,20 +65,66 @@ class MJB_Job_Routes
     }
 
     /**
+     * First path segments under /jobs/ reserved for real pages / CPT archives
+     * (not path-based job search filters).
+     *
+     * @return array<int, string>
+     */
+    public static function get_reserved_subpaths()
+    {
+        $reserved = array(
+            'companies',
+            'blog',
+            'post-a-job',
+            'candidate-registration',
+            'recruiter-registration',
+            'candidate-login',
+            'recruiter-login',
+            'candidate-dashboard',
+            'recruiter-dashboard',
+            'job-dashboard',
+            // Legacy employer-* segments (301 → recruiter-*); keep reserved so search never claims them.
+            'employer-registration',
+            'employer-login',
+            'employer-dashboard',
+            // Front actions (pretty apply / save).
+            'apply',
+            'save',
+        );
+
+        /**
+         * Filter reserved /jobs/{segment}/ paths that must not be treated as search filters.
+         *
+         * @param array<int, string> $reserved
+         */
+        return apply_filters('mjb_jobs_reserved_subpaths', $reserved);
+    }
+
+    /**
      * Register rewrite rules for path-based job searches.
      */
     public static function register_rewrites()
     {
         $slug = self::get_base_slug();
+        $slug_q = preg_quote($slug, '/');
 
+        $reserved = array_filter(array_map('sanitize_title', self::get_reserved_subpaths()));
+        $exclude = '';
+        if (!empty($reserved)) {
+            $exclude = '(?!(?:' . implode('|', array_map(static function ($segment) {
+                return preg_quote($segment, '/');
+            }, $reserved)) . ')(?:/|$))';
+        }
+
+        // Catch-all search paths under /jobs/, excluding reserved demo/page segments.
         add_rewrite_rule(
-            '^' . preg_quote($slug, '/') . '/(.+?)/?$',
+            '^' . $slug_q . '/' . $exclude . '(.+?)/?$',
             'index.php?post_type=job_listing&' . self::QUERY_VAR . '=$matches[1]',
             'top'
         );
 
         add_rewrite_rule(
-            '^' . preg_quote($slug, '/') . '/?$',
+            '^' . $slug_q . '/?$',
             'index.php?post_type=job_listing',
             'top'
         );

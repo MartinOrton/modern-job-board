@@ -119,8 +119,9 @@ class MJB_Import_Scheduler
             return new WP_Error('mjb_schedule_name_required', __('Please provide a feed name.', 'modern-job-board'));
         }
 
-        if ($url === '' || !wp_http_validate_url($url)) {
-            return new WP_Error('mjb_schedule_invalid_url', __('Please provide a valid feed URL.', 'modern-job-board'));
+        $url_check = MJB_Xml_Importer::validate_remote_feed_url($url);
+        if (is_wp_error($url_check)) {
+            return new WP_Error('mjb_schedule_invalid_url', $url_check->get_error_message());
         }
 
         if (!in_array($schedule, array('daily', 'weekly'), true)) {

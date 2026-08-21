@@ -17,6 +17,7 @@ class MJB_Admin_Tabs
     public static function init()
     {
         add_action('wp_ajax_mjb_admin_load_tab', array(__CLASS__, 'ajax_load_tab'));
+        add_action('wp_ajax_mjb_admin_delete_job', array(__CLASS__, 'ajax_delete_job'));
         add_action('admin_menu', array(__CLASS__, 'reorder_menu'), 999);
         add_action('admin_init', array(__CLASS__, 'redirect_legacy_pages'));
         add_action('admin_head', array(__CLASS__, 'render_menu_icon_css'));
@@ -116,7 +117,7 @@ class MJB_Admin_Tabs
             ),
             'setup' => array(
                 'label' => __('Setup', 'modern-job-board'),
-                'icon' => 'sparkles',
+                'icon' => 'wand-sparkles',
                 'paged' => false,
             ),
             'custom-fields' => array(
@@ -126,7 +127,7 @@ class MJB_Admin_Tabs
             ),
             'tools' => array(
                 'label' => __('Tools', 'modern-job-board'),
-                'icon' => 'download',
+                'icon' => 'wrench',
                 'paged' => false,
             ),
         );
@@ -178,9 +179,10 @@ class MJB_Admin_Tabs
      * Render tab navigation.
      *
      * @param string $active_tab
+     * @param bool   $as_links When true, tabs navigate via full page links (job editor screens).
      * @return void
      */
-    public static function render_tab_nav($active_tab)
+    public static function render_tab_nav($active_tab, $as_links = false)
     {
         $active_tab = self::sanitize_tab($active_tab);
         echo '<nav class="mjb-admin-tabs" aria-label="' . esc_attr__('Modern Job Board sections', 'modern-job-board') . '">';
@@ -189,14 +191,30 @@ class MJB_Admin_Tabs
         // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Tab icon SVG escaped in MJB_Icons::render(); other args escaped.
         foreach (self::get_tabs() as $tab_id => $tab) {
             $is_active = $tab_id === $active_tab;
-            printf(
-                '<li class="mjb-admin-tabs__item" role="presentation"><button type="button" class="mjb-admin-tabs__btn%1$s" role="tab" id="mjb-tab-%2$s" data-tab="%2$s" aria-selected="%3$s" aria-controls="mjb-admin-panel">%4$s<span>%5$s</span></button></li>',
-                $is_active ? ' is-active' : '',
-                esc_attr($tab_id),
-                $is_active ? 'true' : 'false',
-                MJB_Icons::render($tab['icon'], 18),
-                esc_html($tab['label'])
-            );
+            $icon = MJB_Icons::render($tab['icon'], 18);
+            $label = esc_html($tab['label']);
+            $active_class = $is_active ? ' is-active' : '';
+
+            if ($as_links) {
+                printf(
+                    '<li class="mjb-admin-tabs__item" role="presentation"><a href="%1$s" class="mjb-admin-tabs__btn%2$s" role="tab" id="mjb-tab-%3$s" aria-selected="%4$s">%5$s<span>%6$s</span></a></li>',
+                    esc_url(self::get_tab_url($tab_id)),
+                    $active_class,
+                    esc_attr($tab_id),
+                    $is_active ? 'true' : 'false',
+                    $icon,
+                    $label
+                );
+            } else {
+                printf(
+                    '<li class="mjb-admin-tabs__item" role="presentation"><button type="button" class="mjb-admin-tabs__btn%1$s" role="tab" id="mjb-tab-%2$s" data-tab="%2$s" aria-selected="%3$s" aria-controls="mjb-admin-panel">%4$s<span>%5$s</span></button></li>',
+                    $active_class,
+                    esc_attr($tab_id),
+                    $is_active ? 'true' : 'false',
+                    $icon,
+                    $label
+                );
+            }
         }
         // phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 
@@ -238,18 +256,29 @@ class MJB_Admin_Tabs
                 self::render_post_type_tab('mjb_resume', $page);
                 break;
             case 'settings':
-                self::render_settings_tab();
+                $settings_tab = isset($_REQUEST['settings_tab']) ? sanitize_key(wp_unslash($_REQUEST['settings_tab'])) : '';
+                self::render_settings_tab($settings_tab);
                 break;
             case 'setup':
                 MJB_Page_Wizard::render_setup_content();
                 break;
             case 'custom-fields':
+                if (!MJB_License::can('custom_fields')) {
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- upgrade_notice_html is escaped.
+                    echo MJB_License::upgrade_notice_html('custom_fields');
+                    break;
+                }
                 global $mjb_custom_fields;
                 if ($mjb_custom_fields instanceof MJB_Custom_Fields) {
                     $mjb_custom_fields->render_admin_content();
                 }
                 break;
             case 'tools':
+                if (!MJB_License::can('tools')) {
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- upgrade_notice_html is escaped.
+                    echo MJB_License::upgrade_notice_html('tools');
+                    break;
+                }
                 global $mjb_tools;
                 if ($mjb_tools instanceof MJB_Tools) {
                     $tools_tab = isset($_REQUEST['tools_tab']) ? sanitize_key(wp_unslash($_REQUEST['tools_tab'])) : 'export';
@@ -284,10 +313,56 @@ class MJB_Admin_Tabs
             $_REQUEST['tools_tab'] = sanitize_key(wp_unslash($_POST['tools_tab']));
         }
 
+        if ($tab_id === 'settings' && isset($_POST['settings_tab'])) {
+            $_REQUEST['settings_tab'] = sanitize_key(wp_unslash($_POST['settings_tab']));
+        }
+
         wp_send_json_success(array(
             'tab' => $tab_id,
             'page' => $page,
             'html' => self::render_tab($tab_id, $page),
+        ));
+    }
+
+    /**
+     * AJAX: trash a job listing from the Jobs tab.
+     *
+     * @return void
+     */
+    public static function ajax_delete_job()
+    {
+        check_ajax_referer('mjb_admin_tabs', 'security');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Unauthorized', 'modern-job-board')), 403);
+        }
+
+        $job_id = isset($_POST['job_id']) ? absint($_POST['job_id']) : 0;
+        if ($job_id <= 0) {
+            wp_send_json_error(array('message' => __('Invalid job.', 'modern-job-board')), 400);
+        }
+
+        $post = get_post($job_id);
+        if (!$post || $post->post_type !== 'job_listing') {
+            wp_send_json_error(array('message' => __('Job not found.', 'modern-job-board')), 404);
+        }
+
+        if (!current_user_can('delete_post', $job_id)) {
+            wp_send_json_error(array('message' => __('You cannot delete this job.', 'modern-job-board')), 403);
+        }
+
+        // Prefer trash (recoverable); fall back to permanent delete if trash is unavailable.
+        $trashed = wp_trash_post($job_id);
+        if (!$trashed) {
+            $deleted = wp_delete_post($job_id, true);
+            if (!$deleted) {
+                wp_send_json_error(array('message' => __('Could not delete the job.', 'modern-job-board')), 500);
+            }
+        }
+
+        wp_send_json_success(array(
+            'job_id' => $job_id,
+            'message' => __('Job moved to trash.', 'modern-job-board'),
         ));
     }
 
@@ -586,7 +661,7 @@ class MJB_Admin_Tabs
                 <button type="button" class="mjb-feature-card mjb-feature-card--action" data-tab="setup">
                     <div class="mjb-feature-icon"><?php
                         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
-                        echo MJB_Icons::render('sparkles', 24);
+                        echo MJB_Icons::render('wand-sparkles', 24);
                     ?></div>
                     <h3><?php esc_html_e('Setup', 'modern-job-board'); ?></h3>
                     <p><?php esc_html_e('Create frontend pages for job search, dashboards, and registration shortcodes.', 'modern-job-board'); ?></p>
@@ -597,28 +672,130 @@ class MJB_Admin_Tabs
     }
 
     /**
-     * Render settings tab content.
+     * Convert a Settings API section id into a URL-safe subtab slug.
      *
+     * @param string $section_id e.g. mjb_license_section
+     * @return string e.g. license
+     */
+    public static function settings_section_slug($section_id)
+    {
+        $slug = (string) $section_id;
+        if (strpos($slug, 'mjb_') === 0) {
+            $slug = substr($slug, 4);
+        }
+        if (substr($slug, -8) === '_section') {
+            $slug = substr($slug, 0, -8);
+        }
+
+        return sanitize_key($slug);
+    }
+
+    /**
+     * Registered settings sections for the Settings tab, keyed by subtab slug.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function get_settings_sections()
+    {
+        global $wp_settings_sections;
+
+        $out = array();
+        $page = 'mjb-settings';
+        if (empty($wp_settings_sections[$page]) || !is_array($wp_settings_sections[$page])) {
+            return $out;
+        }
+
+        foreach ($wp_settings_sections[$page] as $section) {
+            if (empty($section['id'])) {
+                continue;
+            }
+            $slug = self::settings_section_slug($section['id']);
+            if ($slug === '') {
+                continue;
+            }
+            $out[$slug] = $section;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Render settings tab content with a subtab per settings section.
+     *
+     * @param string $active_subtab Subtab slug (section id without mjb_ / _section).
      * @return void
      */
-    private static function render_settings_tab()
+    private static function render_settings_tab($active_subtab = '')
     {
+        $sections = self::get_settings_sections();
+        $active_subtab = sanitize_key((string) $active_subtab);
+        if ($active_subtab === '' || !isset($sections[$active_subtab])) {
+            $keys = array_keys($sections);
+            $active_subtab = !empty($keys) ? $keys[0] : '';
+        }
+
         // When settings are loaded via admin-ajax, settings_fields() stamps _wp_http_referer
         // as admin-ajax.php. options.php then redirects there and the browser shows "0".
-        $settings_return = self::get_tab_url('settings');
+        $return_args = array();
+        if ($active_subtab !== '') {
+            $return_args['settings_tab'] = $active_subtab;
+        }
+        $settings_return = self::get_tab_url('settings', $return_args);
         ?>
-        <div class="mjb-tab-panel mjb-tab-panel--settings">
+        <div class="mjb-tab-panel mjb-tab-panel--settings" data-active-settings-tab="<?php echo esc_attr($active_subtab); ?>">
             <h2 class="mjb-section-title"><?php esc_html_e('Settings', 'modern-job-board'); ?></h2>
             <?php
             // Surfaces Settings API success/error notices after options.php redirect.
             settings_errors();
-            ?>
+
+            if (!empty($sections)) :
+                ?>
+            <div class="mjb-settings-subtabs mjb-admin-subtabs" role="tablist" aria-label="<?php esc_attr_e('Settings sections', 'modern-job-board'); ?>">
+                <?php foreach ($sections as $slug => $section) :
+                    $is_active = ($slug === $active_subtab);
+                    $label = !empty($section['title']) ? $section['title'] : $slug;
+                    ?>
+                <button
+                    type="button"
+                    class="mjb-settings-subtab mjb-admin-subtab<?php echo $is_active ? ' is-active' : ''; ?>"
+                    data-settings-tab="<?php echo esc_attr($slug); ?>"
+                    role="tab"
+                    id="mjb-settings-tab-<?php echo esc_attr($slug); ?>"
+                    aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>"
+                    aria-controls="mjb-settings-panel-<?php echo esc_attr($slug); ?>"
+                ><?php echo esc_html($label); ?></button>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <form action="<?php echo esc_url(admin_url('options.php')); ?>" method="post" class="mjb-settings-form">
                 <?php
                 settings_fields('mjb_settings_group');
-                // Override AJAX referer so save redirects back to this Settings tab.
+                // Override AJAX referer so save redirects back to this Settings subtab.
                 echo '<input type="hidden" name="_wp_http_referer" value="' . esc_attr(wp_unslash($settings_return)) . '" />';
-                do_settings_sections('mjb-settings');
+
+                if (empty($sections)) {
+                    do_settings_sections('mjb-settings');
+                } else {
+                    foreach ($sections as $slug => $section) {
+                        $is_active = ($slug === $active_subtab);
+                        $panel_id = 'mjb-settings-panel-' . $slug;
+                        echo '<div class="mjb-settings-section' . ($is_active ? ' is-active' : '') . '" id="' . esc_attr($panel_id) . '" data-settings-tab="' . esc_attr($slug) . '" role="tabpanel" aria-labelledby="mjb-settings-tab-' . esc_attr($slug) . '"' . ($is_active ? '' : ' hidden') . '>';
+
+                        if (!empty($section['title'])) {
+                            echo '<h2 class="mjb-settings-section__title">' . esc_html($section['title']) . '</h2>';
+                        }
+
+                        if (!empty($section['callback']) && is_callable($section['callback'])) {
+                            call_user_func($section['callback'], $section);
+                        }
+
+                        echo '<table class="form-table" role="presentation">';
+                        do_settings_fields('mjb-settings', $section['id']);
+                        echo '</table>';
+                        echo '</div>';
+                    }
+                }
+
                 submit_button(__('Save Settings', 'modern-job-board'), 'primary mjb-btn mjb-btn-primary');
                 ?>
             </form>
@@ -635,8 +812,15 @@ class MJB_Admin_Tabs
      */
     private static function render_post_type_tab($post_type, $page)
     {
-        $labels = get_post_type_object($post_type);
-        $title = $labels ? $labels->labels->name : ucfirst(str_replace('_', ' ', $post_type));
+        $post_type_object = get_post_type_object($post_type);
+        $title = $post_type_object ? $post_type_object->labels->name : ucfirst(str_replace('_', ' ', $post_type));
+        // Prefer create_posts; fall back to edit_posts when a CPT still blocks create.
+        $create_cap = ($post_type_object && !empty($post_type_object->cap->create_posts))
+            ? $post_type_object->cap->create_posts
+            : '';
+        $can_create = $create_cap
+            && $create_cap !== 'do_not_allow'
+            && current_user_can($create_cap);
         $query = new WP_Query(array(
             'post_type' => $post_type,
             'post_status' => array('publish', 'draft', 'pending', 'private'),
@@ -661,13 +845,15 @@ class MJB_Admin_Tabs
                     <a href="<?php echo esc_url(admin_url('edit.php?post_type=' . $post_type . '&mjb_full_list=1')); ?>" class="mjb-btn mjb-btn-outline">
                         <?php esc_html_e('Open Full List', 'modern-job-board'); ?>
                     </a>
-                    <a href="<?php echo esc_url(admin_url('post-new.php?post_type=' . $post_type)); ?>" class="mjb-btn mjb-btn-primary">
-                        <?php
+                    <?php if ($can_create) : ?>
+                    <a href="<?php echo esc_url(admin_url('post-new.php?post_type=' . rawurlencode($post_type))); ?>" class="mjb-btn mjb-btn-primary">
+                        <span class="mjb-btn__icon" aria-hidden="true"><?php
                         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
                         echo MJB_Icons::render('plus', 16);
-                        ?>
-                        <?php esc_html_e('Add New', 'modern-job-board'); ?>
+                        ?></span>
+                        <span class="mjb-btn__label"><?php esc_html_e('Add New', 'modern-job-board'); ?></span>
                     </a>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -684,10 +870,21 @@ class MJB_Admin_Tabs
                     $edit_url = get_edit_post_link($post_id, 'raw');
                     $view_url = get_permalink($post_id);
                     $status = get_post_status($post_id);
-                    $actions = '<a class="mjb-btn mjb-btn-outline mjb-btn--sm" href="' . esc_url($edit_url) . '">' . esc_html__('Edit', 'modern-job-board') . '</a>';
+                    $actions = '<div class="mjb-list-actions">';
+                    $actions .= '<a class="mjb-btn mjb-btn-outline mjb-btn--sm" href="' . esc_url($edit_url) . '">' . esc_html__('Edit', 'modern-job-board') . '</a>';
                     if ($view_url) {
-                        $actions .= ' <a class="mjb-btn mjb-btn-outline mjb-btn--sm" href="' . esc_url($view_url) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('View', 'modern-job-board') . '</a>';
+                        $actions .= '<a class="mjb-btn mjb-btn-outline mjb-btn--sm" href="' . esc_url($view_url) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('View', 'modern-job-board') . '</a>';
                     }
+
+                    if ($post_type === 'job_listing' && current_user_can('delete_post', $post_id)) {
+                        $actions .= sprintf(
+                            '<button type="button" class="mjb-btn mjb-btn-outline mjb-btn--sm mjb-btn--delete mjb-job-delete" data-job-id="%1$d" data-job-title="%2$s">%3$s</button>',
+                            (int) $post_id,
+                            esc_attr(get_the_title($post_id)),
+                            esc_html__('Delete', 'modern-job-board')
+                        );
+                    }
+                    $actions .= '</div>';
 
                     $grid->open_row()
                         ->render_cell(esc_html(get_the_title()), $headers[0])
@@ -701,7 +898,47 @@ class MJB_Admin_Tabs
 
             $grid->close_body()->end();
             self::render_pagination($query->max_num_pages, $page);
+
+            if ($post_type === 'job_listing') {
+                self::render_delete_job_modal();
+            }
             ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Confirmation modal for deleting a job from the Jobs list.
+     *
+     * @return void
+     */
+    private static function render_delete_job_modal()
+    {
+        ?>
+        <div class="mjb-modal" id="mjb-delete-job-modal" hidden data-mjb-modal>
+            <div class="mjb-modal__backdrop" data-mjb-modal-dismiss tabindex="-1"></div>
+            <div class="mjb-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="mjb-delete-job-title" aria-describedby="mjb-delete-job-desc">
+                <header class="mjb-modal__header">
+                    <h3 id="mjb-delete-job-title" class="mjb-modal__title"><?php esc_html_e('Delete job?', 'modern-job-board'); ?></h3>
+                    <button type="button" class="mjb-modal__close" data-mjb-modal-dismiss aria-label="<?php esc_attr_e('Close', 'modern-job-board'); ?>">&times;</button>
+                </header>
+                <div class="mjb-modal__body">
+                    <p id="mjb-delete-job-desc">
+                        <?php esc_html_e('This will move the job to the trash. You can restore it later from the WordPress trash if needed.', 'modern-job-board'); ?>
+                    </p>
+                    <p class="mjb-modal__emphasis">
+                        <strong class="mjb-modal__job-title"></strong>
+                    </p>
+                </div>
+                <footer class="mjb-modal__footer">
+                    <button type="button" class="mjb-btn mjb-btn-outline" data-mjb-modal-dismiss>
+                        <?php esc_html_e('Cancel', 'modern-job-board'); ?>
+                    </button>
+                    <button type="button" class="mjb-btn mjb-btn--danger" id="mjb-delete-job-confirm">
+                        <?php esc_html_e('Delete job', 'modern-job-board'); ?>
+                    </button>
+                </footer>
+            </div>
         </div>
         <?php
     }

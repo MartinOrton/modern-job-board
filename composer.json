@@ -1,6 +1,6 @@
 {
     "name": "martinorton/modern-job-board",
-    "description": "A freemium WordPress job board plugin (pre-stable beta 0.9.0-beta.6)",
+    "description": "A freemium WordPress job board plugin (pre-stable beta 0.9.0-beta.88)",
     "type": "wordpress-plugin",
     "license": "proprietary",
     "require-dev": {

@@ -1,12 +1,18 @@
 /**
- * Elementor-style field validation for Modern Job Board forms.
- * Shows inline errors on the field, required asterisks on labels,
- * and a short required-fields note at the top of each form.
+ * Inline (field-level) validation for Modern Job Board forms.
+ *
+ * Behaviour (not post-submit-only):
+ * - Required asterisks + short legend when the form has required fields
+ * - On blur: validate once the field has been focused (touched)
+ * - On input/change: revalidate after the field is touched
+ * - On submit: validate every visible field and focus the first error
+ *
+ * Covers application, job, registration, dashboard, and auth card forms.
  */
 (function () {
     'use strict';
 
-    var FORM_SELECTOR = '.mjb-application-form, .mjb-job-form, .mjb-form';
+    var FORM_SELECTOR = '.mjb-application-form, .mjb-job-form, .mjb-form, .mjb-auth-card-form';
     var FIELD_SELECTOR = 'input, select, textarea';
     var SKIP_TYPES = {
         submit: true,
@@ -21,7 +27,39 @@
     var MSG_EMAIL = i18n.email || 'Please enter a valid email address.';
     var MSG_URL = i18n.url || 'Please enter a valid URL.';
     var MSG_NUMBER = i18n.number || 'Please enter a valid number.';
+    var MSG_MINLENGTH = i18n.minlength || 'Please enter at least %d characters.';
+    var MSG_MAXLENGTH = i18n.maxlength || 'Please enter no more than %d characters.';
+    var MSG_PATTERN = i18n.pattern || 'Please match the requested format.';
+    var MSG_PASSWORD_MATCH = i18n.passwordMatch || 'Passwords do not match.';
     var MSG_LEGEND = i18n.requiredLegend || 'Required fields are marked with *';
+
+    /** @type {WeakMap<Element, boolean>} */
+    var touchedFields = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+
+    function isTouched(field) {
+        if (!field) {
+            return false;
+        }
+        if (touchedFields) {
+            return !!touchedFields.get(field);
+        }
+        return field.getAttribute('data-mjb-touched') === '1';
+    }
+
+    function markTouched(field) {
+        if (!field) {
+            return;
+        }
+        if (touchedFields) {
+            touchedFields.set(field, true);
+        } else {
+            field.setAttribute('data-mjb-touched', '1');
+        }
+    }
+
+    function formatMessage(template, n) {
+        return String(template || '').replace(/%d/g, String(n));
+    }
 
     function isVisible(el) {
         if (!el || el.disabled) {
@@ -73,7 +111,9 @@
     }
 
     function getFieldGroup(field) {
-        return field.closest('p, .mjb-field, .mjb-form-field, .mjb-profile-resume-option') || field.parentElement;
+        return field.closest(
+            'p, .mjb-field, .mjb-form-field, .mjb-profile-resume-option, .mjb-auth-card-fields__row > p'
+        ) || field.parentElement;
     }
 
     function getErrorId(field) {
@@ -140,7 +180,13 @@
 
         // Prefer end of the field group so messages sit under the whole control block
         // (matches Elementor: error appears at the field, not as a browser tooltip).
-        if (group && (group.tagName === 'P' || (group.classList && (group.classList.contains('mjb-field') || group.classList.contains('mjb-form-field'))))) {
+        if (
+            group &&
+            (group.tagName === 'P' ||
+                (group.classList &&
+                    (group.classList.contains('mjb-field') ||
+                        group.classList.contains('mjb-form-field'))))
+        ) {
             group.appendChild(error);
         } else if (field.parentNode) {
             if (field.nextSibling) {
@@ -166,7 +212,9 @@
 
         if (type === 'checkbox' || type === 'radio') {
             if (type === 'radio' && field.name) {
-                var group = field.form ? field.form.querySelectorAll('input[type="radio"][name="' + cssEscape(field.name) + '"]') : [];
+                var group = field.form
+                    ? field.form.querySelectorAll('input[type="radio"][name="' + cssEscape(field.name) + '"]')
+                    : [];
                 for (var i = 0; i < group.length; i++) {
                     if (group[i].checked && isVisible(group[i])) {
                         return false;
@@ -184,6 +232,11 @@
         if (tag === 'select') {
             var val = field.value;
             return val === null || val === undefined || String(val).trim() === '';
+        }
+
+        // Passwords: treat as empty only if literally empty (do not trim).
+        if (type === 'password') {
+            return String(field.value || '') === '';
         }
 
         return String(field.value || '').trim() === '';
@@ -210,7 +263,72 @@
         }
     }
 
-    function validateField(field) {
+    function isPasswordConfirmField(field) {
+        var name = (field.name || '').toLowerCase();
+        var id = (field.id || '').toLowerCase();
+        return (
+            name.indexOf('password_confirm') !== -1 ||
+            name.indexOf('pass_confirm') !== -1 ||
+            name === 'pass2' ||
+            name.indexOf('password2') !== -1 ||
+            id.indexOf('password-confirm') !== -1 ||
+            id.indexOf('password_confirm') !== -1
+        );
+    }
+
+    function isPrimaryPasswordField(field) {
+        var name = (field.name || '').toLowerCase();
+        var id = (field.id || '').toLowerCase();
+        if (isPasswordConfirmField(field)) {
+            return false;
+        }
+        return (
+            name === 'mjb_password' ||
+            name === 'pass1' ||
+            name === 'password' ||
+            (name.indexOf('password') !== -1 && name.indexOf('confirm') === -1) ||
+            (id.indexOf('password') !== -1 && id.indexOf('confirm') === -1)
+        );
+    }
+
+    function findPasswordConfirmField(form, passwordField) {
+        if (!form) {
+            return null;
+        }
+        var candidates = form.querySelectorAll('input[type="password"]');
+        for (var i = 0; i < candidates.length; i++) {
+            if (candidates[i] !== passwordField && isPasswordConfirmField(candidates[i])) {
+                return candidates[i];
+            }
+        }
+        return (
+            form.querySelector(
+                'input[name="mjb_password_confirm"], input[name="pass2"], input[id*="password-confirm"], input[id*="password_confirm"]'
+            ) || null
+        );
+    }
+
+    function findPrimaryPasswordField(form, confirmField) {
+        if (!form) {
+            return null;
+        }
+        var byName = form.querySelector(
+            'input[name="mjb_password"], input[name="pass1"], input[name="password"]'
+        );
+        if (byName && byName !== confirmField) {
+            return byName;
+        }
+        var candidates = form.querySelectorAll('input[type="password"]');
+        for (var i = 0; i < candidates.length; i++) {
+            if (candidates[i] !== confirmField && isPrimaryPasswordField(candidates[i])) {
+                return candidates[i];
+            }
+        }
+        return null;
+    }
+
+    function validateField(field, options) {
+        options = options || {};
         if (isSkippable(field) || !isVisible(field)) {
             clearFieldError(field);
             return true;
@@ -218,12 +336,15 @@
 
         var type = (field.getAttribute('type') || field.type || '').toLowerCase();
         var required = field.required || field.getAttribute('aria-required') === 'true';
-        var value = String(field.value || '').trim();
+        var rawValue = String(field.value || '');
+        var value = type === 'password' ? rawValue : rawValue.trim();
 
         if (required && isEmptyValue(field)) {
             // Only show one error per radio group.
             if (type === 'radio' && field.name && field.form) {
-                var radios = field.form.querySelectorAll('input[type="radio"][name="' + cssEscape(field.name) + '"]');
+                var radios = field.form.querySelectorAll(
+                    'input[type="radio"][name="' + cssEscape(field.name) + '"]'
+                );
                 var firstVisible = null;
                 for (var r = 0; r < radios.length; r++) {
                     if (isVisible(radios[r])) {
@@ -264,9 +385,65 @@
                     return false;
                 }
             }
+
+            var minLengthAttr = field.getAttribute('minlength');
+            if (minLengthAttr !== null && minLengthAttr !== '') {
+                var minLength = parseInt(minLengthAttr, 10);
+                if (!isNaN(minLength) && rawValue.length < minLength) {
+                    showFieldError(field, formatMessage(MSG_MINLENGTH, minLength));
+                    return false;
+                }
+            }
+
+            var maxLengthAttr = field.getAttribute('maxlength');
+            if (maxLengthAttr !== null && maxLengthAttr !== '') {
+                var maxLength = parseInt(maxLengthAttr, 10);
+                // Ignore browser default-ish huge maxlengths.
+                if (!isNaN(maxLength) && maxLength > 0 && maxLength < 1000000 && rawValue.length > maxLength) {
+                    showFieldError(field, formatMessage(MSG_MAXLENGTH, maxLength));
+                    return false;
+                }
+            }
+
+            var pattern = field.getAttribute('pattern');
+            if (pattern) {
+                try {
+                    var re = new RegExp('^(?:' + pattern + ')$');
+                    if (!re.test(rawValue)) {
+                        var title = field.getAttribute('title');
+                        showFieldError(field, title || MSG_PATTERN);
+                        return false;
+                    }
+                } catch (e) {
+                    // Invalid pattern attribute — skip client pattern check.
+                }
+            }
+
+            // Password confirmation match.
+            if (type === 'password' && isPasswordConfirmField(field) && field.form) {
+                var primary = findPrimaryPasswordField(field.form, field);
+                if (primary && String(primary.value || '') !== rawValue) {
+                    showFieldError(field, MSG_PASSWORD_MATCH);
+                    return false;
+                }
+            }
         }
 
         clearFieldError(field);
+
+        // When the primary password changes, re-check confirm if it was already touched.
+        if (
+            !options.skipPair &&
+            type === 'password' &&
+            isPrimaryPasswordField(field) &&
+            field.form
+        ) {
+            var confirm = findPasswordConfirmField(field.form, field);
+            if (confirm && (isTouched(confirm) || confirm.classList.contains('mjb-field-invalid'))) {
+                validateField(confirm, { skipPair: true });
+            }
+        }
+
         return true;
     }
 
@@ -299,7 +476,8 @@
             return;
         }
         // Skip labels that only wrap a checkbox/radio control (no standalone field label).
-        var onlyControl = label.querySelector('input[type="checkbox"], input[type="radio"]') &&
+        var onlyControl =
+            label.querySelector('input[type="checkbox"], input[type="radio"]') &&
             label.querySelectorAll('input, select, textarea').length === 1 &&
             String(label.textContent || '').trim().length < 2;
         if (onlyControl) {
@@ -366,13 +544,29 @@
         var children = form.children;
         for (var c = 0; c < children.length; c++) {
             var child = children[c];
-            if (child.classList && (child.classList.contains('mjb-hp-field') || child.classList.contains('mjb-form-required-note'))) {
+            if (
+                child.classList &&
+                (child.classList.contains('mjb-hp-field') ||
+                    child.classList.contains('mjb-form-required-note') ||
+                    child.classList.contains('mjb-auth-apply-note'))
+            ) {
                 continue;
             }
-            if (child.tagName === 'INPUT' && (child.type === 'hidden' || child.name && child.name.indexOf('_nonce') !== -1)) {
+            if (
+                child.tagName === 'INPUT' &&
+                (child.type === 'hidden' || (child.name && child.name.indexOf('_nonce') !== -1))
+            ) {
                 continue;
             }
-            if (child.tagName === 'P' || (child.classList && (child.classList.contains('mjb-field') || child.classList.contains('mjb-form-field')))) {
+            if (
+                child.tagName === 'P' ||
+                child.tagName === 'FIELDSET' ||
+                (child.classList &&
+                    (child.classList.contains('mjb-field') ||
+                        child.classList.contains('mjb-form-field') ||
+                        child.classList.contains('mjb-auth-card-fields') ||
+                        child.classList.contains('mjb-form-section')))
+            ) {
                 firstFieldGroup = child;
                 break;
             }
@@ -396,6 +590,9 @@
                 clearFieldError(field);
                 continue;
             }
+
+            // Submit validates every field; mark as touched so messages stick while editing.
+            markTouched(field);
 
             var type = (field.getAttribute('type') || field.type || '').toLowerCase();
             if (type === 'radio' && field.name) {
@@ -427,43 +624,63 @@
         return valid;
     }
 
+    function shouldLiveValidate(field) {
+        return (
+            isTouched(field) ||
+            field.classList.contains('mjb-field-invalid') ||
+            (getFieldGroup(field) && getFieldGroup(field).classList.contains('mjb-field-has-error'))
+        );
+    }
+
     function bindFieldEvents(form) {
-        form.addEventListener('input', function (event) {
-            var field = event.target;
-            if (!field || isSkippable(field)) {
-                return;
-            }
-            if (field.classList.contains('mjb-field-invalid') || getFieldGroup(field) && getFieldGroup(field).classList.contains('mjb-field-has-error')) {
-                validateField(field);
-            }
-        }, true);
-
-        form.addEventListener('change', function (event) {
-            var field = event.target;
-            if (!field || isSkippable(field)) {
-                return;
-            }
-            // Re-check required marks when dynamic scripts toggle required.
-            window.setTimeout(function () {
-                refreshRequiredMarks(form);
-                if (field.classList.contains('mjb-field-invalid') || field.required) {
+        // Live revalidation after the field has been blurred (or already shows an error).
+        // Avoids "invalid email" on the first character before the user leaves the field.
+        form.addEventListener(
+            'input',
+            function (event) {
+                var field = event.target;
+                if (!field || isSkippable(field)) {
+                    return;
+                }
+                if (shouldLiveValidate(field)) {
                     validateField(field);
                 }
-            }, 0);
-        }, true);
+            },
+            true
+        );
 
-        form.addEventListener('blur', function (event) {
-            var field = event.target;
-            if (!field || isSkippable(field)) {
-                return;
-            }
-            if (field.matches && field.matches(FIELD_SELECTOR)) {
-                // Soft validate on blur only if user has interacted / field was invalid.
-                if (field.value || field.classList.contains('mjb-field-invalid')) {
+        form.addEventListener(
+            'change',
+            function (event) {
+                var field = event.target;
+                if (!field || isSkippable(field)) {
+                    return;
+                }
+                markTouched(field);
+                // Re-check required marks when dynamic scripts toggle required.
+                window.setTimeout(function () {
+                    refreshRequiredMarks(form);
+                    validateField(field);
+                }, 0);
+            },
+            true
+        );
+
+        form.addEventListener(
+            'blur',
+            function (event) {
+                var field = event.target;
+                if (!field || isSkippable(field)) {
+                    return;
+                }
+                if (field.matches && field.matches(FIELD_SELECTOR)) {
+                    markTouched(field);
+                    // Always validate on blur — including empty required fields.
                     validateField(field);
                 }
-            }
-        }, true);
+            },
+            true
+        );
     }
 
     function enhanceForm(form) {

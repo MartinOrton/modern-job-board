@@ -52,6 +52,140 @@ class RestApiV2Test extends TestCase
         $this->assertSame('reviewed', $formatted['status']);
         $this->assertSame('Reviewed', $formatted['status_label']);
         $this->assertSame('Alex', $formatted['candidate_name']);
+        $this->assertTrue($formatted['cv_access']);
+    }
+
+    public function test_resolve_applications_scope_empty_employer_jobs_is_empty_not_unscoped()
+    {
+        $GLOBALS['mjb_test_is_logged_in'] = true;
+        $GLOBALS['mjb_test_current_user_id'] = 7;
+        $GLOBALS['mjb_test_user_roles'][7] = array('employer');
+        $GLOBALS['mjb_test_posts'] = array(21);
+        $GLOBALS['mjb_test_post_types'][21] = 'job_listing';
+        $GLOBALS['mjb_test_post_status'][21] = 'publish';
+        $GLOBALS['mjb_test_post_authors'][21] = 99; // owned by someone else
+
+        $scope = MJB_REST_API_V2::resolve_applications_scope(0);
+
+        $this->assertIsArray($scope);
+        $this->assertTrue($scope['empty_result']);
+        $this->assertSame(array(), $scope['job_ids']);
+        $this->assertSame(0, $scope['job_filter']);
+    }
+
+    public function test_resolve_applications_scope_employer_with_jobs_gets_in_filter()
+    {
+        $GLOBALS['mjb_test_is_logged_in'] = true;
+        $GLOBALS['mjb_test_current_user_id'] = 7;
+        $GLOBALS['mjb_test_user_roles'][7] = array('employer');
+        $GLOBALS['mjb_test_posts'] = array(21, 22, 30);
+        $GLOBALS['mjb_test_post_types'][21] = 'job_listing';
+        $GLOBALS['mjb_test_post_types'][22] = 'job_listing';
+        $GLOBALS['mjb_test_post_types'][30] = 'job_listing';
+        $GLOBALS['mjb_test_post_status'][21] = 'publish';
+        $GLOBALS['mjb_test_post_status'][22] = 'pending';
+        $GLOBALS['mjb_test_post_status'][30] = 'publish';
+        $GLOBALS['mjb_test_post_authors'][21] = 7;
+        $GLOBALS['mjb_test_post_authors'][22] = 7;
+        $GLOBALS['mjb_test_post_authors'][30] = 99;
+
+        $scope = MJB_REST_API_V2::resolve_applications_scope(0);
+
+        $this->assertIsArray($scope);
+        $this->assertFalse($scope['empty_result']);
+        $this->assertSame(array(21, 22), $scope['job_ids']);
+    }
+
+    public function test_resolve_applications_scope_forbids_foreign_job_for_employer()
+    {
+        $GLOBALS['mjb_test_is_logged_in'] = true;
+        $GLOBALS['mjb_test_current_user_id'] = 7;
+        $GLOBALS['mjb_test_user_roles'][7] = array('employer');
+        $GLOBALS['mjb_test_posts'] = array(21);
+        $GLOBALS['mjb_test_post_types'][21] = 'job_listing';
+        $GLOBALS['mjb_test_post_status'][21] = 'publish';
+        $GLOBALS['mjb_test_post_authors'][21] = 7;
+
+        $scope = MJB_REST_API_V2::resolve_applications_scope(999);
+
+        $this->assertInstanceOf(WP_Error::class, $scope);
+        $this->assertSame('mjb_rest_forbidden', array_key_first($scope->errors));
+    }
+
+    public function test_resolve_applications_scope_employer_with_no_jobs_cannot_query_by_job_id()
+    {
+        $GLOBALS['mjb_test_is_logged_in'] = true;
+        $GLOBALS['mjb_test_current_user_id'] = 7;
+        $GLOBALS['mjb_test_user_roles'][7] = array('employer');
+        $GLOBALS['mjb_test_posts'] = array();
+
+        $scope = MJB_REST_API_V2::resolve_applications_scope(12);
+
+        $this->assertInstanceOf(WP_Error::class, $scope);
+        $this->assertSame('mjb_rest_forbidden', array_key_first($scope->errors));
+    }
+
+    public function test_resolve_applications_scope_admin_is_unscoped()
+    {
+        $GLOBALS['mjb_test_is_logged_in'] = true;
+        $GLOBALS['mjb_test_current_user_id'] = 1;
+        $GLOBALS['mjb_test_user_caps'][1]['manage_options'] = true;
+
+        $scope = MJB_REST_API_V2::resolve_applications_scope(0);
+
+        $this->assertIsArray($scope);
+        $this->assertFalse($scope['empty_result']);
+        $this->assertSame(array(), $scope['job_ids']);
+        $this->assertSame(0, $scope['job_filter']);
+    }
+
+    public function test_format_application_for_api_redacts_pii_when_paid_cv_locked()
+    {
+        $GLOBALS['mjb_test_is_logged_in'] = true;
+        $GLOBALS['mjb_test_current_user_id'] = 7;
+        $GLOBALS['mjb_test_user_roles'][7] = array('employer');
+        $GLOBALS['mjb_test_options']['mjb_paid_cv_access'] = 1;
+        $GLOBALS['mjb_test_post_status'][88] = 'publish';
+        $GLOBALS['mjb_test_post_types'][88] = 'job_application';
+        $GLOBALS['mjb_test_post_meta'][88]['_job_applied_for'] = 12;
+        $GLOBALS['mjb_test_post_meta'][88]['_candidate_name'] = 'Alex';
+        $GLOBALS['mjb_test_post_meta'][88]['_candidate_email'] = 'alex@example.test';
+        $GLOBALS['mjb_test_post_content'][88] = 'Cover letter secret';
+        $GLOBALS['mjb_test_post_meta'][88][MJB_Application_Status::META_KEY] = 'new';
+        $GLOBALS['mjb_test_titles'][12] = 'Designer';
+
+        $formatted = MJB_REST_API_V2::format_application_for_api(88);
+
+        $this->assertFalse($formatted['cv_access']);
+        $this->assertSame('', $formatted['candidate_name']);
+        $this->assertSame('', $formatted['candidate_email']);
+        $this->assertSame('', $formatted['message']);
+        $this->assertSame('', $formatted['resume_url']);
+        $this->assertSame('new', $formatted['status']);
+    }
+
+    public function test_format_application_for_api_shows_pii_when_employer_has_cv_pass()
+    {
+        $GLOBALS['mjb_test_is_logged_in'] = true;
+        $GLOBALS['mjb_test_current_user_id'] = 7;
+        $GLOBALS['mjb_test_user_roles'][7] = array('employer');
+        $GLOBALS['mjb_test_options']['mjb_paid_cv_access'] = 1;
+        $GLOBALS['mjb_test_user_meta'][7]['_mjb_cv_access_expires'] = 9999999999;
+        $GLOBALS['mjb_test_post_status'][88] = 'publish';
+        $GLOBALS['mjb_test_post_types'][88] = 'job_application';
+        $GLOBALS['mjb_test_post_meta'][88]['_job_applied_for'] = 12;
+        $GLOBALS['mjb_test_post_meta'][88]['_candidate_name'] = 'Alex';
+        $GLOBALS['mjb_test_post_meta'][88]['_candidate_email'] = 'alex@example.test';
+        $GLOBALS['mjb_test_post_content'][88] = 'Cover letter';
+        $GLOBALS['mjb_test_post_meta'][88][MJB_Application_Status::META_KEY] = 'new';
+        $GLOBALS['mjb_test_titles'][12] = 'Designer';
+
+        $formatted = MJB_REST_API_V2::format_application_for_api(88);
+
+        $this->assertTrue($formatted['cv_access']);
+        $this->assertSame('Alex', $formatted['candidate_name']);
+        $this->assertSame('alex@example.test', $formatted['candidate_email']);
+        $this->assertSame('Cover letter', $formatted['message']);
     }
 
     public function test_format_candidate_profile_for_api_returns_profile_fields()

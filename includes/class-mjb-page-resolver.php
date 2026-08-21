@@ -33,6 +33,8 @@ class MJB_Page_Resolver
             'mjb_candidate_dashboard' => 'mjb_candidate_dashboard_page_id',
             'mjb_candidate_registration' => 'mjb_candidate_registration_page_id',
             'mjb_employer_registration' => 'mjb_employer_registration_page_id',
+            'mjb_candidate_login' => 'mjb_candidate_login_page_id',
+            'mjb_employer_login' => 'mjb_employer_login_page_id',
         );
     }
 
@@ -46,8 +48,12 @@ class MJB_Page_Resolver
     public static function resolve_page_id($shortcode, $option_key)
     {
         $cached = intval(get_option($option_key));
-        if ($cached && get_post_status($cached)) {
-            return $cached;
+        if ($cached) {
+            // Only accept published pages — trash/draft/private must not keep redirects broken.
+            if (get_post_status($cached) === 'publish') {
+                return $cached;
+            }
+            delete_option($option_key);
         }
 
         $pages = get_posts(array(
@@ -123,6 +129,19 @@ class MJB_Page_Resolver
      */
     public static function get_page_url($shortcode, $option_key, $query_args = array(), $fallback_path = '/')
     {
+        // Guard against callers that pass the fallback path as the 3rd argument
+        // (query args). That used to produce broken URLs like /current/?/path/=permalink.
+        if (is_string($query_args)) {
+            if ($fallback_path === '/' || $fallback_path === '') {
+                $fallback_path = $query_args;
+            }
+            $query_args = array();
+        }
+
+        if (!is_array($query_args)) {
+            $query_args = array();
+        }
+
         $page_id = self::resolve_page_id($shortcode, $option_key);
         $url = $page_id ? get_permalink($page_id) : home_url($fallback_path);
 

@@ -3,7 +3,7 @@
  * Plugin Name: Modern Job Board
  * Plugin URI: https://martinorton.com/modern-job-board
  * Description: A freemium job board plugin for WordPress (pre-stable beta — not 1.0).
- * Version: 0.9.0-beta.6
+ * Version: 0.9.0-beta.88
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
  * License: Proprietary
@@ -16,11 +16,17 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '0.9.0-beta.6');
+define('MJB_VERSION', '0.9.0-beta.88');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
 
+require_once MJB_PATH . 'includes/class-mjb-license.php';
+require_once MJB_PATH . 'includes/class-mjb-license-commerce.php';
+require_once MJB_PATH . 'includes/class-mjb-license-remote.php';
+require_once MJB_PATH . 'includes/class-mjb-private-uploads.php';
 require_once MJB_PATH . 'includes/class-mjb-resumes.php';
+require_once MJB_PATH . 'includes/class-mjb-account-status.php';
+require_once MJB_PATH . 'includes/class-mjb-saved-jobs.php';
 require_once MJB_PATH . 'includes/class-mjb-activator.php';
 require_once MJB_PATH . 'includes/class-mjb-notices.php';
 require_once MJB_PATH . 'includes/class-mjb-page-resolver.php';
@@ -39,6 +45,41 @@ require_once MJB_PATH . 'includes/class-mjb-blocks.php';
 require_once MJB_PATH . 'includes/class-mjb-analytics.php';
 require_once MJB_PATH . 'includes/class-mjb-webhook-queue.php';
 require_once MJB_PATH . 'includes/class-mjb-webhooks.php';
+// Product backlog feature modules (#6–#42).
+require_once MJB_PATH . 'includes/class-mjb-legacy-redirects.php';
+require_once MJB_PATH . 'includes/class-mjb-private-board.php';
+require_once MJB_PATH . 'includes/class-mjb-job-alerts.php';
+require_once MJB_PATH . 'includes/class-mjb-talent-pool.php';
+require_once MJB_PATH . 'includes/class-mjb-collaborators.php';
+require_once MJB_PATH . 'includes/class-mjb-embed.php';
+require_once MJB_PATH . 'includes/class-mjb-brand.php';
+require_once MJB_PATH . 'includes/class-mjb-string-overrides.php';
+require_once MJB_PATH . 'includes/class-mjb-auto-approve.php';
+require_once MJB_PATH . 'includes/class-mjb-company-preview.php';
+require_once MJB_PATH . 'includes/class-mjb-messaging.php';
+require_once MJB_PATH . 'includes/class-mjb-analytics-export.php';
+require_once MJB_PATH . 'includes/class-mjb-api-keys.php';
+require_once MJB_PATH . 'includes/class-mjb-pwa.php';
+require_once MJB_PATH . 'includes/class-mjb-filter-settings.php';
+require_once MJB_PATH . 'includes/class-mjb-packages.php';
+require_once MJB_PATH . 'includes/class-mjb-partner-import.php';
+require_once MJB_PATH . 'includes/class-mjb-seo-landings.php';
+require_once MJB_PATH . 'includes/class-mjb-media-listings.php';
+require_once MJB_PATH . 'includes/class-mjb-sms.php';
+require_once MJB_PATH . 'includes/class-mjb-i18n-board.php';
+require_once MJB_PATH . 'includes/class-mjb-blog-package.php';
+// WPJB parity track (A1–A8 core modules).
+require_once MJB_PATH . 'includes/class-mjb-google-jobs.php';
+require_once MJB_PATH . 'includes/class-mjb-job-ops.php';
+require_once MJB_PATH . 'includes/class-mjb-resume-privacy.php';
+require_once MJB_PATH . 'includes/class-mjb-jobs-map.php';
+require_once MJB_PATH . 'includes/class-mjb-promotions.php';
+require_once MJB_PATH . 'includes/class-mjb-ingestion.php';
+require_once MJB_PATH . 'includes/class-mjb-memberships.php';
+require_once MJB_PATH . 'includes/class-mjb-commerce-admin.php';
+require_once MJB_PATH . 'includes/class-mjb-email-templates.php';
+require_once MJB_PATH . 'includes/class-mjb-mailchimp.php';
+require_once MJB_PATH . 'includes/class-mjb-board-polish.php';
 
 register_activation_hook(__FILE__, array('MJB_Activator', 'activate'));
 register_deactivation_hook(__FILE__, array('MJB_Activator', 'deactivate'));
@@ -52,6 +93,7 @@ require_once MJB_PATH . 'includes/class-mjb-admin-tabs.php';
 require_once MJB_PATH . 'includes/class-mjb-admin.php';
 require_once MJB_PATH . 'includes/class-mjb-template-loader.php';
 require_once MJB_PATH . 'includes/class-mjb-applications.php';
+require_once MJB_PATH . 'includes/class-mjb-pretty-urls.php';
 require_once MJB_PATH . 'includes/class-mjb-search.php';
 require_once MJB_PATH . 'includes/class-mjb-dashboard.php';
 require_once MJB_PATH . 'includes/class-mjb-emails.php';
@@ -87,16 +129,58 @@ class Modern_Job_Board
      */
     private function __construct()
     {
+        MJB_License::init();
+        MJB_License_Commerce::init();
+        MJB_License_Remote::init();
         MJB_Page_Resolver::init();
         MJB_Job_Routes::init();
         MJB_Job_Permalinks::init();
+        MJB_Pretty_Urls::init();
+        MJB_Legacy_Redirects::init();
         MJB_Page_Wizard::init();
         MJB_Analytics::init();
-        MJB_Webhooks::init();
-        MJB_Webhook_Queue::init();
-        MJB_Import_Scheduler::init();
+        MJB_Private_Board::init();
+        MJB_Job_Alerts::init();
+        MJB_Talent_Pool::init();
+        MJB_Collaborators::init();
+        MJB_Embed::init();
+        MJB_Brand::init();
+        MJB_String_Overrides::init();
+        MJB_Auto_Approve::init();
+        MJB_Company_Preview::init();
+        MJB_Messaging::init();
+        MJB_Analytics_Export::init();
+        MJB_Api_Keys::init();
+        MJB_Pwa::init();
+        MJB_Filter_Settings::init();
+        MJB_Packages::init();
+        MJB_Partner_Import::init();
+        MJB_Seo_Landings::init();
+        MJB_Media_Listings::init();
+        MJB_Sms::init();
+        MJB_I18n_Board::init();
+        MJB_Blog_Package::init();
+        MJB_Google_Jobs::init();
+        MJB_Job_Ops::init();
+        MJB_Resume_Privacy::init();
+        MJB_Jobs_Map::init();
+        MJB_Promotions::init();
+        MJB_Ingestion::init();
+        MJB_Memberships::init();
+        MJB_Commerce_Admin::init();
+        MJB_Email_Templates::init();
+        MJB_Mailchimp::init();
+        MJB_Application_Guard::init();
+        MJB_Board_Polish::init();
+        if (MJB_License::can('webhooks')) {
+            MJB_Webhooks::init();
+            MJB_Webhook_Queue::init();
+        }
+        if (MJB_License::can('tools')) {
+            MJB_Import_Scheduler::init();
+            MJB_Job_Importer::init();
+        }
         MJB_Blocks::init();
-        MJB_Job_Importer::init();
         $this->init_hooks();
     }
 
@@ -106,6 +190,10 @@ class Modern_Job_Board
     private function init_hooks()
     {
         add_action('init', array($this, 'load_textdomain'));
+
+        MJB_Private_Uploads::init();
+        MJB_Account_Status::init();
+        MJB_Saved_Jobs::init();
 
         $resumes = new MJB_Resumes();
         $resumes->init();
@@ -160,41 +248,54 @@ class Modern_Job_Board
         $candidate_registration = new MJB_Candidate_Registration();
         $candidate_registration->init();
 
+        // Initialize frontend login forms
+        require_once MJB_PATH . 'includes/class-mjb-login.php';
+        $mjb_login = new MJB_Login();
+        $mjb_login->init();
+
         // Initialize Candidate Dashboard
         require_once MJB_PATH . 'includes/class-mjb-candidate-dashboard.php';
         $candidate_dashboard = new MJB_Candidate_Dashboard();
         $candidate_dashboard->init();
 
-        // Initialize WooCommerce Integration
-        if (class_exists('WooCommerce')) {
+        // Pro: WooCommerce monetization
+        if (MJB_License::can('woocommerce') && class_exists('WooCommerce')) {
             require_once MJB_PATH . 'includes/class-mjb-woocommerce.php';
             $mjb_woocommerce = new MJB_WooCommerce();
             $mjb_woocommerce->init();
         }
 
-        // Initialize Custom Fields
-        require_once MJB_PATH . 'includes/class-mjb-custom-fields.php';
-        global $mjb_custom_fields;
-        $mjb_custom_fields = new MJB_Custom_Fields();
-        $mjb_custom_fields->init();
+        // Pro: Custom Fields
+        if (MJB_License::can('custom_fields')) {
+            require_once MJB_PATH . 'includes/class-mjb-custom-fields.php';
+            global $mjb_custom_fields;
+            $mjb_custom_fields = new MJB_Custom_Fields();
+            $mjb_custom_fields->init();
+        }
 
-        // Initialize Tools (CSV Import/Export)
-        require_once MJB_PATH . 'includes/class-mjb-tools.php';
-        global $mjb_tools;
-        $mjb_tools = new MJB_Tools();
-        $mjb_tools->init();
+        // Pro: Tools (CSV Import/Export)
+        if (MJB_License::can('tools')) {
+            require_once MJB_PATH . 'includes/class-mjb-tools.php';
+            global $mjb_tools;
+            $mjb_tools = new MJB_Tools();
+            $mjb_tools->init();
+        }
 
-        // Initialize Integrations (Feeds & API)
-        require_once MJB_PATH . 'includes/class-mjb-feeds.php';
-        $mjb_feeds = new MJB_Feeds();
-        $mjb_feeds->init();
+        // Business: Feeds & REST API
+        if (MJB_License::can('xml_feed')) {
+            require_once MJB_PATH . 'includes/class-mjb-feeds.php';
+            $mjb_feeds = new MJB_Feeds();
+            $mjb_feeds->init();
+        }
 
-        require_once MJB_PATH . 'includes/class-mjb-rest-api.php';
-        $mjb_api = new MJB_REST_API();
-        $mjb_api->init();
+        if (MJB_License::can('rest_api')) {
+            require_once MJB_PATH . 'includes/class-mjb-rest-api.php';
+            $mjb_api = new MJB_REST_API();
+            $mjb_api->init();
 
-        $mjb_api_v2 = new MJB_REST_API_V2();
-        $mjb_api_v2->init();
+            $mjb_api_v2 = new MJB_REST_API_V2();
+            $mjb_api_v2->init();
+        }
 
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
@@ -231,6 +332,8 @@ class Modern_Job_Board
             'mjb_employer_registration',
             'mjb_candidate_registration',
             'mjb_candidate_dashboard',
+            'mjb_candidate_login',
+            'mjb_employer_login',
         );
 
         foreach ($shortcodes as $shortcode) {
@@ -257,6 +360,24 @@ class Modern_Job_Board
             return true;
         }
 
+        return $this->page_has_registration_shortcode();
+    }
+
+    /**
+     * Multi-step registration wizard assets.
+     *
+     * @return bool
+     */
+    private function should_enqueue_registration_wizard()
+    {
+        return $this->page_has_registration_shortcode();
+    }
+
+    /**
+     * @return bool
+     */
+    private function page_has_registration_shortcode()
+    {
         global $post;
         if (!$post instanceof WP_Post) {
             return false;
@@ -293,6 +414,37 @@ class Modern_Job_Board
         );
         wp_enqueue_style('mjb-shared', MJB_URL . 'assets/css/mjb-shared.css', array(), MJB_VERSION);
         wp_enqueue_style('mjb-style', MJB_URL . 'assets/css/mjb-style.css', array('mjb-shared', 'mjb-fonts'), MJB_VERSION);
+        wp_enqueue_style('mjb-board-polish', MJB_URL . 'assets/css/mjb-board-polish.css', array('mjb-style'), MJB_VERSION);
+
+        // Admin-style performance charts + AJAX tabs on the recruiter dashboard.
+        global $post;
+        if ($post instanceof WP_Post && has_shortcode($post->post_content, 'mjb_dashboard')) {
+            wp_enqueue_style(
+                'mjb-charts',
+                MJB_URL . 'assets/css/mjb-charts.css',
+                array('mjb-style'),
+                MJB_VERSION
+            );
+            wp_enqueue_script(
+                'mjb-recruiter-dashboard',
+                MJB_URL . 'assets/js/mjb-recruiter-dashboard.js',
+                array('jquery'),
+                MJB_VERSION,
+                true
+            );
+            $tab_urls = array();
+            if (class_exists('MJB_Dashboard')) {
+                foreach (array_keys(MJB_Dashboard::get_tabs()) as $tab_id) {
+                    $tab_urls[$tab_id] = MJB_Dashboard::get_tab_url($tab_id);
+                }
+            }
+            wp_localize_script('mjb-recruiter-dashboard', 'mjb_recruiter_dashboard', array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('mjb_recruiter_dashboard'),
+                'default_tab' => 'overview',
+                'tabs' => $tab_urls,
+            ));
+        }
 
         if ($this->should_enqueue_recaptcha()) {
             wp_enqueue_script('google-recaptcha', 'https://www.google.com/recaptcha/api.js', array(), null, true);
@@ -304,6 +456,9 @@ class Modern_Job_Board
             'nonce' => wp_create_nonce('mjb_search_nonce'),
             'jobs_search_base' => trailingslashit(MJB_Job_Routes::build_url()),
             'jobs_api_search_base' => trailingslashit(MJB_Job_Routes::build_url(array(), array('rest' => true))),
+            'i18n' => array(
+                'noResults' => __('No matches', 'modern-job-board'),
+            ),
         ));
 
         wp_enqueue_script(
@@ -318,9 +473,71 @@ class Modern_Job_Board
             'email' => __('Please enter a valid email address.', 'modern-job-board'),
             'url' => __('Please enter a valid URL.', 'modern-job-board'),
             'number' => __('Please enter a valid number.', 'modern-job-board'),
+            /* translators: %d: minimum character count */
+            'minlength' => __('Please enter at least %d characters.', 'modern-job-board'),
+            /* translators: %d: maximum character count */
+            'maxlength' => __('Please enter no more than %d characters.', 'modern-job-board'),
+            'pattern' => __('Please match the requested format.', 'modern-job-board'),
+            'passwordMatch' => __('Passwords do not match.', 'modern-job-board'),
             'requiredLegend' => __('Required fields are marked with *', 'modern-job-board'),
             'requiredLegendShort' => __('Required fields', 'modern-job-board'),
         ));
+
+        if ($this->should_enqueue_registration_wizard()) {
+            // City autocomplete reuses Filter Jobs AC (jQuery + mjb_ajax → geocity API).
+            // mjb-ajax-search is already enqueued above when assets load.
+
+            // Full metadata build — accurate AsYouType for every country.
+            wp_enqueue_script(
+                'libphonenumber',
+                MJB_URL . 'assets/js/vendor/libphonenumber-max.js',
+                array(),
+                '1.11.18',
+                true
+            );
+
+            wp_enqueue_script(
+                'mjb-phone-field',
+                MJB_URL . 'assets/js/mjb-phone-field.js',
+                array('libphonenumber', 'mjb-ajax-search'),
+                MJB_VERSION,
+                true
+            );
+
+            wp_enqueue_script(
+                'mjb-registration-wizard',
+                MJB_URL . 'assets/js/mjb-registration-wizard.js',
+                array('mjb-phone-field', 'mjb-ajax-search'),
+                MJB_VERSION,
+                true
+            );
+            wp_localize_script('mjb-registration-wizard', 'mjbRegistrationWizard', array(
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('mjb_registration_wizard'),
+                'checkEmailAction' => 'mjb_check_registration_email',
+                'i18n' => array(
+                    'required' => __('This field is required.', 'modern-job-board'),
+                    'email' => __('Please enter a valid email address.', 'modern-job-board'),
+                    'passwordMatch' => __('Passwords do not match.', 'modern-job-board'),
+                    /* translators: %d: minimum character count */
+                    'minlength' => __('Please enter at least %d characters.', 'modern-job-board'),
+                    'emailExists' => __('That email address is already registered.', 'modern-job-board'),
+                    'submitting' => __('Creating your account…', 'modern-job-board'),
+                    'failed' => __('Registration failed. Please try again.', 'modern-job-board'),
+                    'network' => __('Network error. Please try again.', 'modern-job-board'),
+                ),
+            ));
+        }
+
+        if (is_singular('job_listing')) {
+            wp_enqueue_script(
+                'mjb-job-detail',
+                MJB_URL . 'assets/js/mjb-job-detail.js',
+                array(),
+                MJB_VERSION,
+                true
+            );
+        }
     }
 }
 

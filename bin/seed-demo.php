@@ -162,4 +162,4 @@ echo "Seeded {$imported} demo jobs (" . count($demo_jobs) . ' defined).' . PHP_E
 echo 'Demo URLs:' . PHP_EOL;
 echo '  Jobs: ' . home_url('/jobs/') . PHP_EOL;
 echo '  Post a job: ' . home_url('/post-a-job/') . PHP_EOL;
-echo '  Employer dashboard: ' . home_url('/employer-dashboard/') . PHP_EOL;
+echo '  Recruiter dashboard: ' . home_url('/jobs/recruiter-dashboard/') . PHP_EOL;

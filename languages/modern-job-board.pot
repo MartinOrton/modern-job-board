@@ -1,10 +1,10 @@
 # Copyright (C) 2026 Martin Orton
-# This file is distributed under the GPL.
+# This file is distributed under a proprietary license. See LICENSE.txt.
 msgid ""
 msgstr ""
 "Project-Id-Version: Modern Job Board\n"
-"Report-Msgid-Bugs-To: https://github.com/MartinOrton/modern-job-board\n"
-"POT-Creation-Date: 2026-06-12 07:30+0000\n"
+"Report-Msgid-Bugs-To: hello@martinorton.com\n"
+"POT-Creation-Date: 2026-08-09 10:17+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -13,28 +13,85 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Domain: modern-job-board\n"
 
+msgid "%1$d imported, %2$d skipped"
+msgstr ""
+
 msgid "%1$d jobs imported from XML. %2$d items skipped (duplicates or invalid rows)."
 msgstr ""
 
 msgid "%1$d pages created. %2$d pages were already configured."
 msgstr ""
 
+msgid "%1$s%2$s — apply on %3$s."
+msgstr ""
+
 msgid "%d jobs imported successfully!"
+msgstr ""
+
+msgid "%s featured days"
+msgstr ""
+
+msgid "%s job credits"
+msgstr ""
+
+msgid "%s jobs"
+msgstr ""
+
+msgid "%s-day listings"
 msgstr ""
 
 msgid "&larr; Back to Dashboard"
 msgstr ""
 
+msgid "1. Install and activate Modern Job Board on your WordPress site."
+msgstr ""
+
+msgid "2. Go to Job Board → Settings → License & plan."
+msgstr ""
+
+msgid "3. Paste the key and save."
+msgstr ""
+
 msgid "A new job has been submitted to your board."
 msgstr ""
 
-msgid "A resume is required to apply."
+msgid "A resume is required. Upload one on your candidate profile, then apply again."
+msgstr ""
+
+msgid "API key"
+msgstr ""
+
+msgid "API keys"
+msgstr ""
+
+msgid "API rate limit exceeded. Try again shortly."
+msgstr ""
+
+msgid "About you"
+msgstr ""
+
+msgid "Account"
+msgstr ""
+
+msgid "Account status"
+msgstr ""
+
+msgid "Acme"
 msgstr ""
 
 msgid "Actions"
 msgstr ""
 
+msgid "Activation:"
+msgstr ""
+
 msgid "Active Jobs"
+msgstr ""
+
+msgid "Active published jobs: %1$d / %2$d. Upgrade to Pro for unlimited listings."
+msgstr ""
+
+msgid "Add Feed"
 msgstr ""
 
 msgid "Add Field"
@@ -56,6 +113,15 @@ msgid "Add New Job"
 msgstr ""
 
 msgid "Add New Resume"
+msgstr ""
+
+msgid "Add Scheduled Feed"
+msgstr ""
+
+msgid "Add feed"
+msgstr ""
+
+msgid "Add package product"
 msgstr ""
 
 msgid "After creating pages, visit %s and click Save to refresh rewrite rules for pretty job search URLs."
@@ -82,7 +148,22 @@ msgstr ""
 msgid "All Resumes"
 msgstr ""
 
+msgid "All new jobs"
+msgstr ""
+
 msgid "All required frontend pages are configured."
+msgstr ""
+
+msgid "Already have a job seeker account? Continue below."
+msgstr ""
+
+msgid "Already have an account?"
+msgstr ""
+
+msgid "Already have an employer account? Continue below."
+msgstr ""
+
+msgid "Analytics export"
 msgstr ""
 
 msgid "Application"
@@ -100,7 +181,13 @@ msgstr ""
 msgid "Application Security"
 msgstr ""
 
+msgid "Application could not be submitted. Please try again."
+msgstr ""
+
 msgid "Application for %s by %s"
+msgstr ""
+
+msgid "Application method"
 msgstr ""
 
 msgid "Application received: %s"
@@ -127,10 +214,103 @@ msgstr ""
 msgid "Applied For"
 msgstr ""
 
+msgid "Apply"
+msgstr ""
+
+msgid "Apply to selected"
+msgstr ""
+
+msgid "Apply with your profile and resume"
+msgstr ""
+
+msgid "Approve board account"
+msgstr ""
+
+msgid "Approved"
+msgstr ""
+
+msgid "Archive pagination"
+msgstr ""
+
 msgid "Are you sure you want to delete this job?"
 msgstr ""
 
+msgid "At least 8 characters."
+msgstr ""
+
 msgid "Authentication required."
+msgstr ""
+
+msgid "Auto-approve trusted employers"
+msgstr ""
+
+msgid "Automatically import jobs from remote XML/RSS feeds on a daily or weekly schedule."
+msgstr ""
+
+msgid "Back"
+msgstr ""
+
+msgid "Back to Jobs"
+msgstr ""
+
+msgid "Back to sign in"
+msgstr ""
+
+msgid "Banner image URL"
+msgstr ""
+
+msgid "Blog"
+msgstr ""
+
+msgid "Blog + jobs"
+msgstr ""
+
+msgid "Board Collaborator"
+msgstr ""
+
+msgid "Board brand"
+msgstr ""
+
+msgid "Board collaborators"
+msgstr ""
+
+msgid "Board mode"
+msgstr ""
+
+msgid "Board status"
+msgstr ""
+
+msgid "Brand"
+msgstr ""
+
+msgid "Browse jobs"
+msgstr ""
+
+msgid "Browse open roles and filter by keywords, location, category, job type, or company."
+msgstr ""
+
+msgid "Browse open roles at %s."
+msgstr ""
+
+msgid "Browse open roles in %s."
+msgstr ""
+
+msgid "Browse the latest openings for %s."
+msgstr ""
+
+msgid "Build a company page candidates can browse"
+msgstr ""
+
+msgid "Bulk status"
+msgstr ""
+
+msgid "Business"
+msgstr ""
+
+msgid "Business checkout URL"
+msgstr ""
+
+msgid "Buy %s"
 msgstr ""
 
 msgid "CSV Import"
@@ -142,6 +322,9 @@ msgstr ""
 msgid "CV Unlock Product ID"
 msgstr ""
 
+msgid "Cancel"
+msgstr ""
+
 msgid "Candidate"
 msgstr ""
 
@@ -149,6 +332,9 @@ msgid "Candidate Dashboard"
 msgstr ""
 
 msgid "Candidate Email: %s"
+msgstr ""
+
+msgid "Candidate Login"
 msgstr ""
 
 msgid "Candidate Name"
@@ -166,7 +352,31 @@ msgstr ""
 msgid "Candidate access required."
 msgstr ""
 
+msgid "Candidate approval"
+msgstr ""
+
+msgid "Cannot message yourself."
+msgstr ""
+
 msgid "Checkbox"
+msgstr ""
+
+msgid "Checkout URLs power “Buy Pro/Business” buttons. Use any https product or payment page. With WooCommerce, any gateway that supports WooCommerce works (e.g. PayPal, Stripe, Square, Mollie, Razorpay, or regional gateways where available). Leave blank to fall back to a sales email."
+msgstr ""
+
+msgid "Choose a new password for your account. Your username is shown in the reset email."
+msgstr ""
+
+msgid "Choose package"
+msgstr ""
+
+msgid "City"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+msgid "Collaborators"
 msgstr ""
 
 msgid "Comma separated"
@@ -178,19 +388,82 @@ msgstr ""
 msgid "Company"
 msgstr ""
 
-msgid "Company Name"
+msgid "Company Profiles"
 msgstr ""
 
-msgid "Company Profiles"
+msgid "Company email"
+msgstr ""
+
+msgid "Company logo"
+msgstr ""
+
+msgid "Company name"
 msgstr ""
 
 msgid "Company: %s"
 msgstr ""
 
+msgid "Complete Site"
+msgstr ""
+
+msgid "Complete Site (Business features)"
+msgstr ""
+
+msgid "Complete Site checkout URL"
+msgstr ""
+
 msgid "Configure listings, Google Maps API, and monetization options."
 msgstr ""
 
+msgid "Confirm new password"
+msgstr ""
+
+msgid "Confirm password"
+msgstr ""
+
+msgid "Contact candidate"
+msgstr ""
+
+msgid "Continue"
+msgstr ""
+
+msgid "Continue applying"
+msgstr ""
+
+msgid "Continue to your candidate dashboard to manage your profile and applications."
+msgstr ""
+
+msgid "Continue to your employer dashboard to manage jobs and applications."
+msgstr ""
+
+msgid "Control employer and job seeker self-registration. Pending accounts cannot log in until approved (Users → Approve board account)."
+msgstr ""
+
+msgid "Control listing duration and expiry dates"
+msgstr ""
+
 msgid "Conversion"
+msgstr ""
+
+msgid "Copy this key now; it will not be shown again:"
+msgstr ""
+
+msgid "Could not attach your resume to this application. Please try again."
+msgstr ""
+
+msgid "Could not copy file."
+msgstr ""
+
+msgid "Could not delete the job."
+msgstr ""
+
+msgid "Could not reset the password. Please try again."
+msgstr ""
+
+msgid "Could not save resume."
+msgstr ""
+
+msgid "Country calling code"
 msgstr ""
 
 msgid "Create Missing Pages"
@@ -199,22 +472,76 @@ msgstr ""
 msgid "Create New Company"
 msgstr ""
 
+msgid "Create WooCommerce products and set “Job listing credits”, featured days, and duration. Use shortcode [mjb_packages] on a pricing page. Coupons work via standard WooCommerce coupons on those products. For recurring plans, install WooCommerce Subscriptions and tick “Subscription package” on the product."
+msgstr ""
+
 msgid "Create WordPress pages for each shortcode used by the job board frontend."
+msgstr ""
+
+msgid "Create a job seeker profile in three short steps."
+msgstr ""
+
+msgid "Create a job seeker profile to finish applying. Your resume will be sent with the application."
+msgstr ""
+
+msgid "Create a profile and get hired by top employers."
+msgstr ""
+
+msgid "Create account"
+msgstr ""
+
+msgid "Create an employer account in three short steps."
+msgstr ""
+
+msgid "Create categories that mirror job categories (e.g. Engineering, Design)."
 msgstr ""
 
 msgid "Create frontend pages for job search, dashboards, and registration shortcodes."
 msgstr ""
 
-msgid "Create keys at google.com/recaptcha/admin (reCAPTCHA v2, \"I'm not a robot\" checkbox)."
+msgid "Create key"
+msgstr ""
+
+msgid "Create keys at google.com/recaptcha/admin (reCAPTCHA v2, \"I'm not a robot\" checkbox). Required when reCAPTCHA is enabled."
+msgstr ""
+
+msgid "Creating your account…"
+msgstr ""
+
+msgid "Currency must be a 3-letter ISO code (e.g. USD)."
 msgstr ""
 
 msgid "Current Resume:"
+msgstr ""
+
+msgid "Current collaborators"
+msgstr ""
+
+msgid "Current plan"
+msgstr ""
+
+msgid "Currently working in this role"
 msgstr ""
 
 msgid "Custom Fields"
 msgstr ""
 
 msgid "Custom Fields Builder"
+msgstr ""
+
+msgid "Custom field deleted."
+msgstr ""
+
+msgid "Custom field saved."
+msgstr ""
+
+msgid "Custom fields"
+msgstr ""
+
+msgid "Daily"
+msgstr ""
+
+msgid "Dark"
 msgstr ""
 
 msgid "Dashboard"
@@ -226,16 +553,37 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
+msgid "Delete job"
+msgstr ""
+
+msgid "Delete job?"
+msgstr ""
+
 msgid "Delete this field?"
+msgstr ""
+
+msgid "Delete this scheduled feed?"
 msgstr ""
 
 msgid "Description"
 msgstr ""
 
+msgid "Disabled"
+msgstr ""
+
 msgid "Dismiss"
 msgstr ""
 
+msgid "Display my profile to employers"
+msgstr ""
+
 msgid "Download"
+msgstr ""
+
+msgid "Download CSV"
+msgstr ""
+
+msgid "Download CSV of job views, applications, and revenue meta (when available)."
 msgstr ""
 
 msgid "Download Resume"
@@ -262,13 +610,28 @@ msgstr ""
 msgid "Edit Resume"
 msgstr ""
 
+msgid "Edit Scheduled Feed"
+msgstr ""
+
 msgid "Email"
 msgstr ""
 
 msgid "Email (Internal Form)"
 msgstr ""
 
-msgid "Email Address"
+msgid "Email key to (optional)"
+msgstr ""
+
+msgid "Email or username"
+msgstr ""
+
+msgid "Email reset link"
+msgstr ""
+
+msgid "Embed widget"
+msgstr ""
+
+msgid "Embeddable job widget"
 msgstr ""
 
 msgid "Employer"
@@ -277,10 +640,31 @@ msgstr ""
 msgid "Employer Dashboard"
 msgstr ""
 
+msgid "Employer Login"
+msgstr ""
+
 msgid "Employer Registration"
 msgstr ""
 
+msgid "Employer Sign up"
+msgstr ""
+
 msgid "Employer access required."
+msgstr ""
+
+msgid "Employer approval"
+msgstr ""
+
+msgid "Employer dashboard: %s"
+msgstr ""
+
+msgid "Employer login"
+msgstr ""
+
+msgid "Employer sign in"
+msgstr ""
+
+msgid "Employers"
 msgstr ""
 
 msgid "Enable Pay-Per-Post"
@@ -289,28 +673,46 @@ msgstr ""
 msgid "Enable reCAPTCHA"
 msgstr ""
 
-msgid "Enter the WooCommerce Product ID for the job listing fee."
+msgid "Enable web app manifest + service worker"
 msgstr ""
 
-msgid "Enter the WooCommerce Product ID for unlocking a single application."
+msgid "Enabled"
+msgstr ""
+
+msgid "Enter a license key to unlock Pro or Business features. Leave blank for Free (10 active jobs)."
+msgstr ""
+
+msgid "Enter the email address or username you used to register. We will send a reset link and remind you of your username."
+msgstr ""
+
+msgid "Enter the email or username for your account. We will email reset instructions and your username."
+msgstr ""
+
+msgid "Error"
 msgstr ""
 
 msgid "Error: Shortcodes class not found."
 msgstr ""
 
-msgid "Events: application.submitted, application.status_updated, job.submitted"
+msgid "Every Five Minutes"
 msgstr ""
 
-msgid "Every Five Minutes"
+msgid "Every Hour"
 msgstr ""
 
 msgid "Exp: %s"
 msgstr ""
 
-msgid "Expiration Date:"
+msgid "Expiration date"
 msgstr ""
 
 msgid "Expires"
+msgstr ""
+
+msgid "Expiry (YYYYMMDD)"
+msgstr ""
+
+msgid "Explore open roles at %1$s on %2$s."
 msgstr ""
 
 msgid "Export"
@@ -331,22 +733,109 @@ msgstr ""
 msgid "External URL"
 msgstr ""
 
+msgid "External application URL"
+msgstr ""
+
+msgid "Feature this job on the board"
+msgstr ""
+
 msgid "Featured"
 msgstr ""
 
 msgid "Featured Image"
 msgstr ""
 
-msgid "Featured Job"
+msgid "Featured days"
+msgstr ""
+
+msgid "Featured image"
+msgstr ""
+
+msgid "Feed Name"
+msgstr ""
+
+msgid "Feed URL"
+msgstr ""
+
+msgid "Feed URL must not include credentials."
+msgstr ""
+
+msgid "Feed URL must point to a public host (private or local addresses are not allowed)."
+msgstr ""
+
+msgid "Feed URL must use http or https."
+msgstr ""
+
+msgid "Feed import complete. %1$d jobs imported, %2$d skipped."
+msgstr ""
+
+msgid "File is too large. Maximum size is %s."
+msgstr ""
+
+msgid "File upload failed. Please try again."
+msgstr ""
+
+msgid "Filter %s Jobs"
+msgstr ""
+
+msgid "Filter by keywords, location, category, type, or company"
 msgstr ""
 
 msgid "Filter jobs list"
 msgstr ""
 
+msgid "Find %1$s opportunities on %2$s. Apply online today."
+msgstr ""
+
+msgid "Find jobs"
+msgstr ""
+
 msgid "First Name"
 msgstr ""
 
+msgid "First name"
+msgstr ""
+
+msgid "For manual sales or support. Paste the key into the customer email, or send it automatically below. On a sales site with WooCommerce, assign “MJB plugin license” on the product instead."
+msgstr ""
+
+msgid "Forgot username or password?"
+msgstr ""
+
+msgid "Format: MJB-{PLAN}-{YYYYMMDD|00000000}-{checksum}. Clear the field and save to revert to Free."
+msgstr ""
+
+msgid "Free"
+msgstr ""
+
+msgid "Free to join - no card required"
+msgstr ""
+
+msgid "Free to start - upgrade when you need more tools"
+msgstr ""
+
+msgid "Full https:// URLs only. Events: application.submitted, application.status_updated, job.submitted"
+msgstr ""
+
+msgid "Gallery attachment IDs (comma-separated)"
+msgstr ""
+
+msgid "Generate key"
+msgstr ""
+
+msgid "Get found in location, category, and type search"
+msgstr ""
+
+msgid "Get started"
+msgstr ""
+
+msgid "Go to dashboard"
+msgstr ""
+
 msgid "Google Maps API Key"
+msgstr ""
+
+msgid "Here are new jobs matching your saved search:"
 msgstr ""
 
 msgid "Hi %s,"
@@ -358,7 +847,28 @@ msgstr ""
 msgid "Hired"
 msgstr ""
 
+msgid "How long new job listings stay active (1–3650 days)."
+msgstr ""
+
+msgid "How many days the listing stays featured (0 = none)."
+msgstr ""
+
+msgid "I already have a key"
+msgstr ""
+
+msgid "I am applying for %s via my Modern Job Board candidate profile."
+msgstr ""
+
+msgid "If an account matches that email or username, we sent password reset instructions. Check your inbox (and spam folder). The email includes your username."
+msgstr ""
+
+msgid "If this was a mistake, ignore this email and nothing will change."
+msgstr ""
+
 msgid "Import"
+msgstr ""
+
+msgid "Import / export tools"
 msgstr ""
 
 msgid "Import Jobs"
@@ -373,6 +883,9 @@ msgstr ""
 msgid "Import Jobs from XML File"
 msgstr ""
 
+msgid "Import and export"
+msgstr ""
+
 msgid "Import jobs from an MJB XML feed or compatible RSS feed. Duplicate items (matched by GUID or link) are skipped."
 msgstr ""
 
@@ -382,7 +895,13 @@ msgstr ""
 msgid "Integrations"
 msgstr ""
 
-msgid "Internal (Email)"
+msgid "Interested in remote opportunities"
+msgstr ""
+
+msgid "Internal (email notification)"
+msgstr ""
+
+msgid "Invalid API key."
 msgstr ""
 
 msgid "Invalid application status."
@@ -391,13 +910,52 @@ msgstr ""
 msgid "Invalid download link."
 msgstr ""
 
+msgid "Invalid email/username or password. Please try again."
+msgstr ""
+
+msgid "Invalid file type for copy."
+msgstr ""
+
+msgid "Invalid file type. Allowed: %s."
+msgstr ""
+
 msgid "Invalid job or permission denied."
+msgstr ""
+
+msgid "Invalid job."
+msgstr ""
+
+msgid "Invalid license key."
+msgstr ""
+
+msgid "Invalid message."
 msgstr ""
 
 msgid "Invalid resume file type. Allowed types: PDF, DOC, DOCX."
 msgstr ""
 
+msgid "Invalid user."
+msgstr ""
+
+msgid "Invite teammates to manage job listings and applications without giving them full WordPress admin access."
+msgstr ""
+
+msgid "Issue a license key (vendor)"
+msgstr ""
+
+msgid "JPEG, PNG or WebP. Max 2 MB."
+msgstr ""
+
+msgid "JPEG, PNG or WebP. Max 2 MB. Optional — add more company details later."
+msgstr ""
+
 msgid "Job"
+msgstr ""
+
+msgid "Job Alert"
+msgstr ""
+
+msgid "Job Alerts"
 msgstr ""
 
 msgid "Job Applications"
@@ -412,9 +970,6 @@ msgstr ""
 msgid "Job Category"
 msgstr ""
 
-msgid "Job Data"
-msgstr ""
-
 msgid "Job Listing"
 msgstr ""
 
@@ -425,6 +980,9 @@ msgid "Job Listings"
 msgstr ""
 
 msgid "Job Location"
+msgstr ""
+
+msgid "Job Seeker Sign up"
 msgstr ""
 
 msgid "Job Title"
@@ -439,7 +997,43 @@ msgstr ""
 msgid "Job Views"
 msgstr ""
 
+msgid "Job alert saved. We will email you when matching jobs are posted."
+msgstr ""
+
+msgid "Job alerts"
+msgstr ""
+
+msgid "Job board account"
+msgstr ""
+
 msgid "Job credits:"
+msgstr ""
+
+msgid "Job listings pagination"
+msgstr ""
+
+msgid "Job media"
+msgstr ""
+
+msgid "Job moved to trash."
+msgstr ""
+
+msgid "Job not found."
+msgstr ""
+
+msgid "Job packages"
+msgstr ""
+
+msgid "Job removed from your saved list."
+msgstr ""
+
+msgid "Job saved to your list."
+msgstr ""
+
+msgid "Job seeker login"
+msgstr ""
+
+msgid "Job seekers"
 msgstr ""
 
 msgid "Job submitted successfully using a job credit!"
@@ -454,10 +1048,22 @@ msgstr ""
 msgid "Jobs"
 msgstr ""
 
+msgid "Jobs + content marketing setup"
+msgstr ""
+
+msgid "Jobs at %s"
+msgstr ""
+
+msgid "Jobs in %s"
+msgstr ""
+
 msgid "Jobs list"
 msgstr ""
 
 msgid "Jobs list navigation"
+msgstr ""
+
+msgid "Keep one job seeker profile ready for employers"
 msgstr ""
 
 msgid "Key"
@@ -469,7 +1075,64 @@ msgstr ""
 msgid "Label"
 msgstr ""
 
+msgid "Language"
+msgstr ""
+
 msgid "Last Name"
+msgstr ""
+
+msgid "Last Result"
+msgstr ""
+
+msgid "Last Run"
+msgstr ""
+
+msgid "Last name"
+msgstr ""
+
+msgid "Latest jobs"
+msgstr ""
+
+msgid "Leave empty to use the default listing duration from Settings."
+msgstr ""
+
+msgid "License & plan"
+msgstr ""
+
+msgid "License activated. Current plan: %s."
+msgstr ""
+
+msgid "License activation failed."
+msgstr ""
+
+msgid "License cleared. You are on the Free plan."
+msgstr ""
+
+msgid "License key"
+msgstr ""
+
+msgid "License key format must be MJB-{PLAN}-{YYYYMMDD}-{CHECKSUM}."
+msgstr ""
+
+msgid "License key generated and emailed to %2$s: %1$s"
+msgstr ""
+
+msgid "License key generated: %s"
+msgstr ""
+
+msgid "License key: %s"
+msgstr ""
+
+msgid "License settings"
+msgstr ""
+
+msgid "Light"
+msgstr ""
+
+msgid "Link from the jobs page footer to your career blog for SEO equity."
+msgstr ""
+
+msgid "LinkedIn profile"
 msgstr ""
 
 msgid "Listing Duration (Days)"
@@ -478,19 +1141,67 @@ msgstr ""
 msgid "Listing Settings"
 msgstr ""
 
-msgid "Loading..."
+msgid "Listing details"
+msgstr ""
+
+msgid "Listing duration (days)"
+msgstr ""
+
+msgid "Listing duration cannot exceed 3650 days."
+msgstr ""
+
+msgid "Listing duration must be at least 1 day."
+msgstr ""
+
+msgid "Loading jobs"
+msgstr ""
+
+msgid "Loading section…"
 msgstr ""
 
 msgid "Location"
 msgstr ""
 
+msgid "Locations"
+msgstr ""
+
 msgid "Locked"
+msgstr ""
+
+msgid "Log in to manage job alerts."
+msgstr ""
+
+msgid "Log in to view messages."
+msgstr ""
+
+msgid "Log in: %s"
+msgstr ""
+
+msgid "Logo URL"
+msgstr ""
+
+msgid "Logo upload failed. Please try again."
+msgstr ""
+
+msgid "MJB license issued (%1$s): %2$s"
+msgstr ""
+
+msgid "MJB plugin license"
 msgstr ""
 
 msgid "Manage Jobs"
 msgstr ""
 
-msgid "Manage your job board with complete control."
+msgid "Manage alerts from your candidate dashboard."
+msgstr ""
+
+msgid "Manage license"
+msgstr ""
+
+msgid "Manage your job board settings, listings, and tools."
+msgstr ""
+
+msgid "Mark as recurring plan (pair with WooCommerce Subscriptions if installed)."
 msgstr ""
 
 msgid "Message"
@@ -499,16 +1210,22 @@ msgstr ""
 msgid "Message:"
 msgstr ""
 
+msgid "Messages"
+msgstr ""
+
 msgid "Missing"
 msgstr ""
 
 msgid "Modern Job Board"
 msgstr ""
 
-msgid "Modern Job Board Setup"
+msgid "Modern Job Board Free plan allows %d active (published) jobs. Upgrade to Pro for unlimited listings."
 msgstr ""
 
-msgid "Modern Job Board Tools"
+msgid "Modern Job Board plan: %1$s — %2$d / %3$d active jobs."
+msgstr ""
+
+msgid "Modern Job Board sections"
 msgstr ""
 
 msgid "Modern Job Board setup is incomplete. Create the required frontend pages to enable dashboards, registration, and job search."
@@ -521,6 +1238,18 @@ msgid "My Applications"
 msgstr ""
 
 msgid "My Resume"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Nav style"
+msgstr ""
+
+msgid "Network error. Please try again."
+msgstr ""
+
+msgid "Never run"
 msgstr ""
 
 msgid "New"
@@ -541,7 +1270,31 @@ msgstr ""
 msgid "New Job Submitted: %s"
 msgstr ""
 
+msgid "New Resume"
+msgstr ""
+
+msgid "New password"
+msgstr ""
+
+msgid "Next"
+msgstr ""
+
+msgid "Next page"
+msgstr ""
+
+msgid "No SMS provider configured. Hook mjb_sms_send."
+msgstr ""
+
+msgid "No alerts yet. Save a search from the jobs page."
+msgstr ""
+
 msgid "No applications found for this job."
+msgstr ""
+
+msgid "No applications found."
+msgstr ""
+
+msgid "No companies found."
 msgstr ""
 
 msgid "No custom fields defined."
@@ -556,13 +1309,43 @@ msgstr ""
 msgid "No job performance data yet. Views are tracked when job detail pages are visited."
 msgstr ""
 
+msgid "No jobs available right now."
+msgstr ""
+
 msgid "No jobs found."
+msgstr ""
+
+msgid "No matches"
+msgstr ""
+
+msgid "No messages yet."
+msgstr ""
+
+msgid "No packages configured yet. Add products with package quantity meta."
 msgstr ""
 
 msgid "No profile fields provided."
 msgstr ""
 
+msgid "No public candidate profiles yet."
+msgstr ""
+
+msgid "No records found."
+msgstr ""
+
 msgid "No resume uploaded yet."
+msgstr ""
+
+msgid "No resumes found"
+msgstr ""
+
+msgid "No resumes found in Trash"
+msgstr ""
+
+msgid "No scheduled feeds yet. Add a remote XML feed above to start automatic backfill."
+msgstr ""
+
+msgid "None yet."
 msgstr ""
 
 msgid "Not found"
@@ -571,7 +1354,19 @@ msgstr ""
 msgid "Not found in Trash"
 msgstr ""
 
+msgid "Not registered yet? Create a profile and get hired by top employers."
+msgstr ""
+
+msgid "Not registered yet? Post open jobs and hire top talent."
+msgstr ""
+
+msgid "Note:"
+msgstr ""
+
 msgid "Notification Email"
+msgstr ""
+
+msgid "Notification email"
 msgstr ""
 
 msgid "Number"
@@ -583,16 +1378,58 @@ msgstr ""
 msgid "Number of job listings this package grants."
 msgstr ""
 
+msgid "Open Full List"
+msgstr ""
+
 msgid "Open Setup Wizard"
+msgstr ""
+
+msgid "Open to work"
+msgstr ""
+
+msgid "Optional"
 msgstr ""
 
 msgid "Optional HMAC secret sent as the X-MJB-Signature header (SHA-256)."
 msgstr ""
 
+msgid "Optional attributes: data-limit, data-category, data-location (slugs)."
+msgstr ""
+
+msgid "Optional. Enables domain-bound activation and licensed updates (tasks #6–#7)."
+msgstr ""
+
+msgid "Optional. Used for map embeds on job pages."
+msgstr ""
+
 msgid "Options (for Select)"
 msgstr ""
 
+msgid "Order #%d"
+msgstr ""
+
+msgid "Original"
+msgstr ""
+
+msgid "Override default listing duration for this package."
+msgstr ""
+
+msgid "PDF, DOC or DOCX. Max 5 MB. Stored privately (not the Media Library)."
+msgstr ""
+
+msgid "PWA mode"
+msgstr ""
+
+msgid "Packages"
+msgstr ""
+
+msgid "Packages require WooCommerce."
+msgstr ""
+
 msgid "Page"
+msgstr ""
+
+msgid "Page %1$d of %2$d"
 msgstr ""
 
 msgid "Paid CV Access"
@@ -604,7 +1441,31 @@ msgstr ""
 msgid "Parent Job:"
 msgstr ""
 
+msgid "Partner feeds"
+msgstr ""
+
+msgid "Partner import feeds"
+msgstr ""
+
 msgid "Password"
+msgstr ""
+
+msgid "Password must be at least 8 characters."
+msgstr ""
+
+msgid "Passwords do not match."
+msgstr ""
+
+msgid "Paste this snippet on any external site to show your latest jobs."
+msgstr ""
+
+msgid "Pending"
+msgstr ""
+
+msgid "Pending approval"
+msgstr ""
+
+msgid "Pending users cannot log in until approved."
 msgstr ""
 
 msgid "Performance Charts"
@@ -613,7 +1474,22 @@ msgstr ""
 msgid "Performance Overview"
 msgstr ""
 
-msgid "Phone Number"
+msgid "Phone number"
+msgstr ""
+
+msgid "Photo"
+msgstr ""
+
+msgid "Photo upload failed. Please try again."
+msgstr ""
+
+msgid "Plan"
+msgstr ""
+
+msgid "Plan is forced to %s via MJB_LICENSE_PLAN in wp-config.php."
+msgstr ""
+
+msgid "Plan: %s"
 msgstr ""
 
 msgid "Please <a href=\"%s\">login</a> to view your dashboard."
@@ -622,7 +1498,31 @@ msgstr ""
 msgid "Please complete the reCAPTCHA verification."
 msgstr ""
 
+msgid "Please complete your candidate profile before applying."
+msgstr ""
+
+msgid "Please enter a valid URL."
+msgstr ""
+
+msgid "Please enter a valid email address."
+msgstr ""
+
+msgid "Please enter a valid number."
+msgstr ""
+
+msgid "Please enter at least %d characters."
+msgstr ""
+
+msgid "Please enter no more than %d characters."
+msgstr ""
+
 msgid "Please fill in all required fields."
+msgstr ""
+
+msgid "Please match the requested format."
+msgstr ""
+
+msgid "Please provide a feed name."
 msgstr ""
 
 msgid "Please provide a valid feed URL."
@@ -631,13 +1531,46 @@ msgstr ""
 msgid "Please select a valid company or enter a new company name."
 msgstr ""
 
+msgid "Please upload a valid logo (JPEG, PNG, or WebP)."
+msgstr ""
+
+msgid "Please upload a valid photo (JPEG, PNG, or WebP)."
+msgstr ""
+
 msgid "Please upload a valid resume (PDF, DOC, or DOCX)."
 msgstr ""
 
 msgid "Post a Job"
 msgstr ""
 
-msgid "Professional Headline"
+msgid "Post a job"
+msgstr ""
+
+msgid "Post jobs and manage applicants in one place"
+msgstr ""
+
+msgid "Post open jobs and hire top talent."
+msgstr ""
+
+msgid "Previous"
+msgstr ""
+
+msgid "Previous page"
+msgstr ""
+
+msgid "Primary color"
+msgstr ""
+
+msgid "Primary hover"
+msgstr ""
+
+msgid "Private job search"
+msgstr ""
+
+msgid "Pro"
+msgstr ""
+
+msgid "Pro checkout URL"
 msgstr ""
 
 msgid "Profile Details"
@@ -649,19 +1582,40 @@ msgstr ""
 msgid "Protect the job application form from automated spam. A honeypot field is always active; reCAPTCHA v2 is optional."
 msgstr ""
 
+msgid "Publish jobs immediately after an employer’s first approved listing"
+msgstr ""
+
 msgid "Quick Actions"
+msgstr ""
+
+msgid "REST API"
 msgstr ""
 
 msgid "Ready"
 msgstr ""
 
-msgid "Register as Candidate"
+msgid "Records pagination"
 msgstr ""
 
-msgid "Register as Employer"
+msgid "Recover account"
+msgstr ""
+
+msgid "Register"
+msgstr ""
+
+msgid "Register partner XML/JSON feed URLs. They run on the daily board cron."
+msgstr ""
+
+msgid "Registered feeds"
+msgstr ""
+
+msgid "Registration"
 msgstr ""
 
 msgid "Registration failed. Please try again."
+msgstr ""
+
+msgid "Registration steps"
 msgstr ""
 
 msgid "Registration successful! Welcome to your dashboard."
@@ -673,10 +1627,40 @@ msgstr ""
 msgid "Rejected"
 msgstr ""
 
+msgid "Related jobs"
+msgstr ""
+
+msgid "Related jobs auto-append to blog posts when a matching category slug exists."
+msgstr ""
+
+msgid "Remember me"
+msgstr ""
+
+msgid "Remote"
+msgstr ""
+
 msgid "Remote Feed URL"
 msgstr ""
 
+msgid "Remote license API URL"
+msgstr ""
+
+msgid "Remote license API URL is not configured."
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
 msgid "Remove featured image"
+msgstr ""
+
+msgid "Replace plugin UI strings without editing code. Match the original English string exactly."
+msgstr ""
+
+msgid "Replacement"
+msgstr ""
+
+msgid "Request a new link"
 msgstr ""
 
 msgid "Require Google reCAPTCHA v2 on internal application forms."
@@ -685,13 +1669,34 @@ msgstr ""
 msgid "Require Payment"
 msgstr ""
 
+msgid "Require admin approval for new candidate accounts"
+msgstr ""
+
+msgid "Require admin approval for new employer accounts"
+msgstr ""
+
+msgid "Require login to browse jobs"
+msgstr ""
+
 msgid "Require payment before employers can view candidate details and resumes."
 msgstr ""
 
 msgid "Required Columns:"
 msgstr ""
 
+msgid "Required fields"
+msgstr ""
+
+msgid "Required fields are marked with *"
+msgstr ""
+
+msgid "Required when reCAPTCHA is enabled."
+msgstr ""
+
 msgid "Required?"
+msgstr ""
+
+msgid "Reset"
 msgstr ""
 
 msgid "Resume"
@@ -712,13 +1717,64 @@ msgstr ""
 msgid "Resumes"
 msgstr ""
 
+msgid "Review applications and update hiring status"
+msgstr ""
+
 msgid "Review candidate applications and download resumes."
 msgstr ""
 
 msgid "Reviewed"
 msgstr ""
 
+msgid "Revoke"
+msgstr ""
+
+msgid "Run Now"
+msgstr ""
+
+msgid "Sales email (mailto fallback)"
+msgstr ""
+
 msgid "Save Settings"
+msgstr ""
+
+msgid "Save jobs and pick up where you left off"
+msgstr ""
+
+msgid "Save password"
+msgstr ""
+
+msgid "Saved jobs"
+msgstr ""
+
+msgid "Saved jobs are not available."
+msgstr ""
+
+msgid "Schedule"
+msgstr ""
+
+msgid "Scheduled Feeds"
+msgstr ""
+
+msgid "Scheduled XML Backfill"
+msgstr ""
+
+msgid "Scheduled feed deleted."
+msgstr ""
+
+msgid "Scheduled feed is disabled."
+msgstr ""
+
+msgid "Scheduled feed is not due yet."
+msgstr ""
+
+msgid "Scheduled feed not found."
+msgstr ""
+
+msgid "Scheduled feed saved."
+msgstr ""
+
+msgid "Schedules"
 msgstr ""
 
 msgid "Search"
@@ -730,19 +1786,49 @@ msgstr ""
 msgid "Search Job"
 msgstr ""
 
+msgid "Search Resumes"
+msgstr ""
+
+msgid "Search by name…"
+msgstr ""
+
+msgid "Search candidates"
+msgstr ""
+
+msgid "Search filters"
+msgstr ""
+
 msgid "Security check failed. Please try again."
 msgstr ""
 
 msgid "Select"
 msgstr ""
 
+msgid "Select all"
+msgstr ""
+
 msgid "Send JSON webhook payloads when applications are submitted, statuses change, or jobs are submitted. One URL per line."
+msgstr ""
+
+msgid "Send header X-MJB-API-Key on /wp-json/mjb/* requests. Limit: 60 requests/minute per key."
+msgstr ""
+
+msgid "Send invite"
+msgstr ""
+
+msgid "Set a new password"
 msgstr ""
 
 msgid "Set featured image"
 msgstr ""
 
+msgid "Setting a new password for %s. Use at least 8 characters."
+msgstr ""
+
 msgid "Settings"
+msgstr ""
+
+msgid "Settings sections"
 msgstr ""
 
 msgid "Settings → Permalinks"
@@ -751,19 +1837,76 @@ msgstr ""
 msgid "Setup"
 msgstr ""
 
+msgid "Short bio"
+msgstr ""
+
 msgid "Shortcode"
 msgstr ""
 
 msgid "Shortlisted"
 msgstr ""
 
+msgid "Sign in"
+msgstr ""
+
+msgid "Sign in as a job seeker to save jobs to your list."
+msgstr ""
+
+msgid "Sign in as a job seeker to save jobs."
+msgstr ""
+
+msgid "Sign in as an employer to browse the talent pool."
+msgstr ""
+
+msgid "Sign in to finish applying for this job. Your profile and resume will be used for the application."
+msgstr ""
+
+msgid "Sign in to manage jobs and applications."
+msgstr ""
+
+msgid "Sign in to manage your profile and applications."
+msgstr ""
+
+msgid "Sign in to save jobs"
+msgstr ""
+
+msgid "Sign out and continue"
+msgstr ""
+
+msgid "Sign up"
+msgstr ""
+
+msgid "Site: %s"
+msgstr ""
+
+msgid "Someone requested a password reset for the following account:"
+msgstr ""
+
+msgid "Source file not found."
+msgstr ""
+
+msgid "Start typing a city…"
+msgstr ""
+
 msgid "Status"
+msgstr ""
+
+msgid "Stored privately in the plugin (not the Media Library)."
 msgstr ""
 
 msgid "Submission Product ID"
 msgstr ""
 
+msgid "Submit CV"
+msgstr ""
+
 msgid "Submit Job"
+msgstr ""
+
+msgid "Subscription package"
+msgstr ""
+
+msgid "Success"
 msgstr ""
 
 msgid "Supported fields:"
@@ -772,10 +1915,28 @@ msgstr ""
 msgid "Text"
 msgstr ""
 
+msgid "Text overrides"
+msgstr ""
+
 msgid "Textarea"
 msgstr ""
 
+msgid "Thank you for your purchase."
+msgstr ""
+
 msgid "Thanks for applying for \"%s\". Your application has been received and forwarded to the employer."
+msgstr ""
+
+msgid "Thanks for creating a job seeker account. Your account is pending approval by the job board administrator."
+msgstr ""
+
+msgid "Thanks for creating an employer account. Your account is pending approval by the job board administrator."
+msgstr ""
+
+msgid "That account is not a job seeker account. Please use employer login or register as a job seeker."
+msgstr ""
+
+msgid "That account is not an employer account. Please use job seeker login or register as an employer."
 msgstr ""
 
 msgid "That email address is already registered."
@@ -784,19 +1945,49 @@ msgstr ""
 msgid "That username is already taken."
 msgstr ""
 
+msgid "The Free plan allows a limited number of active published jobs. Upgrade to Pro for unlimited listings, or unpublish another job first."
+msgstr ""
+
 msgid "This dashboard is for candidates only."
 msgstr ""
 
 msgid "This dashboard is for employer accounts only."
 msgstr ""
 
+msgid "This feature requires the %s plan or higher."
+msgstr ""
+
+msgid "This field is required."
+msgstr ""
+
 msgid "This form is for employer accounts only."
+msgstr ""
+
+msgid "This invite is invalid or expired."
 msgstr ""
 
 msgid "This job is no longer available."
 msgstr ""
 
+msgid "This license key has expired."
+msgstr ""
+
+msgid "This password reset link is invalid or has expired."
+msgstr ""
+
+msgid "This password reset link is invalid or has expired. Request a new one."
+msgstr ""
+
+msgid "This will move the job to the trash. You can restore it later from the WordPress trash if needed."
+msgstr ""
+
 msgid "Title"
+msgstr ""
+
+msgid "To set a new password, visit:"
+msgstr ""
+
+msgid "Toggle which filters appear on the jobs search form."
 msgstr ""
 
 msgid "Too many applications submitted. Please try again later."
@@ -814,7 +2005,13 @@ msgstr ""
 msgid "Top Jobs by Views"
 msgstr ""
 
+msgid "Track applications from your dashboard"
+msgstr ""
+
 msgid "Type"
+msgstr ""
+
+msgid "UI text overrides"
 msgstr ""
 
 msgid "URL"
@@ -829,7 +2026,19 @@ msgstr ""
 msgid "Unable to update application status."
 msgstr ""
 
+msgid "Unauthorized"
+msgstr ""
+
 msgid "Unknown job"
+msgstr ""
+
+msgid "Unknown plan."
+msgstr ""
+
+msgid "Unknown upload type."
+msgstr ""
+
+msgid "Unlimited published job listings."
 msgstr ""
 
 msgid "Unlock"
@@ -839,6 +2048,9 @@ msgid "Update"
 msgstr ""
 
 msgid "Update Application"
+msgstr ""
+
+msgid "Update Feed"
 msgstr ""
 
 msgid "Update Job"
@@ -856,13 +2068,28 @@ msgstr ""
 msgid "Upload a CSV file to bulk import job listings."
 msgstr ""
 
+msgid "Upload a resume on your candidate profile before applying."
+msgstr ""
+
 msgid "Uploaded to this job"
+msgstr ""
+
+msgid "Use 00000000 for no expiry."
 msgstr ""
 
 msgid "Use as featured image"
 msgstr ""
 
-msgid "Username"
+msgid "Used when a checkout URL is empty (mailto fallback). Defaults to the site admin email."
+msgstr ""
+
+msgid "User"
+msgstr ""
+
+msgid "Username: %s"
+msgstr ""
+
+msgid "Video URL (YouTube/Vimeo)"
 msgstr ""
 
 msgid "View"
@@ -886,6 +2113,15 @@ msgstr ""
 msgid "View applications: %s"
 msgstr ""
 
+msgid "View company: %s"
+msgstr ""
+
+msgid "View job: %s"
+msgstr ""
+
+msgid "View open jobs"
+msgstr ""
+
 msgid "View the job: %s"
 msgstr ""
 
@@ -901,7 +2137,43 @@ msgstr ""
 msgid "Webhook URLs"
 msgstr ""
 
+msgid "Webhooks"
+msgstr ""
+
+msgid "Webhooks require the Business plan."
+msgstr ""
+
 msgid "Website"
+msgstr ""
+
+msgid "Website URL"
+msgstr ""
+
+msgid "Weekly"
+msgstr ""
+
+msgid "What you get when you register"
+msgstr ""
+
+msgid "When set, completing an order emails a signed Modern Job Board license key to the customer. Use this on your sales site, not for employer job-post products."
+msgstr ""
+
+msgid "Where application notices are sent for internal applications."
+msgstr ""
+
+msgid "WooCommerce Product ID for the job listing fee (required when Pay-Per-Post is enabled)."
+msgstr ""
+
+msgid "WooCommerce Product ID for unlocking a single application."
+msgstr ""
+
+msgid "WooCommerce monetization"
+msgstr ""
+
+msgid "Write career guides and embed [mjb_related_jobs category=\"engineering\"]."
+msgstr ""
+
+msgid "Wrong account type"
 msgstr ""
 
 msgid "XML / RSS Import"
@@ -910,13 +2182,37 @@ msgstr ""
 msgid "XML feed is empty."
 msgstr ""
 
+msgid "XML job feed"
+msgstr ""
+
+msgid "You"
+msgstr ""
+
 msgid "You are already logged in."
+msgstr ""
+
+msgid "You are signed in"
+msgstr ""
+
+msgid "You are signed in, but this page is for employers."
+msgstr ""
+
+msgid "You are signed in, but this page is for job seekers."
+msgstr ""
+
+msgid "You are signed in."
+msgstr ""
+
+msgid "You cannot delete this job."
 msgstr ""
 
 msgid "You do not have access to this job."
 msgstr ""
 
 msgid "You do not have permission to download this resume."
+msgstr ""
+
+msgid "You do not have permission to manage custom fields."
 msgstr ""
 
 msgid "You do not have permission to perform this action."
@@ -929,6 +2225,9 @@ msgid "You have not applied for any jobs yet."
 msgstr ""
 
 msgid "You have not posted any jobs yet."
+msgstr ""
+
+msgid "You have not saved any jobs yet."
 msgstr ""
 
 msgid "You have received a new application for \"%s\"."
@@ -946,7 +2245,19 @@ msgstr ""
 msgid "You must be logged in to view the dashboard."
 msgstr ""
 
+msgid "You must be logged in."
+msgstr ""
+
+msgid "You will receive another email once your account is approved."
+msgstr ""
+
 msgid "Your Jobs"
+msgstr ""
+
+msgid "Your account has been approved. You can now log in."
+msgstr ""
+
+msgid "Your account is pending approval. You will receive an email once it is approved."
 msgstr ""
 
 msgid "Your application could not be submitted. Please try again."
@@ -955,18 +2266,78 @@ msgstr ""
 msgid "Your application for \"%s\" has been updated to: %s"
 msgstr ""
 
+msgid "Your application status is now: %s"
+msgstr ""
+
 msgid "Your dashboard: %s"
+msgstr ""
+
+msgid "Your employer account has been created successfully."
+msgstr ""
+
+msgid "Your employer account is pending approval"
+msgstr ""
+
+msgid "Your employer account is ready"
+msgstr ""
+
+msgid "Your job board account has been approved"
+msgstr ""
+
+msgid "Your job seeker account has been created successfully."
+msgstr ""
+
+msgid "Your job seeker account is pending approval"
+msgstr ""
+
+msgid "Your job seeker account is ready"
+msgstr ""
+
+msgid "Your password was updated. Sign in with your new password."
+msgstr ""
+
+msgid "[%1$s] Your Modern Job Board %2$s license key"
+msgstr ""
+
+msgid "[%s] Collaborator invitation"
+msgstr ""
+
+msgid "[%s] New jobs matching your alert"
+msgstr ""
+
+msgid "[%s] New message"
+msgstr ""
+
+msgid "[%s] Scheduled job import failed"
+msgstr ""
+
+msgid "[%s] You are a board collaborator"
 msgstr ""
 
 msgid "days"
 msgstr ""
 
-msgid "e.g. Senior Web Developer"
+msgid "https product or payment page for Pro (e.g. WooCommerce product URL). Payment is handled by whatever WooCommerce gateway you configure."
 msgstr ""
 
 msgid "reCAPTCHA Secret Key"
 msgstr ""
 
+msgid "reCAPTCHA Secret Key is required when reCAPTCHA is enabled."
+msgstr ""
+
 msgid "reCAPTCHA Site Key"
+msgstr ""
+
+msgid "reCAPTCHA Site Key is required when reCAPTCHA is enabled."
+msgstr ""
+
+msgid "—"
+msgstr ""
+
+msgid "— %s"
+msgstr ""
+
+msgid "— None (board monetization product) —"
 msgstr ""
 

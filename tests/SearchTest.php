@@ -63,13 +63,19 @@ class SearchTest extends TestCase
         $args = MJB_Search::build_query_args(array());
 
         $this->assertArrayNotHasKey('meta_key', $args);
-        $this->assertSame('OR', $args['meta_query']['relation']);
-        $this->assertSame('NUMERIC', $args['meta_query']['mjb_featured_clause']['type']);
-        $this->assertSame('EXISTS', $args['meta_query']['mjb_featured_clause']['compare']);
-        $this->assertSame('NOT EXISTS', $args['meta_query']['mjb_featured_missing']['compare']);
         $this->assertSame('DESC', $args['orderby']['mjb_featured_clause']);
         $this->assertSame('DESC', $args['orderby']['date']);
         $this->assertSame('DESC', $args['orderby']['ID']);
+
+        // Featured pair lives in a named OR-group. Hide-filled (when enabled) AND-wraps it.
+        $featured = $args['meta_query'];
+        if (isset($featured['relation']) && $featured['relation'] === 'AND' && isset($featured[0]) && is_array($featured[0])) {
+            $featured = $featured[0];
+        }
+        $this->assertSame('OR', $featured['relation']);
+        $this->assertSame('NUMERIC', $featured['mjb_featured_clause']['type']);
+        $this->assertSame('EXISTS', $featured['mjb_featured_clause']['compare']);
+        $this->assertSame('NOT EXISTS', $featured['mjb_featured_missing']['compare']);
     }
 
     public function test_build_query_args_supports_pagination()

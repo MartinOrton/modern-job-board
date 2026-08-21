@@ -85,12 +85,12 @@ XML;
 </rss>
 XML;
 
-        $GLOBALS['mjb_test_remote_get_responses']['https://feeds.test/jobs.xml'] = array(
+        $GLOBALS['mjb_test_remote_get_responses']['https://example.com/jobs.xml'] = array(
             'response' => array('code' => 200),
             'body' => $xml,
         );
 
-        $result = MJB_Xml_Importer::import_from_url('https://feeds.test/jobs.xml');
+        $result = MJB_Xml_Importer::import_from_url('https://example.com/jobs.xml');
 
         $this->assertIsArray($result);
         $this->assertSame(1, $result['imported']);
@@ -102,5 +102,30 @@ XML;
         $result = MJB_Xml_Importer::parse_xml_string('<rss><channel><item><title>Broken');
 
         $this->assertInstanceOf(WP_Error::class, $result);
+    }
+
+    public function test_validate_remote_feed_url_blocks_loopback_and_private_ips()
+    {
+        $local = MJB_Xml_Importer::validate_remote_feed_url('http://127.0.0.1/feed.xml');
+        $this->assertInstanceOf(WP_Error::class, $local);
+        $this->assertSame('mjb_url_not_public', $local->get_error_code());
+
+        $private = MJB_Xml_Importer::validate_remote_feed_url('https://192.168.1.10/jobs.xml');
+        $this->assertInstanceOf(WP_Error::class, $private);
+
+        $localhost = MJB_Xml_Importer::validate_remote_feed_url('http://localhost/feed.xml');
+        $this->assertInstanceOf(WP_Error::class, $localhost);
+
+        $creds = MJB_Xml_Importer::validate_remote_feed_url('https://user:pass@example.com/feed.xml');
+        $this->assertInstanceOf(WP_Error::class, $creds);
+    }
+
+    public function test_is_non_public_ip()
+    {
+        $this->assertTrue(MJB_Xml_Importer::is_non_public_ip('127.0.0.1'));
+        $this->assertTrue(MJB_Xml_Importer::is_non_public_ip('10.0.0.5'));
+        $this->assertTrue(MJB_Xml_Importer::is_non_public_ip('192.168.0.1'));
+        $this->assertTrue(MJB_Xml_Importer::is_non_public_ip('169.254.169.254'));
+        $this->assertFalse(MJB_Xml_Importer::is_non_public_ip('8.8.8.8'));
     }
 }

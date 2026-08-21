@@ -1,0 +1,34 @@
+{
+    "checklist": "P0.2.3",
+    "version": "0.9.0-beta.64",
+    "time": "2026-08-09T09:57:55+00:00",
+    "site": "https:\/\/mjb.local\/",
+    "pass": 13,
+    "fail": 0,
+    "skip": 1,
+    "matrix": {
+        "S1": "PASS",
+        "S2": "PASS",
+        "S3": "PASS",
+        "S4": "PASS-structural",
+        "S5": "PASS",
+        "S6": "PASS-structural",
+        "S7": "PASS-api",
+        "S8": "PASS",
+        "S9": "PASS",
+        "S10": "PASS",
+        "S11": "PASS",
+        "S12": "SKIP",
+        "S13": "PASS",
+        "S14": "PASS"
+    },
+    "notes": [
+        "ajax mjb_filter_jobs HTTP 200 body_len=28199 prefix=<div class=\"mjb-job-list\"><article class=\"mjb-job-card mjb-j",
+        "private_storage=C:\/Users\/marti\/Local Sites\/mjb\/app\/public\/wp-content\/mjb-private",
+        "admin_jobs_unauth_http=302"
+    ],
+    "published_jobs": 64,
+    "applications": 0,
+    "employer_users": 0,
+    "candidate_users": 0
+}

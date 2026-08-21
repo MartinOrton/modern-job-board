@@ -78,15 +78,23 @@ class MJB_Emails
         $application_email = get_post_meta($job_id, '_application_email', true);
         $employer = get_userdata($job->post_author);
 
-        if ($application_email) {
-            $to = $application_email;
-        } elseif ($employer) {
-            $to = $employer->user_email;
-        } else {
+        $recipients = array();
+        if ($application_email && class_exists('MJB_Job_Ops')) {
+            $recipients = MJB_Job_Ops::parse_emails($application_email);
+        } elseif ($application_email && is_email($application_email)) {
+            $recipients = array(sanitize_email($application_email));
+        }
+        if (empty($recipients) && $employer && !empty($employer->user_email)) {
+            $recipients = array($employer->user_email);
+        }
+        if (empty($recipients)) {
             return;
         }
 
         $candidate_name = get_post_meta($application_id, '_candidate_name', true);
+        if (class_exists('MJB_Resume_Privacy')) {
+            $candidate_name = MJB_Resume_Privacy::anonymize_name($candidate_name);
+        }
 
         $subject = sprintf(__('New Application for %s', 'modern-job-board'), $job->post_title);
         $subject = apply_filters('mjb_email_application_subject', $subject, $application_id);
@@ -105,6 +113,7 @@ class MJB_Emails
         $message .= get_post_field('post_content', $application_id) . "\n";
         $message = apply_filters('mjb_email_application_message', $message, $application_id);
 
+        $to = implode(',', $recipients);
         do_action('mjb_before_send_email', 'application', $to, $subject, $message, $application_id);
         wp_mail($to, $subject, $message);
         do_action('mjb_after_send_email', 'application', $to, $subject, $message, $application_id);
@@ -138,7 +147,7 @@ class MJB_Emails
 
         $message = sprintf(__('Hi %s,', 'modern-job-board'), $candidate_name) . "\n\n";
         $message .= sprintf(
-            __('Thanks for applying for "%s". Your application has been received and forwarded to the employer.', 'modern-job-board'),
+            __('Thanks for applying for "%s". Your application has been received and forwarded to the recruiter.', 'modern-job-board'),
             $job->post_title
         ) . "\n\n";
         $message .= sprintf(__('View the job: %s', 'modern-job-board'), get_permalink($job_id)) . "\n";
@@ -154,6 +163,120 @@ class MJB_Emails
         do_action('mjb_after_send_email', 'candidate_confirmation', $candidate_email, $subject, $message, $application_id);
 
         do_action('mjb_candidate_application_confirmation_sent', $application_id, $candidate_email);
+    }
+
+    /**
+     * Employer signup confirmation (or pending notice).
+     *
+     * @param int  $user_id
+     * @param bool $pending
+     */
+    public function send_employer_signup_confirmation($user_id, $pending = false)
+    {
+        $user = get_userdata(intval($user_id));
+        if (!$user || empty($user->user_email)) {
+            return;
+        }
+
+        $to = $user->user_email;
+        $name = $user->display_name ? $user->display_name : $user->user_login;
+
+        if ($pending) {
+            $subject = __('Your recruiter account is pending approval', 'modern-job-board');
+            $message = sprintf(__('Hi %s,', 'modern-job-board'), $name) . "\n\n";
+            $message .= __('Thanks for creating a recruiter account. Your account is pending approval by the job board administrator.', 'modern-job-board') . "\n\n";
+            $message .= __('You will receive another email once your account is approved.', 'modern-job-board') . "\n";
+        } else {
+            $subject = __('Your recruiter account is ready', 'modern-job-board');
+            $message = sprintf(__('Hi %s,', 'modern-job-board'), $name) . "\n\n";
+            $message .= __('Your recruiter account has been created successfully.', 'modern-job-board') . "\n\n";
+            if (class_exists('MJB_Dashboard')) {
+                $message .= sprintf(__('Recruiter dashboard: %s', 'modern-job-board'), MJB_Dashboard::get_page_url()) . "\n";
+            }
+        }
+
+        $subject = apply_filters('mjb_email_employer_signup_subject', $subject, $user_id, $pending);
+        $message = apply_filters('mjb_email_employer_signup_message', $message, $user_id, $pending);
+
+        do_action('mjb_before_send_email', 'employer_signup', $to, $subject, $message, $user_id);
+        wp_mail($to, $subject, $message);
+        do_action('mjb_after_send_email', 'employer_signup', $to, $subject, $message, $user_id);
+    }
+
+    /**
+     * Candidate signup confirmation (or pending notice).
+     *
+     * @param int  $user_id
+     * @param bool $pending
+     */
+    public function send_candidate_signup_confirmation($user_id, $pending = false)
+    {
+        $user = get_userdata(intval($user_id));
+        if (!$user || empty($user->user_email)) {
+            return;
+        }
+
+        $to = $user->user_email;
+        $name = $user->display_name ? $user->display_name : $user->user_login;
+
+        if ($pending) {
+            $subject = __('Your job seeker account is pending approval', 'modern-job-board');
+            $message = sprintf(__('Hi %s,', 'modern-job-board'), $name) . "\n\n";
+            $message .= __('Thanks for creating a job seeker account. Your account is pending approval by the job board administrator.', 'modern-job-board') . "\n\n";
+            $message .= __('You will receive another email once your account is approved.', 'modern-job-board') . "\n";
+        } else {
+            $subject = __('Your job seeker account is ready', 'modern-job-board');
+            $message = sprintf(__('Hi %s,', 'modern-job-board'), $name) . "\n\n";
+            $message .= __('Your job seeker account has been created successfully.', 'modern-job-board') . "\n\n";
+            if (class_exists('MJB_Candidate_Dashboard')) {
+                $message .= sprintf(__('Your dashboard: %s', 'modern-job-board'), MJB_Candidate_Dashboard::get_page_url()) . "\n";
+            }
+        }
+
+        $subject = apply_filters('mjb_email_candidate_signup_subject', $subject, $user_id, $pending);
+        $message = apply_filters('mjb_email_candidate_signup_message', $message, $user_id, $pending);
+
+        do_action('mjb_before_send_email', 'candidate_signup', $to, $subject, $message, $user_id);
+        wp_mail($to, $subject, $message);
+        do_action('mjb_after_send_email', 'candidate_signup', $to, $subject, $message, $user_id);
+    }
+
+    /**
+     * Notify user when their pending account is approved.
+     *
+     * @param int $user_id
+     */
+    public function send_account_approved_notification($user_id)
+    {
+        $user = get_userdata(intval($user_id));
+        if (!$user || empty($user->user_email)) {
+            return;
+        }
+
+        $to = $user->user_email;
+        $name = $user->display_name ? $user->display_name : $user->user_login;
+        $roles = (array) $user->roles;
+        $is_employer = in_array('employer', $roles, true);
+
+        $subject = __('Your job board account has been approved', 'modern-job-board');
+        $message = sprintf(__('Hi %s,', 'modern-job-board'), $name) . "\n\n";
+        $message .= __('Your account has been approved. You can now log in.', 'modern-job-board') . "\n\n";
+
+        if ($is_employer && class_exists('MJB_Dashboard')) {
+            $message .= sprintf(__('Recruiter dashboard: %s', 'modern-job-board'), MJB_Dashboard::get_page_url()) . "\n";
+        } elseif (class_exists('MJB_Candidate_Dashboard')) {
+            $message .= sprintf(__('Your dashboard: %s', 'modern-job-board'), MJB_Candidate_Dashboard::get_page_url()) . "\n";
+        }
+
+        $login_url = wp_login_url();
+        $message .= sprintf(__('Log in: %s', 'modern-job-board'), $login_url) . "\n";
+
+        $subject = apply_filters('mjb_email_account_approved_subject', $subject, $user_id);
+        $message = apply_filters('mjb_email_account_approved_message', $message, $user_id);
+
+        do_action('mjb_before_send_email', 'account_approved', $to, $subject, $message, $user_id);
+        wp_mail($to, $subject, $message);
+        do_action('mjb_after_send_email', 'account_approved', $to, $subject, $message, $user_id);
     }
 
     /**

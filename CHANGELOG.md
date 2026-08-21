@@ -19,6 +19,185 @@ Never bump a secondary file without updating `modern-job-board.php` first.
 
 **Internal history:** Entries under “Internal pre-beta history” used temporary `1.x` labels during private development. They are **not** public releases and must not be treated as newer than `0.9.0-beta.*`.
 
+## [0.9.0-beta.88] - 2026-08-19
+
+### Changed
+- **GitHub catch-up:** `main` now matches this late-beta tree. Public GitHub had been frozen at **0.9.0-beta.6** (tag `v0.9.0-beta.1`, 2026-07-21).
+- Version strings aligned to **0.9.0-beta.88** in `README.md`, `readme.txt` Stable tag, `composer.json`, and `FREEMIUM-COMPARISON.md`.
+- Generated city-prefix shards (`assets/data/cities-by-prefix/`, ~90MB) and local `.grok/` tooling are gitignored. Rebuild cities with `bin/build-world-cities.php`.
+- Documented DM Sans as the single UI typeface (`docs/fonts.md`).
+- PHPCS EscapeOutput fixes on Health Check status HTML, recruiter quick-action cards, and the jobs-map marker list.
+
+### Added
+- Recruiter dashboard front-end module (`assets/js/mjb-recruiter-dashboard.js`) and job-detail helpers.
+- PHPUnit suite is **233** tests / 612 assertions (was 200 at beta.65).
+
+### Notes
+- **beta.69–87** were local cache-bust bumps without published notes. Treat this tag as the published rollup after **beta.68**.
+- User-facing work through beta.68 (license gating, product modules #6–#42, WPJB tiers A–C, P0 correctness) is listed in the sections below.
+
+## [0.9.0-beta.68] - 2026-08-11
+
+### Added (WPJB Tier C polish)
+- **C1 Time-trap anti-spam:** configurable min seconds on apply/registration forms.
+- **C2 Spam log + IP bans:** admin **Spam log** panel; banned IP list; event log on blocks.
+- **C3 Completeness bar:** candidate dashboard progress UI from profile completeness helper.
+- **C4 Active filter chips:** removable chips under job search form.
+- **C5 Multi-file apply:** optional extra PDF/DOC attachments stored on applications.
+- **C6 Full board XML backup:** Tools → Export → Download XML backup (jobs/companies/apps/resumes/taxonomies).
+- **C7 Social auto-post:** publish webhook + share URL payloads (X/LinkedIn/FB hooks).
+- **C8 Secure path hashing:** HMAC hashed filenames + sign/verify path helpers.
+- **C9 Health Check:** cron schedule panel under Jobs → Health Check.
+- **C10 Who can post:** Anyone / Employer / Admin setting for front-end job form.
+
+## [0.9.0-beta.67] - 2026-08-11
+
+### Added (WPJB Tier B parity)
+- **B1 Jobs map:** `[mjb_map]` / `[mjb_jobs_map]` multi-marker map (Google Maps API key).
+- **B2 Promotions:** `[mjb_featured_companies]`, company featured meta, admin ad banner slots between job cards, `[mjb_ad_banner]`.
+- **B3 Ingestion:** REST webhook `POST /wp-json/mjb/v1/ingest/job` (+ batch) with secret auth (Broadbean/ATS-style JSON).
+- **B4 Empty-list backfill:** Settings toggle + partner CTA / sourced jobs when search is empty.
+- **B5 Candidate memberships:** free alert slots + WC product “Candidate package” grants extra slots.
+- **B6 Employer trial:** grant job credits / CV days once on employer register.
+- **B7 Payments panel:** admin **Payments** overview (membership counts + WC deep links + recent MJB orders).
+- **B8 Email templates:** admin editor with `{merge}` tags for core notification emails.
+- **B9 Mailchimp:** opt-in on registration + API audience sync.
+- **B10 À-la-carte feature:** WC “Feature this job” product + employer dashboard Feature → cart.
+
+## [0.9.0-beta.66] - 2026-08-11
+
+### Added (WPJB Tier A parity)
+- **A1 Google for Jobs:** field mapper (job type → employmentType), static schema fields, admin JobPosting preview/validation meta box; filter `mjb_job_schema` / `mjb_google_jobs_schema`.
+- **A2 Employer ops:** mark filled, schedule go-live (`_job_publish_at` + cron), republish from dashboard.
+- **A3 List UX:** “New” badge (N days), hide filled from public lists/search, related jobs on single job.
+- **A4 Apply methods:** WhatsApp apply + multi notification emails (CSV).
+- **A5 Resume access:** five-tier talent browse matrix (public / registered / employers / verified / premium).
+- **A6 Candidate anonymizer:** optional surname hide + talent noindex (GDPR-friendly).
+- **A7 Package usage:** employer dashboard credits / published / filled / CV access summary.
+- **A8 Subscribe to search:** alert CTA after job filter form.
+
+### Fixed
+- Google Jobs type-map sanitizer preserved `FULL_TIME`-style tokens (`sanitize_key` was lowercasing them).
+
+## [0.9.0-beta.65] - 2026-08-09
+
+### Fixed
+- **PHPCS:** EscapeOutput on candidate city autocomplete placeholder and job media oEmbed output.
+
+### Changed
+- **Release hygiene:** aligned `readme.txt` Stable tag, `README.md`, `composer.json`, and freemium comparison version lines with `MJB_VERSION`; regenerated `languages/modern-job-board.pot`.
+
+## [0.9.0-beta.64] - 2026-08-09
+
+### Fixed
+- **Resume lifecycle (P0.1.1):** applying always copies the profile resume into a new private file (`MJB_Resumes::copy_profile_resume_for_application`); copy failure aborts apply. Replacing a profile resume no longer deletes files still referenced by applications (`maybe_retire_profile_resume`).
+- **P0 correctness verification:** REST applications scope (empty employer), job-edit payment (no re-bill), and `wp-content` private storage confirmed; covered by existing/new PHPUnit tests.
+
+### Added
+- **1.0 work queue:** `docs/1.0-checklist.md`; smoke runner `bin/smoke-p023.php` (P0.2.3: 13 pass / 0 fail / 1 skip WC).
+
+## [0.9.0-beta.63] - 2026-08-08
+
+### Added
+- **Admin Jobs list:** Delete action with confirmation modal; trashes job via AJAX (`mjb_admin_delete_job`).
+
+## [0.9.0-beta.50] – [0.9.0-beta.62] - 2026-08
+
+### Added / changed (summary)
+- Product modules #6–#42 (alerts, saved jobs, talent pool, brand, PWA, messaging, API keys, etc.).
+- Admin shell: Settings **subtabs** per section; Jobs **add/edit** MJB chrome; Tools **wrench** icon; Setup icon iterations.
+- Job editor: main-column lock for listing details / locations / featured image / custom fields / job media; native WP two-column layout preserved.
+- Registration UX, phone field, city autocomplete, private uploads under `wp-content/mjb-private` and `mjb-brand`.
+
+## [0.9.0-beta.31] - 2026-08-04
+
+### Changed
+- **Registration wizards match Sign in styling**: audience-card shell, header icons, auth field chrome (labels/inputs/focus), `btn-sm` CTAs, progress step icons — same colors/fonts as login cards (width can differ).
+
+## [0.9.0-beta.30] - 2026-08-04
+
+### Added
+- **Multi-step AJAX registration (#17)**: Candidate (About you → Resume → Account) and employer (You → Company → Account) wizards with progress steps, client validation, optional email availability check, and AJAX final submit. Profile extras deferred to dashboards. No-JS full POST still works.
+
+## [0.9.0-beta.29] - 2026-08-04
+
+### Added
+- **Saved jobs dashboard (#9)**: Candidate dashboard section lists bookmarked jobs with company, location, Apply / View / Remove. Stale unpublished IDs are pruned. Remove returns to the dashboard via `redirect_to`.
+
+## [0.9.0-beta.28] - 2026-08-03
+
+### Changed
+- **Pretty public board URLs**: apply intent `/jobs/candidate-login/apply/{token}/` (and registration equivalent); recruiter applications `/jobs/recruiter-dashboard/jobs/{id}/applications/`; job edit `/jobs/post-a-job/edit/{id}/`; apply/save actions `/jobs/apply/{token}/` and `/jobs/save/{id}/`; save-login `/jobs/candidate-login/save/`. Legacy query-string links 301 to pretty paths. Flash notices and nonces remain query args.
+
+## [0.9.0-beta.27] - 2026-08-03
+
+### Changed
+- **Register benefits cards**: match homepage Features (`.feature-card`) surface, border, hover lift/shadow, and icon treatment; keep compact 2×3 sizes.
+
+## [0.9.0-beta.26] - 2026-08-03
+
+### Changed
+- **Pretty password-recovery URLs**: `/jobs/candidate-login/lost-password/` and `/reset-password/` (employer equivalents too) instead of `?mjb_pw=lost`. Legacy query links 301 to the new paths. Recover / set-password card is 2× the sign-in column width (~36rem) and centered.
+
+## [0.9.0-beta.25] - 2026-08-03
+
+### Changed
+- **Inline field validation (not post-submit only)**: `mjb-form-validation.js` validates on blur and live-revalidates after a field is touched; covers auth cards (login / lost / reset), registration, job, application, and dashboard forms (`.mjb-auth-card-form` added). Adds minlength/maxlength/pattern checks and password confirmation matching. Invalid styles apply via `.mjb-has-field-validation` and auth forms.
+
+## [0.9.0-beta.9] - 2026-07-27
+
+### Added
+- **License / plan enforcement (P0.1)**: offline keys `MJB-{PLAN}-{YYYYMMDD|00000000}-{checksum}`; plans Free / Pro / Business / Complete Site. Free caps published jobs at 10; Pro unlocks WooCommerce, custom fields, and tools; Business unlocks REST API, XML feeds, and webhooks. Settings → License & plan; override via `MJB_LICENSE_PLAN` or filter `mjb_license_plan`.
+- **Purchase / license commerce (P0.2)**: gateway-agnostic checkout URLs (SA-friendly: Woo + Payfast/Yoco, not Stripe-as-merchant); mailto fallback; **Buy plan** CTAs; vendor **Issue a license key** form; WooCommerce **MJB plugin license** product meta emails a signed key on order complete. Operator guide: `docs/purchase.md`.
+- **Release checklist**: `docs/release-checklist.md`. Task backlog: remote license server + licensed updates (P1 #6–#7) sketched in `docs/tasks.md`.
+
+### Security
+- **P0.4 re-pass**: remote XML feed import rejects private/loopback hosts (SSRF); feed fetch size capped; resume download `Content-Disposition` hardened; custom-fields admin uses `wp_safe_redirect`. Notes: `docs/security-repass.md`.
+
+### Documentation
+- **P0.5 deploy notes**: `docs/deploy.md` — durable `wp-content/mjb-private` + `mjb-brand`, nginx/Apache/IIS/Local deny rules, cache/CDN, update/backup workflow. `REMOTE_SETUP.md` defers to it.
+
+## [0.9.0-beta.8] - 2026-07-23
+
+
+### Changed
+- **Demo URLs under `/jobs/`**: plugin shortcode pages nest under the Jobs page (`/jobs/post-a-job/`, dashboards, registration). Company archive rewrite is `/jobs/companies/`. Job search rewrites skip reserved first segments. Theme demo nav uses those URLs; **logo links to site root**.
+- **Candidate / employer login pages**: new shortcodes `[mjb_candidate_login]` and `[mjb_employer_login]` (login form + button to registration). Demo nav icons open login when logged out, dashboards when logged in.
+
+### Fixed
+- **Audience card / content-page links**: `render_audience_cards()` passed fallback paths as the `get_page_url()` query-args argument, producing broken URLs like `/docs/?/post-a-job/=…`. Paths are now the 4th argument; string 3rd args are treated as fallbacks defensively.
+- **Docs shortcodes**: documentation samples use escaped `[[mjb_*]]` shortcodes so the docs page no longer expands live jobs/registration UIs.
+- **REST v2 applications ownership**: employers with zero jobs (and any non-admin empty job list) no longer receive an unscoped list of all applications. Foreign `job_id` filters are always rejected for non-admins.
+- **REST v2 paid CV access**: application PII (`candidate_name`, `candidate_email`, `message`, `resume_url`) is redacted when paid CV access is enabled and the employer has not unlocked the application, matching the employer dashboard.
+- **Profile resume on apply**: applications copy the profile resume file so replacing a profile resume no longer breaks past application downloads.
+- **Job edit payment**: editing a listing no longer demotes status to pending, consumes credits, or redirects to checkout.
+- **New company ownership**: frontend “new company” only reuses a company owned by the current employer; never attaches to another employer’s company by name.
+- **Page resolver cache**: only published pages are accepted from options; trash/draft/private caches are cleared and re-scanned.
+- **Upload validation**: max size always enforced; client extension alone no longer bypasses `wp_check_filetype_and_ext`.
+- **Custom fields admin**: create/delete requires `manage_options` (nonce alone is not enough).
+- **Resume download path**: only streams files under allowed MJB storage roots (blocks poisoned absolute paths).
+- **Application form sanitization**: nonce and fields use `wp_unslash`; failed insert uses `error_application_failed`.
+- **single-job.php escaping**: application UI uses `esc_html_e` / `esc_attr` / markup outside translated strings.
+
+### Changed
+- **Storage location**: `mjb-private/` and `mjb-brand/` live under **`wp-content/`** (not inside the plugin folder, not under `uploads/`). Plugin updates no longer wipe CVs/logos. Legacy plugin-local and uploads paths remain readable. Private tier writes Apache `.htaccess` + IIS `web.config`; nginx still needs server config (see `REMOTE_SETUP.md`).
+- Local sync script excludes runtime storage dirs so MIR does not wipe uploaded files.
+- nginx hardening docs updated for `wp-content/mjb-private/` plus legacy paths.
+
+## [0.9.0-beta.7] - 2026-07-23
+
+### Added
+- **Niceboard-style employer registration**: company-first form (name, tagline, logo, description, website, socials, contact name, email, password + confirm), creates a `company` CPT owned by the employer.
+- **Niceboard-style candidate registration**: profile + resume upload + photo, location, experience, preferences, email + password + confirm; resume required at signup.
+- **Private uploads** (`MJB_Private_Uploads`): CVs under plugin `mjb-private/` (web-denied, PHP download only); logos/photos under plugin `mjb-brand/` with hashed names. **Never** creates Media Library attachments.
+- **Account approval** (`MJB_Account_Status`): optional employer/candidate admin approval (settings toggles), blocks login while pending, Users list column + approve action, approval email.
+- Signup confirmation emails for employers and candidates (pending vs approved).
+- Candidate dashboard fields aligned with the new profile model.
+
+### Changed
+- Email is used as login identity (no separate username field on registration forms).
+- Version `0.9.0-beta.7`.
+
 ## [0.9.0-beta.6] - 2026-07-21
 
 ### Added

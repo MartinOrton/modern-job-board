@@ -65,4 +65,19 @@ class AdminTabsTest extends TestCase
         $this->assertStringContainsString('page=modern-job-board', $url);
         $this->assertStringContainsString('tab=settings', $url);
     }
+
+    public function test_settings_section_slug()
+    {
+        $this->assertSame('license', MJB_Admin_Tabs::settings_section_slug('mjb_license_section'));
+        $this->assertSame('board_mode', MJB_Admin_Tabs::settings_section_slug('mjb_board_mode_section'));
+        $this->assertSame('listing', MJB_Admin_Tabs::settings_section_slug('mjb_listing_section'));
+    }
+
+    public function test_get_tab_url_supports_settings_subtab()
+    {
+        $url = MJB_Admin_Tabs::get_tab_url('settings', array('settings_tab' => 'monetization'));
+
+        $this->assertStringContainsString('tab=settings', $url);
+        $this->assertStringContainsString('settings_tab=monetization', $url);
+    }
 }

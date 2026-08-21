@@ -35,6 +35,16 @@ class MJB_Shortcodes
     }
 
     /**
+     * Optional field badge (Niceboard-style).
+     *
+     * @return string
+     */
+    public static function optional_badge()
+    {
+        return ' <span class="mjb-optional-badge">' . esc_html__('Optional', 'modern-job-board') . '</span>';
+    }
+
+    /**
      * Initialize Shortcodes.
      */
     public function init()
@@ -103,9 +113,20 @@ class MJB_Shortcodes
     public static function render_job_loop($jobs)
     {
         if ($jobs->have_posts()) {
+            $filter_params = class_exists('MJB_Search')
+                ? MJB_Search::get_request_filter_params()
+                : array();
+            // AJAX filter posts keywords in $_POST — prefer that when present.
+            if (!empty($_REQUEST['search_keywords'])) {
+                $filter_params['search_keywords'] = sanitize_text_field(wp_unslash($_REQUEST['search_keywords']));
+            }
+            $keywords = isset($filter_params['search_keywords']) ? (string) $filter_params['search_keywords'] : '';
+
             echo '<div class="mjb-job-list">';
+            $card_index = 0;
             while ($jobs->have_posts()) {
                 $jobs->the_post();
+                $card_index++;
 
                 $permalink = get_permalink();
                 $job_title = get_the_title();
@@ -113,16 +134,31 @@ class MJB_Shortcodes
                 $featured_class = $featured ? ' mjb-featured' : '';
                 $excerpt = self::get_job_card_excerpt();
 
+                $is_new = class_exists('MJB_Job_Ops') && MJB_Job_Ops::is_new(get_the_ID());
+                $is_filled = class_exists('MJB_Job_Ops') && MJB_Job_Ops::is_filled(get_the_ID());
+                if ($is_filled) {
+                    $featured_class .= ' mjb-filled';
+                }
+
                 echo '<article class="mjb-job-card mjb-job-item' . esc_attr($featured_class) . '">';
                 echo '<a class="mjb-job-card__stretched-link" href="' . esc_url($permalink) . '" aria-label="' . esc_attr(sprintf(__('View job: %s', 'modern-job-board'), $job_title)) . '"></a>';
+                echo '<div class="mjb-job-card__badges">';
                 if ($featured) {
                     echo '<span class="mjb-badge mjb-badge--featured">' . esc_html__('Featured', 'modern-job-board') . '</span>';
                 }
+                if ($is_new) {
+                    echo '<span class="mjb-badge mjb-badge--new">' . esc_html__('New', 'modern-job-board') . '</span>';
+                }
+                if ($is_filled) {
+                    echo '<span class="mjb-badge mjb-badge--filled">' . esc_html__('Filled', 'modern-job-board') . '</span>';
+                }
+                echo '</div>';
                 echo '<h3 class="mjb-job-card__title">' . esc_html($job_title) . '</h3>';
                 self::render_job_card_company(get_the_ID());
 
                 if ($excerpt !== '') {
-                    echo '<p class="mjb-job-card__excerpt">' . esc_html($excerpt) . '</p>';
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- highlight_search_terms escapes text and wraps safe marks.
+                    echo '<p class="mjb-job-card__excerpt">' . self::highlight_search_terms($excerpt, $keywords) . '</p>';
                 }
 
                 echo '<div class="mjb-job-meta mjb-job-card__meta">';
@@ -147,10 +183,27 @@ class MJB_Shortcodes
 
                 echo '</div>';
                 echo '</article>';
+
+                /**
+                 * After each job card in the public list (1-based index).
+                 *
+                 * @param int      $job_id
+                 * @param int      $card_index
+                 * @param WP_Query $jobs
+                 */
+                do_action('mjb_after_job_card', get_the_ID(), $card_index, $jobs);
             }
             echo '</div>'; // .mjb-job-list
         } else {
-            echo '<p>' . esc_html__('No jobs found.', 'modern-job-board') . '</p>';
+            $empty_html = '<p>' . esc_html__('No jobs found.', 'modern-job-board') . '</p>';
+            /**
+             * Filter empty job list HTML (e.g. backfill CTA).
+             *
+             * @param string   $empty_html
+             * @param WP_Query $jobs
+             */
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Callers escape; backfill returns escaped HTML.
+            echo apply_filters('mjb_job_list_empty_html', $empty_html, $jobs);
         }
     }
 
@@ -504,12 +557,90 @@ class MJB_Shortcodes
      */
     public static function get_job_card_excerpt()
     {
-        $excerpt = get_the_excerpt();
-        if ($excerpt === '') {
-            $excerpt = wp_trim_words(wp_strip_all_tags(get_the_content()), 30, '…');
+        // Never call get_the_excerpt()/get_the_content() here: empty excerpts run
+        // through wp_trim_excerpt → apply_filters('the_content'), which re-enters
+        // single-job content filters (related jobs / map) and can OOM.
+        $post = get_post();
+        if (!$post) {
+            return '';
         }
 
-        return trim($excerpt);
+        $raw = $post->post_excerpt !== '' ? $post->post_excerpt : $post->post_content;
+        return trim(wp_trim_words(wp_strip_all_tags((string) $raw), 30, '…'));
+    }
+
+    /**
+     * Escape descriptive text and wrap search keyword hits in pill-style marks.
+     *
+     * @param string $text     Plain text (already stripped of HTML).
+     * @param string $keywords Free-text search keywords from the filter.
+     * @return string Safe HTML.
+     */
+    public static function highlight_search_terms($text, $keywords)
+    {
+        $text = (string) $text;
+        $keywords = trim((string) $keywords);
+
+        if ($text === '') {
+            return '';
+        }
+
+        if ($keywords === '') {
+            return esc_html($text);
+        }
+
+        $parts = preg_split('/\s+/u', $keywords, -1, PREG_SPLIT_NO_EMPTY);
+        if (!is_array($parts) || empty($parts)) {
+            return esc_html($text);
+        }
+
+        $terms = array();
+        foreach ($parts as $part) {
+            $part = trim($part);
+            // Skip tiny noise tokens (e.g. "a", "of").
+            $len = function_exists('mb_strlen') ? mb_strlen($part) : strlen($part);
+            if ($part === '' || $len < 2) {
+                continue;
+            }
+            $terms[$part] = true;
+        }
+
+        if (empty($terms)) {
+            return esc_html($text);
+        }
+
+        $terms = array_keys($terms);
+        usort(
+            $terms,
+            static function ($a, $b) {
+                $la = function_exists('mb_strlen') ? mb_strlen($a) : strlen($a);
+                $lb = function_exists('mb_strlen') ? mb_strlen($b) : strlen($b);
+                return $lb - $la;
+            }
+        );
+
+        $pattern = implode('|', array_map(static function ($term) {
+            return preg_quote($term, '/');
+        }, $terms));
+
+        $segments = preg_split('/(' . $pattern . ')/iu', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+        if (!is_array($segments)) {
+            return esc_html($text);
+        }
+
+        $html = '';
+        foreach ($segments as $segment) {
+            if ($segment === '') {
+                continue;
+            }
+            if (preg_match('/^(?:' . $pattern . ')$/iu', $segment)) {
+                $html .= '<mark class="mjb-search-hit">' . esc_html($segment) . '</mark>';
+            } else {
+                $html .= esc_html($segment);
+            }
+        }
+
+        return $html;
     }
 
     /**
@@ -608,18 +739,45 @@ class MJB_Shortcodes
         $candidate_dashboard_url = MJB_Page_Resolver::get_page_url(
             'mjb_candidate_dashboard',
             'mjb_candidate_dashboard_page_id',
-            '/candidate-dashboard/'
+            array(),
+            '/jobs/candidate-dashboard/'
         );
+        $candidate_login_url = MJB_Page_Resolver::get_page_url(
+            'mjb_candidate_login',
+            'mjb_candidate_login_page_id',
+            array(),
+            '/jobs/candidate-login/'
+        );
+        // #31: logged-out "Submit CV" goes to login (then dashboard).
+        $submit_cv_url = $candidate_dashboard_url;
+        if (!is_user_logged_in()) {
+            $submit_cv_url = add_query_arg(
+                'redirect_to',
+                rawurlencode($candidate_dashboard_url),
+                $candidate_login_url
+            );
+        }
         $employer_registration_url = MJB_Page_Resolver::get_page_url(
             'mjb_employer_registration',
             'mjb_employer_registration_page_id',
-            '/employer-registration/'
+            array(),
+            '/jobs/recruiter-registration/'
         );
         $post_job_url = MJB_Page_Resolver::get_page_url(
             'mjb_job_form',
             'mjb_job_form_page_id',
-            '/post-a-job/'
+            array(),
+            '/jobs/post-a-job/'
         );
+        if (!is_user_logged_in()) {
+            $employer_login = MJB_Page_Resolver::get_page_url(
+                'mjb_employer_login',
+                'mjb_employer_login_page_id',
+                array(),
+                '/jobs/recruiter-login/'
+            );
+            $post_job_url = add_query_arg('redirect_to', rawurlencode($post_job_url), $employer_login);
+        }
         ?>
         <section class="mjb-audience-cards" aria-label="<?php esc_attr_e('Get started', 'modern-job-board'); ?>">
             <div class="mjb-audience-cards__grid">
@@ -634,10 +792,10 @@ class MJB_Shortcodes
                             <h2 class="mjb-audience-card__title"><?php esc_html_e('Job seekers', 'modern-job-board'); ?></h2>
                         </header>
                         <p class="mjb-audience-card__intro">
-                            <?php esc_html_e('Create a profile and get hired by top employers.', 'modern-job-board'); ?>
+                            <?php esc_html_e('Create a profile and get hired by top recruiters.', 'modern-job-board'); ?>
                         </p>
                         <div class="mjb-audience-card__actions">
-                            <a href="<?php echo esc_url($candidate_dashboard_url); ?>" class="btn btn-primary btn-sm">
+                            <a href="<?php echo esc_url($submit_cv_url); ?>" class="btn btn-primary btn-sm">
                                 <?php esc_html_e('Submit CV', 'modern-job-board'); ?>
                             </a>
                             <a href="#mjb-jobs-list" class="btn btn-outline btn-sm">
@@ -654,7 +812,7 @@ class MJB_Shortcodes
                                 echo MJB_Icons::render('briefcase', 24);
                                 ?>
                             </span>
-                            <h2 class="mjb-audience-card__title"><?php esc_html_e('Employers', 'modern-job-board'); ?></h2>
+                            <h2 class="mjb-audience-card__title"><?php esc_html_e('Recruiters', 'modern-job-board'); ?></h2>
                         </header>
                         <p class="mjb-audience-card__intro">
                             <?php esc_html_e('Post open jobs and hire top talent.', 'modern-job-board'); ?>
@@ -700,38 +858,93 @@ class MJB_Shortcodes
             $filter_params = MJB_Search::get_request_filter_params();
         }
 
+        $total_jobs = MJB_Search::count_published_jobs();
+        $total_label = number_format_i18n($total_jobs);
+        $location_label = MJB_Search::get_term_label('job_location', $filter_params['search_location']);
+        $category_label = MJB_Search::get_term_label('job_category', $filter_params['search_category']);
+        $type_label = MJB_Search::get_term_label('job_type', $filter_params['search_type']);
+        $company_locked = !empty($filter_params['search_company']);
+
         ob_start();
         ?>
-        <form id="mjb-job-filter" class="mjb-job-filter mjb-search-panel" method="GET" action="<?php echo esc_url(MJB_Job_Routes::build_url()); ?>">
+        <form class="mjb-job-filter mjb-search-panel" method="GET" action="<?php echo esc_url(MJB_Job_Routes::build_url()); ?>" data-mjb-job-filter>
             <?php if ($show_heading) : ?>
-                <h3><?php esc_html_e('Filter Jobs', 'modern-job-board'); ?></h3>
+                <h3 class="mjb-filter-heading">
+                    <?php
+                    if (function_exists('is_singular') && is_singular('job_listing')) {
+                        esc_html_e('Find other jobs', 'modern-job-board');
+                    } else {
+                        echo esc_html(sprintf(
+                            /* translators: %s: formatted job count, e.g. 4,793 */
+                            __('Filter %s Jobs', 'modern-job-board'),
+                            $total_label
+                        ));
+                    }
+                    ?>
+                </h3>
+                <?php if (function_exists('is_singular') && is_singular('job_listing')) : ?>
+                    <p class="mjb-filter-heading-hint"><?php esc_html_e('Search the full board — results open on the jobs page.', 'modern-job-board'); ?></p>
+                <?php endif; ?>
             <?php endif; ?>
             <div class="mjb-filter-row">
-                <?php if (!empty($filter_params['search_company'])) : ?>
+                <?php if ($company_locked) : ?>
                     <input type="hidden" name="search_company" value="<?php echo esc_attr($filter_params['search_company']); ?>">
                 <?php endif; ?>
-                <input type="text" name="search_keywords" placeholder="<?php esc_attr_e('Keywords...', 'modern-job-board'); ?>" value="<?php echo esc_attr($filter_params['search_keywords']); ?>">
                 <?php
-                // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Dropdown helpers escape all HTML.
-                echo MJB_Search::render_location_dropdown($filter_params['search_location']);
-                echo MJB_Search::render_taxonomy_dropdown(
-                    'job_category',
-                    'search_category',
-                    $filter_params['search_category'],
-                    esc_html__('All Categories', 'modern-job-board')
-                );
-                echo MJB_Search::render_taxonomy_dropdown(
-                    'job_type',
-                    'search_type',
-                    $filter_params['search_type'],
-                    esc_html__('All Job Types', 'modern-job-board')
-                );
+                // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Autocomplete helper escapes all HTML.
+                echo MJB_Search::render_autocomplete_field(array(
+                    'name' => 'search_keywords',
+                    'type' => 'keywords',
+                    'value' => $filter_params['search_keywords'],
+                    'label' => $filter_params['search_keywords'],
+                    'placeholder' => __('Keywords...', 'modern-job-board'),
+                    'free_text' => true,
+                ));
+                echo MJB_Search::render_autocomplete_field(array(
+                    'name' => 'search_location',
+                    'type' => 'location',
+                    'value' => $filter_params['search_location'],
+                    'label' => $location_label,
+                    'placeholder' => __('All Locations', 'modern-job-board'),
+                ));
+                echo MJB_Search::render_autocomplete_field(array(
+                    'name' => 'search_category',
+                    'type' => 'category',
+                    'value' => $filter_params['search_category'],
+                    'label' => $category_label,
+                    'placeholder' => __('All Categories', 'modern-job-board'),
+                ));
+                echo MJB_Search::render_autocomplete_field(array(
+                    'name' => 'search_type',
+                    'type' => 'type',
+                    'value' => $filter_params['search_type'],
+                    'label' => $type_label,
+                    'placeholder' => __('All Job Types', 'modern-job-board'),
+                ));
+                if (!$company_locked) {
+                    echo MJB_Search::render_autocomplete_field(array(
+                        'name' => 'search_company',
+                        'type' => 'company',
+                        'value' => $filter_params['search_company'],
+                        'label' => MJB_Search::get_company_label($filter_params['search_company']),
+                        'placeholder' => __('All Companies', 'modern-job-board'),
+                    ));
+                }
                 // phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
                 ?>
-                <button type="submit" class="btn btn-primary btn-sm mjb-button mjb-button--search"><?php esc_html_e('Search', 'modern-job-board'); ?></button>
+                <div class="mjb-filter-actions">
+                    <button type="submit" class="btn btn-primary btn-sm mjb-button mjb-button--search"><?php esc_html_e('Search', 'modern-job-board'); ?></button>
+                    <button type="button" class="btn btn-outline btn-sm mjb-button mjb-button--reset" data-mjb-filter-reset><?php esc_html_e('Reset', 'modern-job-board'); ?></button>
+                </div>
             </div>
         </form>
         <?php
+        /**
+         * After jobs filter form (e.g. subscribe-to-search).
+         *
+         * @param array $filter_params
+         */
+        do_action('mjb_after_job_search_form', $filter_params);
 
         return ob_get_clean();
     }
@@ -859,13 +1072,23 @@ class MJB_Shortcodes
 
     /**
      * Build a job form URL with optional query arguments.
+     * Prefer pretty /edit/{id}/ when callers pass action=edit + job_id.
      *
      * @param array $query_args
      * @return string
      */
     public static function get_job_form_page_url($query_args = array())
     {
-        return MJB_Page_Resolver::get_page_url('mjb_job_form', self::JOB_FORM_PAGE_OPTION, $query_args, '/post-job/');
+        $query_args = is_array($query_args) ? $query_args : array();
+        if (
+            class_exists('MJB_Pretty_Urls')
+            && isset($query_args['action'], $query_args['job_id'])
+            && $query_args['action'] === 'edit'
+        ) {
+            return MJB_Pretty_Urls::job_edit_url((int) $query_args['job_id']);
+        }
+
+        return MJB_Page_Resolver::get_page_url('mjb_job_form', self::JOB_FORM_PAGE_OPTION, $query_args, '/jobs/post-a-job/');
     }
 
     /**
@@ -875,14 +1098,23 @@ class MJB_Shortcodes
     {
         if (!is_user_logged_in()) {
             return '<p>' . sprintf(
-                __('You must be <a href="%s">logged in as an employer</a> to post jobs.', 'modern-job-board'),
+                __('You must be <a href="%s">logged in as a recruiter</a> to post jobs.', 'modern-job-board'),
                 esc_url(wp_login_url(get_permalink()))
             ) . '</p>';
         }
 
         $user = wp_get_current_user();
-        if (!in_array('employer', (array) $user->roles, true) && !user_can($user, 'manage_options')) {
-            return '<p>' . __('This form is for employer accounts only.', 'modern-job-board') . '</p>';
+        if (class_exists('MJB_Board_Polish')) {
+            $can_post = MJB_Board_Polish::user_can_post_job(get_current_user_id());
+            if (!$can_post) {
+                $mode = get_option(MJB_Board_Polish::OPTION_WHO_CAN_POST, 'employer');
+                if ($mode === 'admin') {
+                    return '<p>' . esc_html__('Only administrators can post jobs on this board.', 'modern-job-board') . '</p>';
+                }
+                return '<p>' . esc_html__('This form is for recruiter accounts only.', 'modern-job-board') . '</p>';
+            }
+        } elseif (!in_array('employer', (array) $user->roles, true) && !user_can($user, 'manage_options')) {
+            return '<p>' . __('This form is for recruiter accounts only.', 'modern-job-board') . '</p>';
         }
 
         ob_start();
@@ -896,13 +1128,20 @@ class MJB_Shortcodes
         $job_description = '';
         $company_name = '';
 
-        if (isset($_GET['action']) && $_GET['action'] == 'edit' && isset($_GET['job_id'])) {
+        $edit_job_id = class_exists('MJB_Pretty_Urls')
+            ? MJB_Pretty_Urls::request_edit_job_id()
+            : 0;
+        if ($edit_job_id <= 0 && isset($_GET['action']) && $_GET['action'] == 'edit' && isset($_GET['job_id'])) {
+            $edit_job_id = (int) $_GET['job_id'];
+        }
+
+        if ($edit_job_id > 0) {
             if (!is_user_logged_in()) {
                 echo '<p>' . esc_html__('You must be logged in to edit a job.', 'modern-job-board') . '</p>';
                 return ob_get_clean();
             }
 
-            $job_id = intval($_GET['job_id']);
+            $job_id = $edit_job_id;
             $job = get_post($job_id);
 
             // Verify ownership
@@ -1093,7 +1332,7 @@ class MJB_Shortcodes
         $redirect_url = MJB_Page_Resolver::get_request_fallback_url(
             'mjb_job_form',
             self::JOB_FORM_PAGE_OPTION,
-            '/post-a-job/'
+            '/jobs/post-a-job/'
         );
 
         if (!is_user_logged_in()) {
@@ -1117,9 +1356,10 @@ class MJB_Shortcodes
                 MJB_Notices::redirect($redirect_url, 'error_invalid_company');
             }
 
-            // Reuse an existing company with the same name to prevent duplicates.
+            // Reuse only the current employer's company with the same name (never attach to someone else's).
             $company_id = MJB_Job_Importer::find_or_create_company($company_name_text, array(
                 'author_id' => get_current_user_id(),
+                'only_own'  => true,
             ));
             if (!$company_id) {
                 MJB_Notices::redirect($redirect_url, 'error_invalid_company');
@@ -1145,20 +1385,24 @@ class MJB_Shortcodes
             }
         }
 
+        $is_edit = intval($existing_job_id) > 0;
+
         $post_data = array(
             'post_title' => $title,
             'post_content' => $description,
             'post_type' => 'job_listing',
-            'post_status' => 'pending', // Always reset to pending on edit? Or keep status? Let's keep status if edit.
+            'post_status' => 'pending',
         );
-        
+
         $post_data = apply_filters('mjb_pre_job_submission_data', $post_data, $_POST);
 
-        if ($existing_job_id) {
+        if ($is_edit) {
             $post_data['ID'] = $existing_job_id;
-            // Don't change status if editing, unless we want to re-review. Let's keep current status for now for simplicity, or pending if logic requires.
-            // Actually, usually edits require re-approval. Let's set to pending.
-            $post_data['post_status'] = 'pending';
+            // Preserve existing status on edit — do not demote published listings or re-trigger payment.
+            $existing_job = get_post($existing_job_id);
+            if ($existing_job && !empty($existing_job->post_status)) {
+                $post_data['post_status'] = $existing_job->post_status;
+            }
             $post_id = wp_update_post($post_data);
             $notice_code = 'success_job_updated';
         } else {
@@ -1223,50 +1467,50 @@ class MJB_Shortcodes
                 }
             }
             
-            // Payment Logic
+            // Payment / credits only apply to new listings — never re-bill or re-credit on edit.
             $payment_required = get_option('mjb_payment_required');
             $product_id = get_option('mjb_submission_product_id');
-            
-            if ($payment_required) {
+
+            if (!$is_edit && $payment_required) {
                 $user_id = get_current_user_id();
                 $credits = get_user_meta($user_id, '_mjb_job_credits', true);
                 $credits = $credits ? intval($credits) : 0;
 
                 // Check for Credits
                 if ($credits > 0) {
+                     if (!MJB_License::can_publish_job(0)) {
+                         // Keep pending; do not consume credit when Free job cap blocks publish.
+                         MJB_Notices::redirect($redirect_url, 'error_job_cap');
+                     }
+
                      // Use Credit
                      $new_credits = $credits - 1;
                      update_user_meta($user_id, '_mjb_job_credits', $new_credits);
-                     
+
                      // Publish Job immediately (bypass pending_payment)
-                     // If previously set to pending, update to publish.
                      wp_update_post(array(
                          'ID' => $post_id,
                          'post_status' => 'publish'
                      ));
-                     
-                     // Optional: Add note that credit was used
+
                      update_post_meta($post_id, '_mjb_credit_used', true);
-                     
+
                      MJB_Notices::redirect($redirect_url, 'success_job_credit');
                 }
 
                 // If no credits, proceed to Pay-Per-Post
                 if ($product_id && function_exists('wc_get_cart_url')) {
-                    if ($post_data['post_status'] === 'pending') { // Only if we just set it to pending
-                         // Update status to pending_payment
-                         $update = array('ID' => $post_id, 'post_status' => 'pending_payment');
-                         wp_update_post($update);
-                         
-                         $cart_url = wc_get_cart_url();
-                         $redirect_url = add_query_arg(array(
-                             'add-to-cart' => $product_id,
-                             'mjb_job_id' => $post_id
-                         ), $cart_url);
-                         
-                         wp_safe_redirect($redirect_url);
-                         exit;
-                    }
+                     $update = array('ID' => $post_id, 'post_status' => 'pending_payment');
+                     wp_update_post($update);
+
+                     $cart_url = wc_get_cart_url();
+                     $redirect_url = add_query_arg(array(
+                         'add-to-cart' => $product_id,
+                         'mjb_job_id' => $post_id
+                     ), $cart_url);
+
+                     wp_safe_redirect($redirect_url);
+                     exit;
                 }
             }
 

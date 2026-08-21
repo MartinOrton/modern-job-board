@@ -25,6 +25,12 @@ if (!defined('ABSPATH')) {
 
 MJB_Job_Routes::register_rewrites();
 MJB_Job_Permalinks::register_rewrites();
+if (class_exists('MJB_Login')) {
+    MJB_Login::register_rewrites();
+}
+if (class_exists('MJB_Pretty_Urls')) {
+    MJB_Pretty_Urls::register_rewrites();
+}
 flush_rewrite_rules(false);
 delete_option('mjb_routes_version');
 

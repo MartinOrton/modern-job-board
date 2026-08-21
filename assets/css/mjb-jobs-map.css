@@ -1,0 +1,65 @@
+/* Jobs map shortcode */
+.mjb-jobs-map {
+  margin: 1.25rem 0;
+}
+
+.mjb-jobs-map__canvas {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e8eef5;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.mjb-jobs-map__list {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.mjb-jobs-map__list li {
+  margin: 0.35rem 0;
+}
+
+.mjb-jobs-map__company {
+  color: #64748b;
+}
+
+.mjb-jobs-map__company::before {
+  content: "· ";
+}
+
+.mjb-jobs-map__loc {
+  color: #64748b;
+  font-size: 0.85em;
+}
+
+.mjb-jobs-map__loc::before {
+  content: "— ";
+}
+
+.mjb-map--no-key,
+.mjb-map--empty {
+  padding: 1rem;
+  border: 1px dashed rgba(15, 23, 42, 0.15);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.mjb-map-iw {
+  max-width: 240px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.mjb-map-iw__title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.mjb-map-iw__company,
+.mjb-map-iw__loc {
+  color: #64748b;
+  font-size: 12px;
+}
