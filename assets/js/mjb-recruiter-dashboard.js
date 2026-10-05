@@ -4,7 +4,7 @@
 jQuery(function ($) {
     var $shell = $('.mjb-portal-dashboard.mjb-employer-dashboard');
     var $panel = $('#mjb-recruiter-panel');
-    var $loader = $('#mjb-recruiter-loader');
+    var $live = $('#mjb-recruiter-live');
     var $tabButtons = $shell.find('.mjb-portal-tabs__btn');
     var config = window.mjb_recruiter_dashboard || {};
     var currentTab = $panel.data('active-tab') || config.default_tab || 'overview';
@@ -34,16 +34,25 @@ jQuery(function ($) {
         }
     }
 
-    function setLoadingState(isLoading) {
-        if (!$loader.length) {
-            return;
-        }
+    function setLoadingState(isLoading, tab) {
         if (isLoading) {
             $shell.addClass('mjb-portal-is-loading');
-            $loader.addClass('is-active').attr('aria-hidden', 'false');
+            var html = (config.skeletons && tab && config.skeletons[tab]) ? config.skeletons[tab] : '';
+            if (!html && config.skeletons && config.skeletons.jobs) {
+                html = config.skeletons.jobs;
+            }
+            if (html) {
+                $panel.addClass('is-swapping');
+                $panel.html(html).removeClass('is-swapping');
+            }
+            if ($live.length) {
+                $live.text((config.i18n && config.i18n.loading) || 'Loading dashboard');
+            }
             return;
         }
-        $loader.removeClass('is-active').attr('aria-hidden', 'true');
+        if ($live.length) {
+            $live.text('');
+        }
         $shell.removeClass('mjb-portal-is-loading');
     }
 
@@ -65,7 +74,8 @@ jQuery(function ($) {
             request.abort();
         }
 
-        setLoadingState(true);
+        var previousHtml = $panel.html();
+        setLoadingState(true, tab);
 
         request = $.ajax({
             url: config.ajax_url,
@@ -79,20 +89,24 @@ jQuery(function ($) {
             }
         }).done(function (response) {
             if (!response || !response.success || !response.data || typeof response.data.html !== 'string') {
+                $panel.html(previousHtml);
                 return;
             }
 
             currentTab = response.data.tab || tab;
             currentPage = response.data.page || page;
-            $panel.html(response.data.html);
+            $panel.addClass('is-swapping');
+            $panel.html(response.data.html).removeClass('is-swapping');
             setActiveTabButton(currentTab);
 
             if (pushHistory !== false && window.history && window.history.pushState) {
                 var nextUrl = response.data.url || tabUrl(currentTab, currentPage);
                 window.history.pushState({ mjbRecruiterTab: currentTab, page: currentPage }, '', nextUrl);
             }
-        }).fail(function () {
-            // Keep current panel content on failure.
+        }).fail(function (xhr, status) {
+            if (status !== 'abort') {
+                $panel.html(previousHtml);
+            }
         }).always(function () {
             setLoadingState(false);
             request = null;
@@ -146,6 +160,61 @@ jQuery(function ($) {
             return;
         }
         loadTab('jobs', page, true);
+    });
+
+    function showRecruiterNotice(message, isError) {
+        $shell.children('.mjb-message').remove();
+        if (!message) {
+            return;
+        }
+        var notice = $('<div>', {
+            'class': 'mjb-message ' + (isError ? 'error' : 'success'),
+            role: isError ? 'alert' : 'status',
+            text: message
+        });
+        $shell.prepend(notice);
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    }
+
+    $shell.on('submit', 'form', function (event) {
+        if (event.isDefaultPrevented()) {
+            return;
+        }
+        var form = this;
+        if (!config.ajax_url || !form.querySelector('[name="mjb_dashboard_action"]')) {
+            return;
+        }
+        event.preventDefault();
+        if (form.getAttribute('data-busy') === '1') {
+            return;
+        }
+        form.setAttribute('data-busy', '1');
+        var body = new FormData(form);
+        body.set('action', 'mjb_recruiter_mutate');
+        body.set('mjb_panel_tab', currentTab);
+        body.set('mjb_panel_page', String(currentPage || 1));
+        fetch(config.ajax_url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: body
+        }).then(function (response) {
+            return response.json();
+        }).then(function (payload) {
+            form.removeAttribute('data-busy');
+            var data = payload && payload.data ? payload.data : {};
+            if (!payload || !payload.success) {
+                showRecruiterNotice(data.message || 'Changes could not be saved. Try again.', true);
+                return;
+            }
+            if (typeof data.html === 'string' && data.html !== '') {
+                $panel.html(data.html);
+            }
+            showRecruiterNotice(data.message, false);
+        }).catch(function () {
+            form.removeAttribute('data-busy');
+            showRecruiterNotice('Changes could not be saved. Try again.', true);
+        });
     });
 
     window.addEventListener('popstate', function (event) {

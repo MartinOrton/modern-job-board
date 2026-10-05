@@ -347,6 +347,54 @@ class MJB_Job_Alerts
     }
 
     /**
+     * Account-settings choice: off, or one frequency applied to every saved alert.
+     *
+     * @param int $user_id
+     * @return string off|daily|weekly
+     */
+    public static function preference_for_user($user_id)
+    {
+        $user_id = (int) $user_id;
+        if ($user_id <= 0 || (class_exists('MJB_Candidate_Account') && MJB_Candidate_Account::alerts_paused($user_id))) {
+            return 'off';
+        }
+        $alerts = self::get_user_alerts($user_id);
+        if (empty($alerts)) {
+            return 'off';
+        }
+        $freq = (string) get_post_meta($alerts[0]->ID, '_mjb_alert_frequency', true);
+        return $freq === 'weekly' ? 'weekly' : 'daily';
+    }
+
+    /**
+     * Pause alerts, or set every saved search to the same digest frequency.
+     *
+     * @param int    $user_id
+     * @param string $frequency off|daily|weekly
+     */
+    public static function set_preference_for_user($user_id, $frequency)
+    {
+        $user_id = (int) $user_id;
+        $frequency = in_array($frequency, array('off', 'daily', 'weekly'), true) ? $frequency : 'off';
+        if ($user_id <= 0) {
+            return;
+        }
+        if ($frequency === 'off') {
+            update_user_meta($user_id, '_mjb_alerts_paused', '1');
+            return;
+        }
+        delete_user_meta($user_id, '_mjb_alerts_paused');
+        $alerts = self::get_user_alerts($user_id);
+        if (empty($alerts)) {
+            self::save_alert($user_id, array(), $frequency);
+            return;
+        }
+        foreach ($alerts as $alert) {
+            update_post_meta($alert->ID, '_mjb_alert_frequency', $frequency);
+        }
+    }
+
+    /**
      * Create or update an alert from filter params.
      *
      * @param int   $user_id
@@ -469,6 +517,11 @@ class MJB_Job_Alerts
 
         $now = time();
         foreach ($alerts as $alert_id) {
+            $author_id = (int) get_post_field('post_author', $alert_id);
+            if ($author_id > 0 && class_exists('MJB_Candidate_Account') && MJB_Candidate_Account::alerts_paused($author_id)) {
+                continue;
+            }
+
             $freq = get_post_meta($alert_id, '_mjb_alert_frequency', true);
             $last = (int) get_post_meta($alert_id, '_mjb_alert_last_sent', true);
             $interval = ($freq === 'weekly') ? WEEK_IN_SECONDS : DAY_IN_SECONDS;

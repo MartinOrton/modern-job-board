@@ -72,17 +72,18 @@ class LicenseTest extends TestCase
 
     public function test_free_job_cap_blocks_when_at_limit()
     {
+        $limit = MJB_License::FREE_ACTIVE_JOB_LIMIT;
         $GLOBALS['mjb_test_options'][MJB_License::OPTION_PLAN] = MJB_License::PLAN_FREE;
-        $GLOBALS['mjb_test_post_counts']['job_listing'] = (object) array('publish' => 10);
+        $GLOBALS['mjb_test_post_counts']['job_listing'] = (object) array('publish' => $limit);
 
-        $this->assertSame(10, MJB_License::count_active_jobs());
+        $this->assertSame($limit, MJB_License::count_active_jobs());
         $this->assertFalse(MJB_License::can_publish_job(0));
     }
 
     public function test_free_job_cap_allows_under_limit()
     {
         $GLOBALS['mjb_test_options'][MJB_License::OPTION_PLAN] = MJB_License::PLAN_FREE;
-        $GLOBALS['mjb_test_post_counts']['job_listing'] = (object) array('publish' => 9);
+        $GLOBALS['mjb_test_post_counts']['job_listing'] = (object) array('publish' => MJB_License::FREE_ACTIVE_JOB_LIMIT - 1);
 
         $this->assertTrue(MJB_License::can_publish_job(0));
     }
@@ -90,7 +91,7 @@ class LicenseTest extends TestCase
     public function test_free_job_cap_allows_updating_existing_published_job()
     {
         $GLOBALS['mjb_test_options'][MJB_License::OPTION_PLAN] = MJB_License::PLAN_FREE;
-        $GLOBALS['mjb_test_post_counts']['job_listing'] = (object) array('publish' => 10);
+        $GLOBALS['mjb_test_post_counts']['job_listing'] = (object) array('publish' => MJB_License::FREE_ACTIVE_JOB_LIMIT);
         $GLOBALS['mjb_test_post_types'][55] = 'job_listing';
         $GLOBALS['mjb_test_post_status'][55] = 'publish';
 
@@ -100,7 +101,7 @@ class LicenseTest extends TestCase
     public function test_pro_ignores_job_cap()
     {
         $GLOBALS['mjb_test_options'][MJB_License::OPTION_PLAN] = MJB_License::PLAN_PRO;
-        $GLOBALS['mjb_test_post_counts']['job_listing'] = (object) array('publish' => 100);
+        $GLOBALS['mjb_test_post_counts']['job_listing'] = (object) array('publish' => MJB_License::FREE_ACTIVE_JOB_LIMIT + 1);
 
         $this->assertTrue(MJB_License::can_publish_job(0));
     }
@@ -154,7 +155,7 @@ class LicenseTest extends TestCase
     public function test_guard_insert_forces_pending_when_over_cap()
     {
         $GLOBALS['mjb_test_options'][MJB_License::OPTION_PLAN] = MJB_License::PLAN_FREE;
-        $GLOBALS['mjb_test_post_counts']['job_listing'] = (object) array('publish' => 10);
+        $GLOBALS['mjb_test_post_counts']['job_listing'] = (object) array('publish' => MJB_License::FREE_ACTIVE_JOB_LIMIT);
 
         $data = array(
             'post_type' => 'job_listing',

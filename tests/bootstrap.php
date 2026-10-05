@@ -56,6 +56,27 @@ if (!function_exists('__')) {
     }
 }
 
+if (!function_exists('_x')) {
+    function _x($text, $context, $domain = null)
+    {
+        unset($context, $domain);
+
+        return $text;
+    }
+}
+
+if (!function_exists('checked')) {
+    function checked($checked, $current = true, $echo = true)
+    {
+        $result = ((string) $checked === (string) $current) ? ' checked="checked"' : '';
+        if ($echo) {
+            echo $result;
+        }
+
+        return $result;
+    }
+}
+
 if (!function_exists('esc_html__')) {
     function esc_html__($text, $domain = null)
     {
@@ -218,6 +239,21 @@ if (!function_exists('esc_attr')) {
     function esc_attr($text)
     {
         return htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8');
+    }
+}
+
+if (!function_exists('esc_attr__')) {
+    function esc_attr__($text, $domain = null)
+    {
+        unset($domain);
+        return esc_attr($text);
+    }
+}
+
+if (!function_exists('esc_attr_e')) {
+    function esc_attr_e($text, $domain = null)
+    {
+        echo esc_attr__($text, $domain);
     }
 }
 
@@ -549,7 +585,7 @@ if (!function_exists('get_userdata')) {
         return (object) array(
             'ID' => $user_id,
             'user_email' => $GLOBALS['mjb_test_user_emails'][$user_id] ?? 'user@example.test',
-            'display_name' => 'Test User',
+            'display_name' => $GLOBALS['mjb_test_user_display'][$user_id] ?? 'Test User',
             'roles' => $GLOBALS['mjb_test_user_roles'][$user_id] ?? array(),
             'first_name' => $GLOBALS['mjb_test_user_first'][$user_id] ?? '',
             'last_name' => $GLOBALS['mjb_test_user_last'][$user_id] ?? '',
@@ -764,6 +800,19 @@ if (!function_exists('wp_nonce_url')) {
     }
 }
 
+if (!function_exists('wp_nonce_field')) {
+    function wp_nonce_field($action = -1, $name = '_wpnonce', $referer = true, $echo = true)
+    {
+        unset($referer);
+        $html = '<input type="hidden" name="' . esc_attr($name) . '" value="' . esc_attr(wp_create_nonce($action)) . '">';
+        if ($echo) {
+            echo $html;
+        }
+
+        return $html;
+    }
+}
+
 if (!function_exists('email_exists')) {
     function email_exists($email)
     {
@@ -807,15 +856,17 @@ if (!function_exists('get_posts')) {
     {
         $post_type = $args['post_type'] ?? '';
 
-        if ($post_type === 'company') {
+        if ($post_type === 'company' || $post_type === 'job_application' || $post_type === 'mjb_resume') {
             $posts = array();
             foreach (($GLOBALS['mjb_test_post_types'] ?? array()) as $post_id => $type) {
-                if ($type === 'company') {
+                if ($type === $post_type) {
                     $posts[] = intval($post_id);
                 }
             }
-            foreach (array_values($GLOBALS['mjb_test_companies_by_title'] ?? array()) as $post_id) {
-                $posts[] = intval($post_id);
+            if ($post_type === 'company') {
+                foreach (array_values($GLOBALS['mjb_test_companies_by_title'] ?? array()) as $post_id) {
+                    $posts[] = intval($post_id);
+                }
             }
             $posts = array_values(array_unique($posts));
         } else {
@@ -990,6 +1041,26 @@ if (!function_exists('wp_kses_post')) {
     function wp_kses_post($data)
     {
         return (string) $data;
+    }
+}
+
+if (!function_exists('wp_kses')) {
+    function wp_kses($data, $allowed_html = array(), $allowed_protocols = array())
+    {
+        unset($allowed_html, $allowed_protocols);
+        return (string) $data;
+    }
+}
+
+if (!function_exists('wp_trash_post')) {
+    function wp_trash_post($post_id)
+    {
+        $post_id = intval($post_id);
+        if (!isset($GLOBALS['mjb_test_post_status'][$post_id])) {
+            return false;
+        }
+        $GLOBALS['mjb_test_post_status'][$post_id] = 'trash';
+        return get_post($post_id);
     }
 }
 
@@ -1255,6 +1326,22 @@ if (!function_exists('plugins_url')) {
     }
 }
 
+if (!function_exists('number_format_i18n')) {
+    function number_format_i18n($number, $decimals = 0)
+    {
+        return number_format((float) $number, (int) $decimals);
+    }
+}
+
+if (!function_exists('date_i18n')) {
+    function date_i18n($format, $timestamp = false, $gmt = false)
+    {
+        unset($gmt);
+        $timestamp = $timestamp === false ? time() : (int) $timestamp;
+        return date($format, $timestamp);
+    }
+}
+
 
 if (!function_exists('wp_hash_password')) {
     function wp_hash_password($password)
@@ -1314,6 +1401,7 @@ require_once dirname(__DIR__) . '/includes/class-mjb-license.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-license-commerce.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-private-uploads.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-account-status.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-admin-bar.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-job-routes.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-job-permalinks.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-location.php';
@@ -1344,10 +1432,18 @@ require_once dirname(__DIR__) . '/includes/class-mjb-analytics.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-webhook-queue.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-webhooks.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-admin-tabs.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-admin-dashboard.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-admin-jobs.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-admin-companies.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-admin-applications.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-admin-resumes.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-document-label.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-admin.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-license-remote.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-legacy-redirects.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-private-board.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-job-alerts.php';
+require_once dirname(__DIR__) . '/includes/class-mjb-candidate-account.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-talent-pool.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-collaborators.php';
 require_once dirname(__DIR__) . '/includes/class-mjb-embed.php';

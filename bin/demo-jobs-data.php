@@ -695,3 +695,176 @@ function mjb_build_demo_job_content($sections) {
 
     return $html;
 }
+
+/**
+ * Demo company profiles for hover previews and company pages.
+ *
+ * Keys must match `company` names in mjb_get_demo_jobs_data().
+ *
+ * @return array<string, array{tagline:string,website:string,linkedin:string,twitter:string,about:string}>
+ */
+function mjb_get_demo_companies_data() {
+    return array(
+        'Acme Digital' => array(
+            'tagline' => 'WordPress products for publishers and memberships.',
+            'website' => 'https://www.acmedigital.example',
+            'linkedin' => 'https://www.linkedin.com/company/acme-digital',
+            'twitter' => 'https://x.com/acmedigital',
+            'about' => 'Acme Digital builds bespoke WordPress products for publishers and membership organisations.',
+        ),
+        'Northline Studio' => array(
+            'tagline' => 'Product design for ambitious SaaS teams.',
+            'website' => 'https://www.northlinestudio.example',
+            'linkedin' => 'https://www.linkedin.com/company/northline-studio',
+            'twitter' => 'https://x.com/northlinestudio',
+            'about' => 'Northline Studio is a London product-design studio working with SaaS and marketplace teams.',
+        ),
+        'Launchpad Labs' => array(
+            'tagline' => 'Early-stage product, shipped weekly.',
+            'website' => 'https://www.launchpadlabs.example',
+            'linkedin' => 'https://www.linkedin.com/company/launchpad-labs',
+            'twitter' => 'https://x.com/launchpadlabs',
+            'about' => 'Launchpad Labs helps founders go from prototype to production with a small, senior build team.',
+        ),
+        'CloudNine SaaS' => array(
+            'tagline' => 'B2B software that stays out of the way.',
+            'website' => 'https://www.cloudninesaas.example',
+            'linkedin' => 'https://www.linkedin.com/company/cloudnine-saas',
+            'twitter' => 'https://x.com/cloudninesaas',
+            'about' => 'CloudNine SaaS builds subscription operations software for mid-market teams.',
+        ),
+        'Atlas Logistics' => array(
+            'tagline' => 'Freight visibility from dock to door.',
+            'website' => 'https://www.atlaslogistics.example',
+            'linkedin' => 'https://www.linkedin.com/company/atlas-logistics',
+            'twitter' => 'https://x.com/atlaslogistics',
+            'about' => 'Atlas Logistics runs regional freight and last-mile operations with a strong ops culture.',
+        ),
+        'Harbor Health' => array(
+            'tagline' => 'Clinician-led digital health tools.',
+            'website' => 'https://www.harborhealth.example',
+            'linkedin' => 'https://www.linkedin.com/company/harbor-health',
+            'twitter' => 'https://x.com/harborhealth',
+            'about' => 'Harbor Health builds software used by clinics to coordinate care and patient communications.',
+        ),
+        'Summit Education' => array(
+            'tagline' => 'Cohort courses for working professionals.',
+            'website' => 'https://www.summiteducation.example',
+            'linkedin' => 'https://www.linkedin.com/company/summit-education',
+            'twitter' => 'https://x.com/summitedu',
+            'about' => 'Summit Education runs live, cohort-based courses for people upskilling in their careers.',
+        ),
+        'Greenfield Finance' => array(
+            'tagline' => 'Clearer books for growing companies.',
+            'website' => 'https://www.greenfieldfinance.example',
+            'linkedin' => 'https://www.linkedin.com/company/greenfield-finance',
+            'twitter' => 'https://x.com/greenfieldfin',
+            'about' => 'Greenfield Finance provides fractional finance leadership and bookkeeping for SMEs.',
+        ),
+        'Pixel & Ink' => array(
+            'tagline' => 'Brand, editorial, and campaign design.',
+            'website' => 'https://www.pixelandink.example',
+            'linkedin' => 'https://www.linkedin.com/company/pixel-and-ink',
+            'twitter' => 'https://x.com/pixelandink',
+            'about' => 'Pixel & Ink is an independent studio for brand systems, editorial design, and campaigns.',
+        ),
+        'Velocity Motors' => array(
+            'tagline' => 'Aftersales software for motor groups.',
+            'website' => 'https://www.velocitymotors.example',
+            'linkedin' => 'https://www.linkedin.com/company/velocity-motors',
+            'twitter' => 'https://x.com/velocitymotors',
+            'about' => 'Velocity Motors builds workshop and aftersales tools for multi-site motor groups.',
+        ),
+        'Riverstone HR' => array(
+            'tagline' => 'People operations without the paperwork fog.',
+            'website' => 'https://www.riverstonehr.example',
+            'linkedin' => 'https://www.linkedin.com/company/riverstone-hr',
+            'twitter' => 'https://x.com/riverstonehr',
+            'about' => 'Riverstone HR advises growing teams on hiring, policy, and people operations.',
+        ),
+        'Brightwave Agency' => array(
+            'tagline' => 'Performance marketing with a point of view.',
+            'website' => 'https://www.brightwaveagency.example',
+            'linkedin' => 'https://www.linkedin.com/company/brightwave-agency',
+            'twitter' => 'https://x.com/brightwavehq',
+            'about' => 'Brightwave Agency is a performance and brand studio for consumer and B2B clients.',
+        ),
+        'Oak & Co.' => array(
+            'tagline' => 'Workplace furniture made to last.',
+            'website' => 'https://www.oakandco.example',
+            'linkedin' => 'https://www.linkedin.com/company/oak-and-co',
+            'twitter' => 'https://x.com/oakandco',
+            'about' => 'Oak & Co. designs and supplies durable workplace furniture for studios and offices.',
+        ),
+        'Nexus Payments' => array(
+            'tagline' => 'Card processing for Canadian SMBs.',
+            'website' => 'https://www.nexuspayments.example',
+            'linkedin' => 'https://www.linkedin.com/company/nexus-payments',
+            'twitter' => 'https://x.com/nexuspayments',
+            'about' => 'Nexus Payments processes card transactions and payouts for small Canadian businesses.',
+        ),
+        'Trailhead Outdoors' => array(
+            'tagline' => 'Gear for people who actually go outside.',
+            'website' => 'https://www.trailheadoutdoors.example',
+            'linkedin' => 'https://www.linkedin.com/company/trailhead-outdoors',
+            'twitter' => 'https://x.com/trailheadgear',
+            'about' => 'Trailhead Outdoors makes and sells outdoor gear with a small, product-led team.',
+        ),
+        'Cedar Workspace' => array(
+            'tagline' => 'Flexible studios for hybrid teams.',
+            'website' => 'https://www.cedarworkspace.example',
+            'linkedin' => 'https://www.linkedin.com/company/cedar-workspace',
+            'twitter' => 'https://x.com/cedarworkspace',
+            'about' => 'Cedar Workspace operates flexible studio and office space for hybrid teams.',
+        ),
+        'Signal Security' => array(
+            'tagline' => 'Practical security for product companies.',
+            'website' => 'https://www.signalsecurity.example',
+            'linkedin' => 'https://www.linkedin.com/company/signal-security',
+            'twitter' => 'https://x.com/signalsec',
+            'about' => 'Signal Security helps product companies run sensible application and cloud security.',
+        ),
+        'Bloom Botanicals' => array(
+            'tagline' => 'Plants and florals, delivered with care.',
+            'website' => 'https://www.bloombotanicals.example',
+            'linkedin' => 'https://www.linkedin.com/company/bloom-botanicals',
+            'twitter' => 'https://x.com/bloombotanicals',
+            'about' => 'Bloom Botanicals grows and delivers plants and seasonal florals for homes and workplaces.',
+        ),
+        'Prism Analytics' => array(
+            'tagline' => 'Analytics that product teams will actually use.',
+            'website' => 'https://www.prismanalytics.example',
+            'linkedin' => 'https://www.linkedin.com/company/prism-analytics',
+            'twitter' => 'https://x.com/prismanalytics',
+            'about' => 'Prism Analytics builds event pipelines and dashboards for product and growth teams.',
+        ),
+        'Workstream ATS' => array(
+            'tagline' => 'Applicant tracking without the bloat.',
+            'website' => 'https://www.workstreamats.example',
+            'linkedin' => 'https://www.linkedin.com/company/workstream-ats',
+            'twitter' => 'https://x.com/workstreamats',
+            'about' => 'Workstream ATS is a focused applicant-tracking product for in-house recruiting teams.',
+        ),
+        'Lumen Coffee' => array(
+            'tagline' => 'Roastery and cafe, wholesale and retail.',
+            'website' => 'https://www.lumencoffee.example',
+            'linkedin' => 'https://www.linkedin.com/company/lumen-coffee',
+            'twitter' => 'https://x.com/lumencoffee',
+            'about' => 'Lumen Coffee roasts and serves specialty coffee, with wholesale accounts across the city.',
+        ),
+        'Stacklayer Hosting' => array(
+            'tagline' => 'Managed hosting for WordPress at scale.',
+            'website' => 'https://www.stacklayerhosting.example',
+            'linkedin' => 'https://www.linkedin.com/company/stacklayer-hosting',
+            'twitter' => 'https://x.com/stacklayer',
+            'about' => 'Stacklayer Hosting provides managed WordPress hosting and on-call support for agencies.',
+        ),
+        'Evergreen Renewables' => array(
+            'tagline' => 'Community-scale solar, built to last.',
+            'website' => 'https://www.evergreenrenewables.example',
+            'linkedin' => 'https://www.linkedin.com/company/evergreen-renewables',
+            'twitter' => 'https://x.com/evergreenre',
+            'about' => 'Evergreen Renewables develops solar projects and energy infrastructure across Ireland.',
+        ),
+    );
+}

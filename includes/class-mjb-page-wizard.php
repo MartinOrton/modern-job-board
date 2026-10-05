@@ -22,6 +22,7 @@ class MJB_Page_Wizard
 
         add_action('admin_menu', array(__CLASS__, 'register_admin_page'), 20);
         add_action('admin_init', array(__CLASS__, 'handle_create_pages'));
+        add_action('wp_ajax_mjb_admin_setup', array(__CLASS__, 'ajax_create_pages'));
         add_action('admin_init', array(__CLASS__, 'handle_dismiss_notice'));
         add_action('admin_notices', array(__CLASS__, 'render_setup_notice'));
     }
@@ -316,8 +317,20 @@ class MJB_Page_Wizard
     /**
      * Handle create-pages form submission.
      */
+    public static function ajax_create_pages()
+    {
+        self::handle_create_pages();
+        wp_send_json_error(array(
+            'message' => __('That action could not be completed.', 'modern-job-board'),
+        ));
+    }
+
     public static function handle_create_pages()
     {
+        if (wp_doing_ajax() && !doing_action('wp_ajax_mjb_admin_setup')) {
+            return;
+        }
+
         if (!isset($_POST['mjb_action']) || $_POST['mjb_action'] !== 'create_setup_pages') {
             return;
         }
@@ -327,12 +340,28 @@ class MJB_Page_Wizard
         }
 
         $result = self::create_missing_pages();
+        $created = intval($result['created']);
+        $existing = intval($result['existing']);
+        $message = sprintf(
+            /* translators: 1: pages created, 2: pages already configured */
+            __('%1$d pages created. %2$d pages were already configured.', 'modern-job-board'),
+            $created,
+            $existing
+        );
+
+        if (wp_doing_ajax()) {
+            wp_send_json_success(array(
+                'message' => $message,
+                'tab' => 'setup',
+            ));
+        }
+
         $redirect = add_query_arg(
             array(
                 'page' => 'modern-job-board',
                 'tab' => 'setup',
-                'mjb_pages_created' => $result['created'],
-                'mjb_pages_existing' => $result['existing'],
+                'mjb_pages_created' => $created,
+                'mjb_pages_existing' => $existing,
             ),
             admin_url('admin.php')
         );

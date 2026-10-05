@@ -23,6 +23,77 @@ class MJB_Tools
         add_action('admin_init', array($this, 'handle_schedule_feed_save'));
         add_action('admin_init', array($this, 'handle_schedule_feed_delete'));
         add_action('admin_init', array($this, 'handle_schedule_feed_run'));
+        add_action('wp_ajax_mjb_admin_tools', array($this, 'ajax_tools'));
+    }
+
+    /**
+     * Run a tools mutation from admin-ajax and return JSON.
+     */
+    public function ajax_tools()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => __('You do not have permission to use tools.', 'modern-job-board'),
+            ));
+        }
+
+        $action = isset($_POST['mjb_action']) ? sanitize_key(wp_unslash($_POST['mjb_action'])) : '';
+        $handlers = array(
+            'import_jobs' => 'handle_import_jobs',
+            'import_jobs_xml' => 'handle_import_jobs_xml',
+            'import_jobs_xml_url' => 'handle_import_jobs_xml_url',
+            'schedule_feed_save' => 'handle_schedule_feed_save',
+            'schedule_feed_delete' => 'handle_schedule_feed_delete',
+            'schedule_feed_run' => 'handle_schedule_feed_run',
+        );
+
+        if (!isset($handlers[$action])) {
+            wp_send_json_error(array(
+                'message' => __('That action could not be completed.', 'modern-job-board'),
+            ));
+        }
+
+        $this->{$handlers[$action]}();
+
+        wp_send_json_error(array(
+            'message' => __('That action could not be completed.', 'modern-job-board'),
+        ));
+    }
+
+    /**
+     * admin-ajax still runs admin_init. Leave the real save to ajax_tools().
+     *
+     * @return bool
+     */
+    private function skip_tools_ajax_init()
+    {
+        return wp_doing_ajax() && !doing_action('wp_ajax_mjb_admin_tools');
+    }
+
+    /**
+     * JSON for an in-place tools save, or the existing admin redirect.
+     *
+     * @param string $tools_tab
+     * @param array  $args
+     * @param string $message
+     * @param bool   $is_error
+     */
+    private function finish_tools($tools_tab, $args, $message, $is_error = false)
+    {
+        if (wp_doing_ajax()) {
+            $payload = array(
+                'message' => $message,
+                'tab' => 'tools',
+                'tools_tab' => $tools_tab,
+            );
+            if ($is_error) {
+                wp_send_json_error($payload);
+            }
+            wp_send_json_success($payload);
+        }
+
+        wp_safe_redirect($this->get_tools_tab_url($tools_tab, $args));
+        exit;
     }
 
     /**
@@ -64,15 +135,29 @@ class MJB_Tools
             <h2 class="mjb-section-title"><?php esc_html_e('Tools', 'modern-job-board'); ?></h2>
 
             <div class="mjb-tools-subtabs" role="tablist" aria-label="<?php esc_attr_e('Import and export', 'modern-job-board'); ?>">
-                <button type="button" class="mjb-tools-subtab<?php echo $active_tab === 'export' ? ' is-active' : ''; ?>" data-tools-tab="export" role="tab" aria-selected="<?php echo $active_tab === 'export' ? 'true' : 'false'; ?>">
-                    <?php esc_html_e('Export', 'modern-job-board'); ?>
-                </button>
-                <button type="button" class="mjb-tools-subtab<?php echo $active_tab === 'import' ? ' is-active' : ''; ?>" data-tools-tab="import" role="tab" aria-selected="<?php echo $active_tab === 'import' ? 'true' : 'false'; ?>">
-                    <?php esc_html_e('Import', 'modern-job-board'); ?>
-                </button>
-                <button type="button" class="mjb-tools-subtab<?php echo $active_tab === 'schedules' ? ' is-active' : ''; ?>" data-tools-tab="schedules" role="tab" aria-selected="<?php echo $active_tab === 'schedules' ? 'true' : 'false'; ?>">
-                    <?php esc_html_e('Schedules', 'modern-job-board'); ?>
-                </button>
+                <?php
+                MJB_Admin_Tabs::render_admin_subtab(array(
+                    'active' => $active_tab === 'export',
+                    'label' => __('Export', 'modern-job-board'),
+                    'class' => 'mjb-tools-subtab',
+                    'data_attr' => 'data-tools-tab',
+                    'data_value' => 'export',
+                ));
+                MJB_Admin_Tabs::render_admin_subtab(array(
+                    'active' => $active_tab === 'import',
+                    'label' => __('Import', 'modern-job-board'),
+                    'class' => 'mjb-tools-subtab',
+                    'data_attr' => 'data-tools-tab',
+                    'data_value' => 'import',
+                ));
+                MJB_Admin_Tabs::render_admin_subtab(array(
+                    'active' => $active_tab === 'schedules',
+                    'label' => __('Schedules', 'modern-job-board'),
+                    'class' => 'mjb-tools-subtab',
+                    'data_attr' => 'data-tools-tab',
+                    'data_value' => 'schedules',
+                ));
+                ?>
             </div>
 
             <!-- Export Tab -->
@@ -493,6 +578,10 @@ class MJB_Tools
      */
     public function handle_import_jobs()
     {
+        if ($this->skip_tools_ajax_init()) {
+            return;
+        }
+
         if (isset($_POST['mjb_action']) && $_POST['mjb_action'] == 'import_jobs' && check_admin_referer('mjb_import_jobs_nonce') && current_user_can('manage_options')) {
             if (!empty($_FILES['import_file']['tmp_name'])) {
                 $file = $_FILES['import_file']['tmp_name'];
@@ -528,8 +617,15 @@ class MJB_Tools
 
                 fclose($handle);
 
-                wp_safe_redirect($this->get_tools_tab_url('import', array('imported' => $count)));
-                exit;
+                $this->finish_tools(
+                    'import',
+                    array('imported' => $count),
+                    sprintf(
+                        /* translators: %d: number of jobs imported */
+                        __('%d jobs imported successfully!', 'modern-job-board'),
+                        $count
+                    )
+                );
             }
         }
     }
@@ -539,6 +635,10 @@ class MJB_Tools
      */
     public function handle_import_jobs_xml()
     {
+        if ($this->skip_tools_ajax_init()) {
+            return;
+        }
+
         if (!isset($_POST['mjb_action']) || $_POST['mjb_action'] !== 'import_jobs_xml') {
             return;
         }
@@ -560,6 +660,10 @@ class MJB_Tools
      */
     public function handle_import_jobs_xml_url()
     {
+        if ($this->skip_tools_ajax_init()) {
+            return;
+        }
+
         if (!isset($_POST['mjb_action']) || $_POST['mjb_action'] !== 'import_jobs_xml_url') {
             return;
         }
@@ -604,11 +708,21 @@ class MJB_Tools
      */
     private function redirect_with_xml_result($result)
     {
-        wp_safe_redirect($this->get_tools_tab_url('import', array(
-            'xml_imported' => intval($result['imported']),
-            'xml_skipped' => intval($result['skipped']),
-        )));
-        exit;
+        $imported = intval($result['imported']);
+        $skipped = intval($result['skipped']);
+        $this->finish_tools(
+            'import',
+            array(
+                'xml_imported' => $imported,
+                'xml_skipped' => $skipped,
+            ),
+            sprintf(
+                /* translators: 1: imported count, 2: skipped count */
+                __('%1$d jobs imported from XML. %2$d items skipped (duplicates or invalid rows).', 'modern-job-board'),
+                $imported,
+                $skipped
+            )
+        );
     }
 
     /**
@@ -618,8 +732,7 @@ class MJB_Tools
      */
     private function redirect_with_xml_error($message)
     {
-        wp_safe_redirect($this->get_tools_tab_url('import', array('xml_error' => $message)));
-        exit;
+        $this->finish_tools('import', array('xml_error' => $message), $message, true);
     }
 
     /**
@@ -627,6 +740,10 @@ class MJB_Tools
      */
     public function handle_schedule_feed_save()
     {
+        if ($this->skip_tools_ajax_init()) {
+            return;
+        }
+
         if (!isset($_POST['mjb_action']) || $_POST['mjb_action'] !== 'schedule_feed_save') {
             return;
         }
@@ -645,12 +762,19 @@ class MJB_Tools
         ));
 
         if (is_wp_error($result)) {
-            wp_safe_redirect($this->get_tools_tab_url('schedules', array('schedule_error' => $result->get_error_message())));
-            exit;
+            $this->finish_tools(
+                'schedules',
+                array('schedule_error' => $result->get_error_message()),
+                $result->get_error_message(),
+                true
+            );
         }
 
-        wp_safe_redirect($this->get_tools_tab_url('schedules', array('schedule_saved' => 1)));
-        exit;
+        $this->finish_tools(
+            'schedules',
+            array('schedule_saved' => 1),
+            __('Scheduled feed saved.', 'modern-job-board')
+        );
     }
 
     /**
@@ -658,6 +782,10 @@ class MJB_Tools
      */
     public function handle_schedule_feed_delete()
     {
+        if ($this->skip_tools_ajax_init()) {
+            return;
+        }
+
         if (!isset($_POST['mjb_action']) || $_POST['mjb_action'] !== 'schedule_feed_delete') {
             return;
         }
@@ -671,8 +799,11 @@ class MJB_Tools
             MJB_Import_Scheduler::delete_feed($feed_id);
         }
 
-        wp_safe_redirect($this->get_tools_tab_url('schedules', array('schedule_deleted' => 1)));
-        exit;
+        $this->finish_tools(
+            'schedules',
+            array('schedule_deleted' => 1),
+            __('Scheduled feed deleted.', 'modern-job-board')
+        );
     }
 
     /**
@@ -680,6 +811,10 @@ class MJB_Tools
      */
     public function handle_schedule_feed_run()
     {
+        if ($this->skip_tools_ajax_init()) {
+            return;
+        }
+
         if (!isset($_POST['mjb_action']) || $_POST['mjb_action'] !== 'schedule_feed_run') {
             return;
         }
@@ -695,15 +830,29 @@ class MJB_Tools
 
         $result = MJB_Import_Scheduler::run_feed($feed_id, true);
         if (is_wp_error($result)) {
-            wp_safe_redirect($this->get_tools_tab_url('schedules', array('schedule_error' => $result->get_error_message())));
-            exit;
+            $this->finish_tools(
+                'schedules',
+                array('schedule_error' => $result->get_error_message()),
+                $result->get_error_message(),
+                true
+            );
         }
 
-        wp_safe_redirect($this->get_tools_tab_url('schedules', array(
-            'schedule_ran' => 1,
-            'schedule_imported' => intval($result['imported']),
-            'schedule_skipped' => intval($result['skipped']),
-        )));
-        exit;
+        $imported = intval($result['imported']);
+        $skipped = intval($result['skipped']);
+        $this->finish_tools(
+            'schedules',
+            array(
+                'schedule_ran' => 1,
+                'schedule_imported' => $imported,
+                'schedule_skipped' => $skipped,
+            ),
+            sprintf(
+                /* translators: 1: imported count, 2: skipped count */
+                __('Feed import complete. %1$d jobs imported, %2$d skipped.', 'modern-job-board'),
+                $imported,
+                $skipped
+            )
+        );
     }
 }

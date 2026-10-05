@@ -24,7 +24,7 @@ class MJB_License
     const PLAN_COMPLETE = 'complete_site';
 
     /** Free tier: max published job_listing posts. */
-    const FREE_ACTIVE_JOB_LIMIT = 10;
+    const FREE_ACTIVE_JOB_LIMIT = 100;
 
     /**
      * HMAC secret for offline keys. Remote validation can replace this later.
@@ -310,7 +310,8 @@ class MJB_License
     }
 
     /**
-     * Admin notice when cap is hit or plan is free.
+     * Admin notice when the Free plan job cap is hit.
+     * Everyday usage lives in the dashboard plan chip, not a WP notice.
      */
     public static function admin_plan_notice()
     {
@@ -339,25 +340,6 @@ class MJB_License
             ));
             echo ' <a href="' . esc_url(admin_url('admin.php?page=modern-job-board&tab=settings#mjb-license')) . '">';
             echo esc_html__('License settings', 'modern-job-board');
-            echo '</a></p></div>';
-            return;
-        }
-
-        // Soft Free-plan usage banner on MJB screens.
-        if (!self::can('unlimited_jobs') && $screen && strpos((string) $screen->id, 'modern-job-board') !== false) {
-            $count = self::count_active_jobs();
-            $limit = self::get_free_job_limit();
-            $class = $count >= $limit ? 'notice-warning' : 'notice-info';
-            echo '<div class="notice ' . esc_attr($class) . ' is-dismissible"><p>';
-            echo esc_html(sprintf(
-                /* translators: 1: plan label, 2: published count, 3: free limit */
-                __('Modern Job Board plan: %1$s — %2$d / %3$d active jobs.', 'modern-job-board'),
-                self::get_plan_label(),
-                $count,
-                $limit
-            ));
-            echo ' <a href="' . esc_url(admin_url('admin.php?page=modern-job-board&tab=settings#mjb-license')) . '">';
-            echo esc_html__('Manage license', 'modern-job-board');
             echo '</a></p></div>';
         }
     }

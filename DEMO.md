@@ -64,6 +64,24 @@ $env:PHPRC = "$env:APPDATA\Local\run\cp2oegpc-\conf\php"
   "C:\Users\marti\Local Sites\mjb\app\public"
 ```
 
+## Seed recruiters, candidates, CVs, and applications
+
+Adds test employers (`employer` role), extra companies/jobs, candidate accounts with PDF resumes, and applications in mixed workflow statuses. Safe to re-run (skips duplicates). All `@mjb.test` accounts use password `MjbTest-2026!`.
+
+```powershell
+$env:PHPRC = "$env:APPDATA\Local\run\cp2oegpc-\conf\php"
+& "$env:APPDATA\Local\lightning-services\php-8.3.17+1\bin\win64\php.exe" `
+  -d auto_prepend_file= `
+  "C:\Users\marti\4Mation Digital\modern-job-board\bin\populate-test-people.php" `
+  "C:\Users\marti\Local Sites\mjb\app\public"
+```
+
+Example logins after seeding:
+
+- Recruiter: `recruiter.helios-analytics@mjb.test`
+- Candidate (has applications + CV): `candidate.01@mjb.test`
+- Candidate (CV only, no applications): `candidate.16@mjb.test`
+
 ## Demo URLs
 
 After seeding:

@@ -11,6 +11,55 @@ class MJB_Admin
 {
 
     /**
+     * Save plugin settings without leaving the Settings screen.
+     */
+    public function ajax_save_settings()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => __('You do not have permission to perform this action.', 'modern-job-board'),
+            ), 403);
+        }
+        $nonce = isset($_POST['_wpnonce']) ? sanitize_text_field(wp_unslash($_POST['_wpnonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'mjb_settings_group-options')) {
+            wp_send_json_error(array(
+                'code' => 'error_security',
+                'message' => class_exists('MJB_Notices') ? MJB_Notices::message('error_security') : '',
+            ));
+        }
+
+        $allowed = apply_filters('allowed_options', array());
+        $options = (isset($allowed['mjb_settings_group']) && is_array($allowed['mjb_settings_group']))
+            ? $allowed['mjb_settings_group']
+            : array();
+        if (empty($options)) {
+            wp_send_json_error(array(
+                'message' => class_exists('MJB_Notices') ? MJB_Notices::message('error_security') : '',
+            ));
+        }
+
+        foreach ($options as $option) {
+            $option = trim((string) $option);
+            if ($option === '') {
+                continue;
+            }
+            $value = null;
+            if (isset($_POST[$option])) {
+                $value = wp_unslash($_POST[$option]);
+                if (!is_array($value)) {
+                    $value = trim((string) $value);
+                }
+            }
+            update_option($option, $value);
+        }
+
+        wp_send_json_success(array(
+            'code' => 'success_settings',
+            'message' => class_exists('MJB_Notices') ? MJB_Notices::message('success_settings') : '',
+        ));
+    }
+
+    /**
      * Initialize Admin.
      */
     public function init()
@@ -18,6 +67,7 @@ class MJB_Admin
         MJB_Admin_Tabs::init();
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'register_settings'));
+        add_action('wp_ajax_mjb_save_settings', array($this, 'ajax_save_settings'));
 
         // Custom Columns for Applications
         // Custom Columns for Applications
@@ -231,20 +281,24 @@ class MJB_Admin
         ?>
         <div class="mjb-dashboard-page mjb-admin-page mjb-job-editor">
             <div class="mjb-dashboard-wrap mjb-admin-shell">
-                <header class="mjb-dashboard-header">
-                    <h1><?php esc_html_e('Modern Job Board', 'modern-job-board'); ?> <span class="mjb-badge">v<?php echo esc_html(MJB_VERSION); ?></span></h1>
-                    <p class="subtitle"><?php esc_html_e('Manage your job board settings, listings, and tools.', 'modern-job-board'); ?></p>
-                </header>
+                <?php MJB_Admin_Tabs::render_shell_header(); ?>
                 <?php MJB_Admin_Tabs::render_tab_nav('jobs', true); ?>
                 <div class="mjb-admin-panel mjb-job-editor-panel">
-                    <div class="mjb-tab-panel mjb-tab-panel--job-editor">
-                        <div class="mjb-tab-panel__header">
-                            <h2 class="mjb-section-title"><?php echo esc_html($heading); ?></h2>
-                            <div class="mjb-tab-panel__actions">
-                                <a href="<?php echo esc_url(MJB_Admin_Tabs::get_tab_url('jobs')); ?>" class="mjb-btn mjb-btn-outline">
-                                    <?php esc_html_e('Back to Jobs', 'modern-job-board'); ?>
-                                </a>
-                            </div>
+                    <div class="mjb-tab-panel mjb-tab-panel--job-editor mjb-jobs">
+                        <div class="mjb-sec mjb-jobs__sec">
+                            <h2><?php
+                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                                echo MJB_Icons::render('pencil', 22);
+                                echo esc_html($heading);
+                            ?></h2>
+                            <span class="mjb-topbar__spacer"></span>
+                            <a href="<?php echo esc_url(MJB_Admin_Tabs::get_tab_url('jobs')); ?>" class="mjb-btn mjb-btn-outline">
+                                <?php
+                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                                echo MJB_Icons::render('chevron-left', 16);
+                                ?>
+                                <span><?php esc_html_e('Back to Jobs', 'modern-job-board'); ?></span>
+                            </a>
                         </div>
         <?php
     }
@@ -261,6 +315,14 @@ class MJB_Admin
         }
 
         echo '</div></div></div></div>';
+
+        self::render_calendar_modal(
+            array(
+                'id' => 'mjb-job-cal-modal',
+                'title' => __('Choose expiry date', 'modern-job-board'),
+                'empty_label' => __('Clear', 'modern-job-board'),
+            )
+        );
 
         // Keep locked main-column boxes out of #side-sortables when reordered with arrows/drag.
         $locked = wp_json_encode($this->get_job_main_column_meta_box_ids());
@@ -339,27 +401,165 @@ class MJB_Admin
                 array('mjb-admin-css'),
                 MJB_VERSION
             );
-        }
-
-        if ($screen && $screen->id === 'toplevel_page_modern-job-board') {
+            wp_enqueue_style(
+                'mjb-admin-dashboard-css',
+                $base_url . 'assets/css/mjb-admin-dashboard.css',
+                array('mjb-admin-css'),
+                MJB_VERSION
+            );
+            wp_enqueue_style(
+                'mjb-admin-jobs-css',
+                $base_url . 'assets/css/mjb-admin-jobs.css',
+                array('mjb-admin-dashboard-css'),
+                MJB_VERSION
+            );
             wp_enqueue_script(
-                'mjb-admin-tabs',
-                plugin_dir_url(dirname(__FILE__)) . 'assets/js/mjb-admin-tabs.js',
+                'mjb-admin-dashboard',
+                $base_url . 'assets/js/mjb-admin-dashboard.js',
                 array('jquery'),
                 MJB_VERSION,
                 true
             );
+
+            if ($this->is_job_editor_screen()) {
+                wp_enqueue_script(
+                    'mjb-admin-calendar',
+                    $base_url . 'assets/js/mjb-admin-calendar.js',
+                    array('jquery'),
+                    MJB_VERSION,
+                    true
+                );
+                wp_enqueue_script(
+                    'mjb-admin-job-editor',
+                    $base_url . 'assets/js/mjb-admin-job-editor.js',
+                    array(),
+                    MJB_VERSION,
+                    true
+                );
+                wp_localize_script(
+                    'mjb-admin-job-editor',
+                    'mjbJobEditor',
+                    array(
+                        'icons' => array(
+                            'status' => MJB_Icons::render('circle-dot', 16),
+                            'visibility' => MJB_Icons::render('eye', 16),
+                            'date' => MJB_Icons::render('calendar', 16),
+                        ),
+                    )
+                );
+            }
+        }
+
+        if ($screen && $screen->id === 'toplevel_page_modern-job-board') {
+            wp_enqueue_script(
+                'mjb-admin-jobs',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/js/mjb-admin-jobs.js',
+                array('jquery', 'mjb-admin-dashboard'),
+                MJB_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'mjb-admin-companies',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/js/mjb-admin-companies.js',
+                array('jquery', 'mjb-admin-dashboard'),
+                MJB_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'mjb-admin-applications',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/js/mjb-admin-applications.js',
+                array('jquery', 'mjb-admin-dashboard'),
+                MJB_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'mjb-admin-resumes',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/js/mjb-admin-resumes.js',
+                array('jquery', 'mjb-admin-dashboard'),
+                MJB_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'mjb-admin-calendar',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/js/mjb-admin-calendar.js',
+                array('jquery'),
+                MJB_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'mjb-admin-settings',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/js/mjb-admin-settings.js',
+                array('jquery', 'mjb-admin-dashboard', 'mjb-admin-calendar'),
+                MJB_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'mjb-admin-tabs',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/js/mjb-admin-tabs.js',
+                array('jquery', 'mjb-admin-dashboard', 'mjb-admin-jobs', 'mjb-admin-companies', 'mjb-admin-applications', 'mjb-admin-resumes', 'mjb-admin-settings'),
+                MJB_VERSION,
+                true
+            );
+            $skeletons = array();
+            foreach (array_keys(MJB_Admin_Tabs::get_tabs()) as $tab_id) {
+                $skeletons[$tab_id] = MJB_Admin_Tabs::get_tab_skeleton_html($tab_id);
+            }
             wp_localize_script('mjb-admin-tabs', 'mjb_admin_tabs', array(
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('mjb_admin_tabs'),
                 'default_tab' => MJB_Admin_Tabs::get_default_tab(),
+                'skeletons' => $skeletons,
+                'export_jobs_url' => wp_nonce_url(admin_url('admin-post.php?action=mjb_export_jobs'), 'mjb_export_jobs'),
+                'export_companies_url' => wp_nonce_url(admin_url('admin-post.php?action=mjb_export_companies'), 'mjb_export_companies'),
+                'export_applications_url' => wp_nonce_url(admin_url('admin-post.php?action=mjb_export_applications'), 'mjb_export_applications'),
+                'export_resumes_url' => wp_nonce_url(admin_url('admin-post.php?action=mjb_export_resumes'), 'mjb_export_resumes'),
+                'i18n' => array(
+                    'loading' => __('Loading section…', 'modern-job-board'),
+                    'jobSelected' => __('1 job selected', 'modern-job-board'),
+                    'jobsSelected' => __('%d jobs selected', 'modern-job-board'),
+                    'companySelected' => __('1 company selected', 'modern-job-board'),
+                    'companiesSelected' => __('%d companies selected', 'modern-job-board'),
+                    'applicationSelected' => __('1 application selected', 'modern-job-board'),
+                    'applicationsSelected' => __('%d applications selected', 'modern-job-board'),
+                    'resumeSelected' => __('1 resume selected', 'modern-job-board'),
+                    'resumesSelected' => __('%d resumes selected', 'modern-job-board'),
+                    'confirmBulkDelete' => __('Move the selected jobs to the trash?', 'modern-job-board'),
+                    'confirmBulkDeleteCompanies' => __('Move the selected companies to the trash?', 'modern-job-board'),
+                    'confirmBulkDeleteApplications' => __('Move the selected applications to the trash?', 'modern-job-board'),
+                    'confirmBulkDeleteResumes' => __('Move the selected resumes to the trash?', 'modern-job-board'),
+                    'downloadResume' => __('Download resume', 'modern-job-board'),
+                    'editResume' => __('Edit resume', 'modern-job-board'),
+                    'publishResume' => __('Publish', 'modern-job-board'),
+                    'deleteResume' => __('Delete', 'modern-job-board'),
+                    'actionFailed' => __('Could not update jobs.', 'modern-job-board'),
+                    'noMatches' => __('No matches', 'modern-job-board'),
+                ),
             ));
         }
     }
 
     /**
-     * Add Admin Menu.
+     * Top-level wp-admin menu icon (white MJB mark on transparent).
+     *
+     * WordPress paints data-URI SVGs at 20px with opacity for idle/hover.
+     *
+     * @return string Data URI, or Dashicons fallback.
      */
+    public static function get_admin_menu_icon()
+    {
+        $path = MJB_PATH . 'assets/images/mjb-icon.svg';
+        if (!is_readable($path)) {
+            return 'dashicons-portfolio';
+        }
+
+        $svg = file_get_contents($path);
+        if (!is_string($svg) || $svg === '') {
+            return 'dashicons-portfolio';
+        }
+
+        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+    }
+
     /**
      * Add Admin Menu.
      */
@@ -372,7 +572,7 @@ class MJB_Admin
             'manage_options',
             'modern-job-board',
             array($this, 'admin_dashboard_html'),
-            'dashicons-portfolio',
+            self::get_admin_menu_icon(),
             56
         );
 
@@ -403,13 +603,11 @@ class MJB_Admin
         ?>
         <div class="wrap mjb-dashboard-page mjb-admin-page">
             <div class="mjb-dashboard-wrap mjb-admin-shell">
-                <header class="mjb-dashboard-header">
-                    <h1><?php esc_html_e('Modern Job Board', 'modern-job-board'); ?> <span class="mjb-badge">v<?php echo esc_html(MJB_VERSION); ?></span></h1>
-                    <p class="subtitle"><?php esc_html_e('Manage your job board settings, listings, and tools.', 'modern-job-board'); ?></p>
-                </header>
+                <?php MJB_Admin_Tabs::render_shell_header(); ?>
 
                 <?php MJB_Admin_Tabs::render_tab_nav($active_tab); ?>
 
+                <div id="mjb-admin-live" class="screen-reader-text" aria-live="polite" aria-atomic="true"></div>
                 <div
                     id="mjb-admin-panel"
                     class="mjb-admin-panel"
@@ -422,11 +620,6 @@ class MJB_Admin
                     // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Tab HTML is escaped by renderers.
                     echo MJB_Admin_Tabs::render_tab($active_tab, $active_page);
                     ?>
-                </div>
-
-                <div id="mjb-admin-loader" class="mjb-admin-loader" aria-hidden="true" role="status">
-                    <span class="mjb-spinner" aria-hidden="true"></span>
-                    <span class="screen-reader-text"><?php esc_html_e('Loading section…', 'modern-job-board'); ?></span>
                 </div>
             </div>
         </div>
@@ -741,7 +934,11 @@ class MJB_Admin
     public function license_section_callback()
     {
         echo '<div id="mjb-license"></div>';
-        echo '<p>' . esc_html__('Enter a license key to unlock Pro or Business features. Leave blank for Free (10 active jobs).', 'modern-job-board') . '</p>';
+        echo '<p>' . esc_html(sprintf(
+            /* translators: %d: free plan active job limit */
+            __('Enter a license key to unlock Pro or Business features. Leave blank for Free (%d active jobs).', 'modern-job-board'),
+            MJB_License::get_free_job_limit()
+        )) . '</p>';
         echo '<p class="description">' . esc_html__('Checkout URLs power “Buy Pro/Business” buttons. Use any https product or payment page. With WooCommerce, any gateway that supports WooCommerce works (e.g. PayPal, Stripe, Square, Mollie, Razorpay, or regional gateways where available). Leave blank to fall back to a sales email.', 'modern-job-board') . '</p>';
         if (defined('MJB_LICENSE_PLAN') && MJB_License::is_valid_plan(MJB_LICENSE_PLAN)) {
             echo '<p class="description"><strong>' . esc_html__('Note:', 'modern-job-board') . '</strong> ';
@@ -1270,80 +1467,138 @@ class MJB_Admin
         if ($method === '') {
             $method = 'internal';
         }
-        $publish_at_local = $publish_at ? str_replace(' ', 'T', substr($publish_at, 0, 16)) : '';
+        $publish_at_local = $publish_at ? substr($publish_at, 0, 16) : '';
         ?>
-        <div class="mjb-job-meta mjb-settings-form">
-            <table class="form-table" role="presentation">
-                <tr>
-                    <th scope="row"><label for="mjb_job_expires"><?php esc_html_e('Expiration date', 'modern-job-board'); ?></label></th>
-                    <td>
-                        <input type="date" name="mjb_job_expires" id="mjb_job_expires" value="<?php echo esc_attr($expires); ?>">
-                        <p class="description"><?php esc_html_e('Leave empty to use the default listing duration from Settings.', 'modern-job-board'); ?></p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><label for="mjb_job_publish_at"><?php esc_html_e('Schedule go-live', 'modern-job-board'); ?></label></th>
-                    <td>
-                        <input type="datetime-local" name="mjb_job_publish_at" id="mjb_job_publish_at" value="<?php echo esc_attr($publish_at_local); ?>">
-                        <p class="description"><?php esc_html_e('Optional. When set on a draft/pending job, MJB publishes it after this date/time.', 'modern-job-board'); ?></p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php esc_html_e('Featured', 'modern-job-board'); ?></th>
-                    <td>
-                        <label for="mjb_featured">
-                            <input type="checkbox" name="mjb_featured" id="mjb_featured" value="1" <?php checked($featured, 1); ?>>
-                            <?php esc_html_e('Feature this job on the board', 'modern-job-board'); ?>
-                        </label>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php esc_html_e('Filled', 'modern-job-board'); ?></th>
-                    <td>
-                        <label for="mjb_job_filled">
-                            <input type="checkbox" name="mjb_job_filled" id="mjb_job_filled" value="1" <?php checked($filled, '1'); ?>>
-                            <?php esc_html_e('Mark as filled (can be hidden from public lists)', 'modern-job-board'); ?>
-                        </label>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php esc_html_e('Application method', 'modern-job-board'); ?></th>
-                    <td>
-                        <label class="mjb-job-meta__radio">
-                            <input type="radio" name="mjb_application_method" value="internal" <?php checked($method, 'internal'); ?>>
-                            <?php esc_html_e('Internal (email notification)', 'modern-job-board'); ?>
-                        </label>
-                        <label class="mjb-job-meta__radio">
-                            <input type="radio" name="mjb_application_method" value="external" <?php checked($method, 'external'); ?>>
-                            <?php esc_html_e('External URL', 'modern-job-board'); ?>
-                        </label>
-                        <label class="mjb-job-meta__radio">
-                            <input type="radio" name="mjb_application_method" value="whatsapp" <?php checked($method, 'whatsapp'); ?>>
-                            <?php esc_html_e('WhatsApp', 'modern-job-board'); ?>
-                        </label>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><label for="mjb_application_email"><?php esc_html_e('Notification email(s)', 'modern-job-board'); ?></label></th>
-                    <td>
-                        <input type="text" name="mjb_application_email" id="mjb_application_email" value="<?php echo esc_attr($app_email); ?>" class="regular-text" placeholder="hr@example.com, hiring@example.com">
-                        <p class="description"><?php esc_html_e('Comma-separated list for internal application notices.', 'modern-job-board'); ?></p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><label for="mjb_application_url"><?php esc_html_e('External application URL', 'modern-job-board'); ?></label></th>
-                    <td>
-                        <input type="url" name="mjb_application_url" id="mjb_application_url" value="<?php echo esc_attr($app_url); ?>" class="regular-text" placeholder="https://">
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><label for="mjb_application_whatsapp"><?php esc_html_e('WhatsApp number', 'modern-job-board'); ?></label></th>
-                    <td>
-                        <input type="text" name="mjb_application_whatsapp" id="mjb_application_whatsapp" value="<?php echo esc_attr($whatsapp); ?>" class="regular-text" placeholder="+27123456789">
-                        <p class="description"><?php esc_html_e('International format; used when application method is WhatsApp.', 'modern-job-board'); ?></p>
-                    </td>
-                </tr>
-            </table>
+        <div class="mjb-job-meta mjb-settings-form mjb-settings-stack">
+            <div class="mjb-settings-field">
+                <label for="mjb_job_expires"><?php esc_html_e('Expiration date', 'modern-job-board'); ?></label>
+                <div class="mjb-license-expiry">
+                    <input type="text" name="mjb_job_expires" id="mjb_job_expires" value="<?php echo esc_attr($expires); ?>" class="regular-text" maxlength="10" placeholder="YYYY-MM-DD" autocomplete="off" inputmode="numeric" data-mjb-cal-format="iso">
+                    <button type="button" class="mjb-jobs-filter__btn" data-mjb-cal-open data-mjb-cal-for="mjb_job_expires" data-mjb-cal-modal="mjb-job-cal-modal" data-mjb-cal-title="<?php echo esc_attr__('Choose expiry date', 'modern-job-board'); ?>" data-mjb-cal-clear-label="<?php echo esc_attr__('Clear', 'modern-job-board'); ?>" aria-haspopup="dialog" aria-controls="mjb-job-cal-modal">
+                        <?php
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                        echo MJB_Icons::render('calendar', 16);
+                        ?>
+                        <span><?php esc_html_e('Pick date', 'modern-job-board'); ?></span>
+                    </button>
+                </div>
+                <p class="description"><?php esc_html_e('Leave empty to use the default listing duration from Settings.', 'modern-job-board'); ?></p>
+            </div>
+            <div class="mjb-settings-field">
+                <label for="mjb_job_publish_at"><?php esc_html_e('Schedule go-live', 'modern-job-board'); ?></label>
+                <div class="mjb-license-expiry">
+                    <input type="text" name="mjb_job_publish_at" id="mjb_job_publish_at" value="<?php echo esc_attr($publish_at_local); ?>" class="regular-text" maxlength="16" placeholder="YYYY-MM-DD HH:MM" autocomplete="off" data-mjb-cal-format="datetime">
+                    <button type="button" class="mjb-jobs-filter__btn" data-mjb-cal-open data-mjb-cal-for="mjb_job_publish_at" data-mjb-cal-modal="mjb-job-cal-modal" data-mjb-cal-title="<?php echo esc_attr__('Choose go-live date', 'modern-job-board'); ?>" data-mjb-cal-clear-label="<?php echo esc_attr__('Clear', 'modern-job-board'); ?>" aria-haspopup="dialog" aria-controls="mjb-job-cal-modal">
+                        <?php
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                        echo MJB_Icons::render('calendar', 16);
+                        ?>
+                        <span><?php esc_html_e('Pick date', 'modern-job-board'); ?></span>
+                    </button>
+                </div>
+                <p class="description"><?php esc_html_e('Optional. When set on a draft/pending job, MJB publishes it after this date/time.', 'modern-job-board'); ?></p>
+            </div>
+            <label class="mjb-settings-check" for="mjb_featured">
+                <input type="checkbox" name="mjb_featured" id="mjb_featured" value="1" <?php checked($featured, 1); ?>>
+                <span><?php esc_html_e('Feature this job on the board', 'modern-job-board'); ?></span>
+            </label>
+            <label class="mjb-settings-check" for="mjb_job_filled">
+                <input type="checkbox" name="mjb_job_filled" id="mjb_job_filled" value="1" <?php checked($filled, '1'); ?>>
+                <span><?php esc_html_e('Mark as filled (can be hidden from public lists)', 'modern-job-board'); ?></span>
+            </label>
+            <div class="mjb-settings-field">
+                <span class="mjb-settings-field__label"><?php esc_html_e('Application method', 'modern-job-board'); ?></span>
+                <label class="mjb-settings-check mjb-job-meta__radio">
+                    <input type="radio" name="mjb_application_method" value="internal" <?php checked($method, 'internal'); ?>>
+                    <span><?php esc_html_e('Internal (email notification)', 'modern-job-board'); ?></span>
+                </label>
+                <label class="mjb-settings-check mjb-job-meta__radio">
+                    <input type="radio" name="mjb_application_method" value="external" <?php checked($method, 'external'); ?>>
+                    <span><?php esc_html_e('External URL', 'modern-job-board'); ?></span>
+                </label>
+                <label class="mjb-settings-check mjb-job-meta__radio">
+                    <input type="radio" name="mjb_application_method" value="whatsapp" <?php checked($method, 'whatsapp'); ?>>
+                    <span><?php esc_html_e('WhatsApp', 'modern-job-board'); ?></span>
+                </label>
+            </div>
+            <div class="mjb-settings-field">
+                <label for="mjb_application_email"><?php esc_html_e('Notification email(s)', 'modern-job-board'); ?></label>
+                <input type="text" name="mjb_application_email" id="mjb_application_email" value="<?php echo esc_attr($app_email); ?>" class="regular-text" placeholder="hr@example.com, hiring@example.com">
+                <p class="description"><?php esc_html_e('Comma-separated list for internal application notices.', 'modern-job-board'); ?></p>
+            </div>
+            <div class="mjb-settings-field">
+                <label for="mjb_application_url"><?php esc_html_e('External application URL', 'modern-job-board'); ?></label>
+                <input type="url" name="mjb_application_url" id="mjb_application_url" value="<?php echo esc_attr($app_url); ?>" class="regular-text" placeholder="https://">
+            </div>
+            <div class="mjb-settings-field">
+                <label for="mjb_application_whatsapp"><?php esc_html_e('WhatsApp number', 'modern-job-board'); ?></label>
+                <input type="text" name="mjb_application_whatsapp" id="mjb_application_whatsapp" value="<?php echo esc_attr($whatsapp); ?>" class="regular-text" placeholder="+27123456789">
+                <p class="description"><?php esc_html_e('International format; used when application method is WhatsApp.', 'modern-job-board'); ?></p>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * License-style date calendar modal (grey header, Lucide chevrons, 16px radius).
+     *
+     * @param array $args {
+     *     @type string $id Modal element id.
+     *     @type string $title Dialog title.
+     *     @type string $empty_label Footer clear/empty button label.
+     * }
+     * @return void
+     */
+    public static function render_calendar_modal($args = array())
+    {
+        $id = isset($args['id']) ? (string) $args['id'] : 'mjb-date-cal-modal';
+        $title = isset($args['title']) ? (string) $args['title'] : __('Choose date', 'modern-job-board');
+        $empty_label = isset($args['empty_label']) ? (string) $args['empty_label'] : __('Clear', 'modern-job-board');
+        $title_id = $id . '-title';
+        ?>
+        <div class="mjb-modal" id="<?php echo esc_attr($id); ?>" hidden data-mjb-modal data-mjb-cal>
+            <div class="mjb-modal__backdrop" data-mjb-cal-dismiss tabindex="-1"></div>
+            <div class="mjb-modal__dialog mjb-license-cal" role="dialog" aria-modal="true" aria-labelledby="<?php echo esc_attr($title_id); ?>">
+                <header class="mjb-modal__header">
+                    <h3 id="<?php echo esc_attr($title_id); ?>" class="mjb-modal__title"><?php echo esc_html($title); ?></h3>
+                    <button type="button" class="mjb-modal__close" data-mjb-cal-dismiss aria-label="<?php esc_attr_e('Close', 'modern-job-board'); ?>">&times;</button>
+                </header>
+                <div class="mjb-modal__body">
+                    <div class="mjb-license-cal__nav">
+                        <button type="button" class="mjb-jobs-filter__btn" data-cal-prev aria-label="<?php esc_attr_e('Previous month', 'modern-job-board'); ?>">
+                            <?php
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                            echo MJB_Icons::render('chevron-left', 16);
+                            ?>
+                        </button>
+                        <div class="mjb-license-cal__label" data-cal-label></div>
+                        <button type="button" class="mjb-jobs-filter__btn" data-cal-next aria-label="<?php esc_attr_e('Next month', 'modern-job-board'); ?>">
+                            <?php
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                            echo MJB_Icons::render('chevron-right', 16);
+                            ?>
+                        </button>
+                    </div>
+                    <div class="mjb-license-cal__dows" aria-hidden="true">
+                        <span><?php echo esc_html(_x('Mo', 'weekday short', 'modern-job-board')); ?></span>
+                        <span><?php echo esc_html(_x('Tu', 'weekday short', 'modern-job-board')); ?></span>
+                        <span><?php echo esc_html(_x('We', 'weekday short', 'modern-job-board')); ?></span>
+                        <span><?php echo esc_html(_x('Th', 'weekday short', 'modern-job-board')); ?></span>
+                        <span><?php echo esc_html(_x('Fr', 'weekday short', 'modern-job-board')); ?></span>
+                        <span><?php echo esc_html(_x('Sa', 'weekday short', 'modern-job-board')); ?></span>
+                        <span><?php echo esc_html(_x('Su', 'weekday short', 'modern-job-board')); ?></span>
+                    </div>
+                    <div class="mjb-license-cal__viewport" data-cal-viewport>
+                        <div class="mjb-license-cal__track" data-cal-track>
+                            <div class="mjb-license-cal__grid" data-cal-grid></div>
+                        </div>
+                    </div>
+                </div>
+                <footer class="mjb-modal__footer">
+                    <button type="button" class="mjb-btn mjb-btn-outline" data-cal-none><?php echo esc_html($empty_label); ?></button>
+                    <button type="button" class="mjb-btn mjb-btn-outline" data-mjb-cal-dismiss><?php esc_html_e('Cancel', 'modern-job-board'); ?></button>
+                </footer>
+            </div>
         </div>
         <?php
     }

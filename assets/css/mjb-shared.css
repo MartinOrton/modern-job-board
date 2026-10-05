@@ -3,6 +3,11 @@
 :root {
     --mjb-heading-weight: 600;
     --mjb-heading-line-height: 1.2;
+    --mjb-icon-stroke: 1.5;
+}
+
+.mjb-icon {
+    stroke-width: 1.5;
 }
 
 /* Unified plugin heading weight (H1–H6 and heading-class components) */
@@ -42,6 +47,111 @@ body[class*="post-type-mjb_resume"] :is(h1, h2, h3, h4, h5, h6),
     display: none !important;
 }
 
+/*
+ * Status boxes — success, info, warning, error.
+ * Light fill, dark border and Lucide icon, plugin text color.
+ * Covers front-end .mjb-message and wp-admin .notice variants.
+ */
+.mjb-message:not([hidden]),
+.notice.notice-success,
+.notice.notice-info,
+.notice.notice-warning,
+.notice.notice-error,
+.notice.updated {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid transparent;
+    border-radius: var(--mjb-radius, 0.75rem);
+    box-shadow: none;
+    color: var(--mjb-text, var(--mjb-text-primary, #1a1a2e));
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+.mjb-message:not([hidden])::before,
+.notice.notice-success::before,
+.notice.notice-info::before,
+.notice.notice-warning::before,
+.notice.notice-error::before,
+.notice.updated::before {
+    content: "";
+    flex: none;
+    width: 18px;
+    height: 18px;
+    background: center / 18px 18px no-repeat;
+}
+
+.notice.notice-success > p,
+.notice.notice-info > p,
+.notice.notice-warning > p,
+.notice.notice-error > p,
+.notice.updated > p {
+    margin: 0;
+    padding: 0;
+    color: inherit;
+    flex: 1;
+}
+
+.notice.is-dismissible.notice-success,
+.notice.is-dismissible.notice-info,
+.notice.is-dismissible.notice-warning,
+.notice.is-dismissible.notice-error,
+.notice.is-dismissible.updated {
+    position: relative;
+    padding-right: 2.75rem;
+}
+
+.mjb-message.success,
+.notice.notice-success,
+.notice.updated {
+    background: #f0fdf4;
+    border-color: #15803d;
+}
+
+.mjb-message.success::before,
+.notice.notice-success::before,
+.notice.updated::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2315803D' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E");
+}
+
+.mjb-message.info,
+.mjb-message.mjb-message--info,
+.notice.notice-info {
+    background: #eff6ff;
+    border-color: #1d4ed8;
+}
+
+.mjb-message.info::before,
+.mjb-message.mjb-message--info::before,
+.notice.notice-info::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231D4ED8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4'/%3E%3Cpath d='M12 8h.01'/%3E%3C/svg%3E");
+}
+
+.mjb-message.warning,
+.notice.notice-warning {
+    background: #fffbeb;
+    border-color: #b45309;
+}
+
+.mjb-message.warning::before,
+.notice.notice-warning::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B45309' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3'/%3E%3Cpath d='M12 9v4'/%3E%3Cpath d='M12 17h.01'/%3E%3C/svg%3E");
+}
+
+.mjb-message.error,
+.notice.notice-error {
+    background: #fef2f2;
+    border-color: #b91c1c;
+}
+
+.mjb-message.error::before,
+.notice.notice-error::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B91C1C' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m15 9-6 6'/%3E%3Cpath d='m9 9 6 6'/%3E%3C/svg%3E");
+}
+
 .mjb-data-grid[data-cols="1"] { --mjb-grid-cols: 1; }
 .mjb-data-grid[data-cols="2"] { --mjb-grid-cols: 2; }
 .mjb-data-grid[data-cols="3"] { --mjb-grid-cols: 3; }
@@ -62,3 +172,85 @@ body[class*="post-type-mjb_resume"] :is(h1, h2, h3, h4, h5, h6),
 .mjb-data-grid[data-cols="18"] { --mjb-grid-cols: 18; }
 .mjb-data-grid[data-cols="19"] { --mjb-grid-cols: 19; }
 .mjb-data-grid[data-cols="20"] { --mjb-grid-cols: 20; }
+
+/*
+ * In-card text links for the candidate, recruiter, and admin dashboards.
+ * Same rest and hover as the theme top menu: gray, weight 600, no line
+ * until hover, then a 2px line grows from the left.
+ * The line sits on the text (an inner span when an arrow sits beside it)
+ * so it does not run under that arrow.
+ * Top tabs, real buttons, icon buttons, and whole-card links are excluded.
+ */
+:root {
+    --mjb-card-link-rest: var(--text-secondary, #64748b);
+    --mjb-card-link-hover: var(--primary, var(--mjb-primary, #0F766E));
+}
+
+.mjb-candidate-dashboard :is(.mjb-cd-stat, .mjb-cd-panel) a:not(.btn):not(.mjb-btn):not(.button):not(.mjb-cd-tab):not(.mjb-cd-sq):not(.mjb-cd-icon-btn):not(.mjb-icon-btn),
+.mjb-candidate-dashboard button.mjb-cd-linkbtn,
+.mjb-portal-dashboard .mjb-data-grid a:not(.btn):not(.mjb-btn):not(.button):not(.mjb-icon-btn),
+#wpbody-content :is(.mjb-dash, .mjb-tab-panel--list) a:not(.mjb-btn):not(.button):not(.btn):not(.mjb-admin-tabs__btn) {
+    color: var(--mjb-card-link-rest);
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: color 0.2s ease;
+}
+
+.mjb-candidate-dashboard :is(.mjb-cd-stat, .mjb-cd-panel) a:not(.btn):not(.mjb-btn):not(.button):not(.mjb-cd-tab):not(.mjb-cd-sq):not(.mjb-cd-icon-btn):not(.mjb-icon-btn):hover,
+.mjb-candidate-dashboard :is(.mjb-cd-stat, .mjb-cd-panel) a:not(.btn):not(.mjb-btn):not(.button):not(.mjb-cd-tab):not(.mjb-cd-sq):not(.mjb-cd-icon-btn):not(.mjb-icon-btn):focus-visible,
+.mjb-candidate-dashboard button.mjb-cd-linkbtn:hover,
+.mjb-candidate-dashboard button.mjb-cd-linkbtn:focus-visible,
+.mjb-portal-dashboard .mjb-data-grid a:not(.btn):not(.mjb-btn):not(.button):not(.mjb-icon-btn):hover,
+.mjb-portal-dashboard .mjb-data-grid a:not(.btn):not(.mjb-btn):not(.button):not(.mjb-icon-btn):focus-visible,
+#wpbody-content :is(.mjb-dash, .mjb-tab-panel--list) a:not(.mjb-btn):not(.button):not(.btn):not(.mjb-admin-tabs__btn):hover,
+#wpbody-content :is(.mjb-dash, .mjb-tab-panel--list) a:not(.mjb-btn):not(.button):not(.btn):not(.mjb-admin-tabs__btn):focus-visible {
+    color: var(--mjb-card-link-hover);
+}
+
+.mjb-candidate-dashboard .mjb-cd-u,
+#wpbody-content :is(.mjb-dash, .mjb-tab-panel--list, .mjb-plan-chip) .mjb-u {
+    position: relative;
+    display: inline;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.mjb-candidate-dashboard :is(.mjb-cd-stat, .mjb-cd-panel) a:not(.btn):not(.mjb-btn):not(.button):not(.mjb-cd-tab):not(.mjb-cd-sq):not(.mjb-cd-icon-btn):not(.mjb-icon-btn):not(:has(> .mjb-cd-u)),
+.mjb-portal-dashboard .mjb-data-grid a:not(.btn):not(.mjb-btn):not(.button):not(.mjb-icon-btn),
+#wpbody-content :is(.mjb-dash, .mjb-tab-panel--list) a:not(.mjb-btn):not(.button):not(.btn):not(.mjb-admin-tabs__btn):not(:has(> .mjb-u)) {
+    position: relative;
+}
+
+.mjb-candidate-dashboard .mjb-cd-u::after,
+#wpbody-content :is(.mjb-dash, .mjb-tab-panel--list, .mjb-plan-chip) .mjb-u::after,
+.mjb-candidate-dashboard :is(.mjb-cd-stat, .mjb-cd-panel) a:not(.btn):not(.mjb-btn):not(.button):not(.mjb-cd-tab):not(.mjb-cd-sq):not(.mjb-cd-icon-btn):not(.mjb-icon-btn):not(:has(> .mjb-cd-u))::after,
+.mjb-portal-dashboard .mjb-data-grid a:not(.btn):not(.mjb-btn):not(.button):not(.mjb-icon-btn)::after,
+#wpbody-content :is(.mjb-dash, .mjb-tab-panel--list) a:not(.mjb-btn):not(.button):not(.btn):not(.mjb-admin-tabs__btn):not(:has(> .mjb-u))::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -0.35rem;
+    width: 100%;
+    height: 2px;
+    border-radius: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+
+.mjb-candidate-dashboard a:hover .mjb-cd-u::after,
+.mjb-candidate-dashboard a:focus-visible .mjb-cd-u::after,
+.mjb-candidate-dashboard button:hover .mjb-cd-u::after,
+.mjb-candidate-dashboard button:focus-visible .mjb-cd-u::after,
+.mjb-candidate-dashboard :is(.mjb-cd-stat, .mjb-cd-panel) a:not(:has(> .mjb-cd-u)):hover::after,
+.mjb-candidate-dashboard :is(.mjb-cd-stat, .mjb-cd-panel) a:not(:has(> .mjb-cd-u)):focus-visible::after,
+#wpbody-content :is(.mjb-dash, .mjb-tab-panel--list, .mjb-plan-chip) a:hover .mjb-u::after,
+#wpbody-content :is(.mjb-dash, .mjb-tab-panel--list, .mjb-plan-chip) a:focus-visible .mjb-u::after,
+#wpbody-content :is(.mjb-dash, .mjb-tab-panel--list) a:not(:has(> .mjb-u)):hover::after,
+#wpbody-content :is(.mjb-dash, .mjb-tab-panel--list) a:not(:has(> .mjb-u)):focus-visible::after,
+.mjb-portal-dashboard .mjb-data-grid a:hover::after,
+.mjb-portal-dashboard .mjb-data-grid a:focus-visible::after {
+    transform: scaleX(1);
+}

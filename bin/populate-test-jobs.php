@@ -212,7 +212,7 @@ foreach ($companies as $company) {
         $title = $titles[mt_rand(0, count($titles) - 1)];
         $suffix = $current_published + $i + 1;
         // Unique title + external id so re-runs can still add more if targets rise.
-        $unique_title = sprintf('%s (%s #%d)', $title, $company_name, $suffix);
+        $unique_title = $suffix > 1 ? sprintf('%s #%d', $title, $suffix) : $title;
         $external_id = 'mjb-test-' . $company_id . '-' . sanitize_title($title) . '-' . $suffix . '-' . mt_rand(1000, 9999);
 
         $post_id = MJB_Job_Importer::import_job(

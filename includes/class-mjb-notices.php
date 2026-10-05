@@ -41,9 +41,63 @@ class MJB_Notices
             return '';
         }
 
-        $type = (strpos($code, 'error_') === 0) ? 'error' : 'success';
+        $message = ($code === 'success_candidate_registered')
+            ? self::candidate_registered_message()
+            : $messages[$code];
 
-        return '<div class="mjb-message ' . esc_attr($type) . '">' . esc_html($messages[$code]) . '</div>';
+        if (strpos($code, 'error_') === 0) {
+            $type = 'error';
+        } elseif (strpos($code, 'warning_') === 0) {
+            $type = 'warning';
+        } elseif (strpos($code, 'info_') === 0) {
+            $type = 'info';
+        } else {
+            $type = 'success';
+        }
+
+        $role = ($type === 'error' || $type === 'warning') ? 'alert' : 'status';
+
+        return '<div class="mjb-message ' . esc_attr($type) . '" role="' . esc_attr($role) . '">' . esc_html($message) . '</div>';
+    }
+
+    /**
+     * Welcome line after a job seeker account is created.
+     *
+     * @param string|null $first_name Logged-in user's first name when null.
+     * @return string
+     */
+    public static function candidate_registered_message($first_name = null)
+    {
+        if ($first_name === null) {
+            $first_name = '';
+            if (is_user_logged_in()) {
+                $first_name = (string) get_user_meta(get_current_user_id(), 'first_name', true);
+            }
+        }
+
+        $first_name = trim((string) $first_name);
+        if ($first_name === '') {
+            return __('Registration successful! Welcome.', 'modern-job-board');
+        }
+
+        return sprintf(
+            /* translators: %s: candidate first name */
+            __('Registration successful! Welcome %s.', 'modern-job-board'),
+            $first_name
+        );
+    }
+
+    /**
+     * Message text for a notice code.
+     *
+     * @param string $code
+     * @return string
+     */
+    public static function message($code)
+    {
+        $code = sanitize_key((string) $code);
+        $messages = apply_filters('mjb_notice_messages', self::default_messages());
+        return isset($messages[$code]) ? (string) $messages[$code] : '';
     }
 
     /**
@@ -56,8 +110,17 @@ class MJB_Notices
         return array(
             'success_application' => __('Application submitted successfully!', 'modern-job-board'),
             'success_profile' => __('Profile updated successfully.', 'modern-job-board'),
+            'success_document_label' => __('Document label saved.', 'modern-job-board'),
             'success_resume' => __('Resume uploaded successfully.', 'modern-job-board'),
+            'success_resume_deleted' => __('CV removed from your profile.', 'modern-job-board'),
+            'success_photo' => __('Profile photo updated.', 'modern-job-board'),
+            'success_photo_deleted' => __('Profile photo removed.', 'modern-job-board'),
             'success_job_republished' => __('Job republished successfully.', 'modern-job-board'),
+            'success_job_filled' => __('Job marked as filled.', 'modern-job-board'),
+            'success_job_reopened' => __('Job reopened.', 'modern-job-board'),
+            'success_job_deleted' => __('Job deleted.', 'modern-job-board'),
+            'success_application_status' => __('Application status updated.', 'modern-job-board'),
+            'success_settings' => __('Settings saved.', 'modern-job-board'),
             'success_job_submitted' => __('Job submitted successfully! It is pending review.', 'modern-job-board'),
             'success_job_updated' => __('Job updated successfully! It is pending review.', 'modern-job-board'),
             'success_job_credit' => __('Job submitted successfully using a job credit!', 'modern-job-board'),
@@ -82,6 +145,7 @@ class MJB_Notices
             'error_resume_required' => __('A resume is required. Upload one on your candidate profile, then apply again.', 'modern-job-board'),
             'error_resume_copy' => __('Could not attach your resume to this application. Please try again.', 'modern-job-board'),
             'error_resume_upload' => __('Resume upload failed. Please try again.', 'modern-job-board'),
+            'error_resume_delete_confirm' => __('Type DELETE to confirm removing your CV.', 'modern-job-board'),
             'error_invalid_logo' => __('Please upload a valid logo (JPEG, PNG, or WebP).', 'modern-job-board'),
             'error_logo_upload' => __('Logo upload failed. Please try again.', 'modern-job-board'),
             'error_invalid_photo' => __('Please upload a valid photo (JPEG, PNG, or WebP).', 'modern-job-board'),

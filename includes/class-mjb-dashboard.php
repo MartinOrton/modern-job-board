@@ -19,6 +19,7 @@ class MJB_Dashboard
         add_shortcode('mjb_dashboard', array($this, 'output_dashboard'));
         add_action('init', array($this, 'handle_post_actions'));
         add_action('wp_ajax_mjb_recruiter_load_tab', array($this, 'ajax_load_tab'));
+        add_action('wp_ajax_mjb_recruiter_mutate', array($this, 'ajax_mutate'));
     }
 
     /**
@@ -31,31 +32,96 @@ class MJB_Dashboard
             return;
         }
 
-        $action = sanitize_key(wp_unslash($_POST['mjb_dashboard_action']));
+        // admin-ajax.php still runs init. A redirect here would replace the JSON response.
+        if (wp_doing_ajax()) {
+            return;
+        }
+
+        $result = $this->run_dashboard_action();
+        if (!is_array($result) || empty($result['redirect'])) {
+            return;
+        }
+        if (!empty($result['code'])) {
+            MJB_Notices::redirect($result['redirect'], $result['code']);
+        }
+        wp_safe_redirect($result['redirect']);
+        exit;
+    }
+
+    /**
+     * Save a recruiter dashboard change and refresh the panel in place.
+     */
+    public function ajax_mutate()
+    {
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array(
+                'message' => __('You must be logged in to view the dashboard.', 'modern-job-board'),
+            ), 401);
+        }
+        $user = wp_get_current_user();
+        if (!in_array('employer', (array) $user->roles, true) && !user_can($user, 'manage_options')) {
+            wp_send_json_error(array(
+                'message' => __('This dashboard is for recruiter accounts only.', 'modern-job-board'),
+            ), 403);
+        }
+
+        $result = $this->run_dashboard_action();
+        if (!is_array($result)) {
+            wp_send_json_error(array(
+                'code' => 'error_security',
+                'message' => MJB_Notices::message('error_security'),
+            ));
+        }
+
+        $code = isset($result['code']) ? (string) $result['code'] : '';
+        $payload = array(
+            'code' => $code,
+            'message' => $code !== '' ? MJB_Notices::message($code) : '',
+        );
+        if ($code !== '' && strpos($code, 'error_') === 0) {
+            wp_send_json_error($payload);
+        }
+
+        if (!empty($result['applications_job'])) {
+            $payload['html'] = $this->render_applications_inner((int) $result['applications_job']);
+        } elseif (!empty($result['tab'])) {
+            $page = isset($_POST['mjb_panel_page']) ? max(1, (int) $_POST['mjb_panel_page']) : 1;
+            $payload['html'] = $this->render_tab_content((string) $result['tab'], $page);
+        }
+        wp_send_json_success($payload);
+    }
+
+    /**
+     * @return array{code:string,redirect:string,tab?:string,applications_job?:int}|null
+     */
+    private function run_dashboard_action()
+    {
+        $action = isset($_POST['mjb_dashboard_action']) ? sanitize_key(wp_unslash($_POST['mjb_dashboard_action'])) : '';
 
         if ($action === 'delete_job') {
-            $this->handle_delete_job_post();
-            return;
+            return $this->handle_delete_job_post();
         }
-
         if ($action === 'update_application_status') {
-            $this->handle_update_application_status_post();
-            return;
+            return $this->handle_update_application_status_post();
         }
-
         if ($action === 'bulk_update_application_status') {
-            $this->handle_bulk_update_application_status_post();
-            return;
+            return $this->handle_bulk_update_application_status_post();
         }
-
         if ($action === 'toggle_job_filled') {
-            $this->handle_toggle_job_filled();
-            return;
+            return $this->handle_toggle_job_filled();
         }
-
         if ($action === 'republish_job') {
-            $this->handle_republish_job();
+            return $this->handle_republish_job();
         }
+        if ($action === 'save_document_label' && class_exists('MJB_Document_Label')) {
+            MJB_Document_Label::handle_dashboard_post();
+            return array(
+                'code' => 'success_document_label',
+                'redirect' => self::get_tab_url('overview'),
+                'tab' => 'overview',
+            );
+        }
+        return null;
     }
 
     /**
@@ -81,8 +147,12 @@ class MJB_Dashboard
         } else {
             update_post_meta($job_id, '_job_filled', $filled ? '1' : '0');
         }
-        wp_safe_redirect(self::get_tab_url('jobs'));
-        exit;
+        $code = $filled ? 'success_job_filled' : 'success_job_reopened';
+        return array(
+            'code' => $code,
+            'redirect' => self::get_tab_url('jobs', array('mjb_notice' => $code)),
+            'tab' => 'jobs',
+        );
     }
 
     /**
@@ -103,8 +173,11 @@ class MJB_Dashboard
             return;
         }
         if (class_exists('MJB_License') && !MJB_License::can_publish_job($job_id)) {
-            wp_safe_redirect(self::get_tab_url('jobs', array('mjb_notice' => 'error_job_cap')));
-            exit;
+            return array(
+                'code' => 'error_job_cap',
+                'redirect' => self::get_tab_url('jobs', array('mjb_notice' => 'error_job_cap')),
+                'tab' => 'jobs',
+            );
         }
         $duration = (int) get_option('mjb_listing_duration', 30);
         if ($duration < 1) {
@@ -121,8 +194,11 @@ class MJB_Dashboard
             MJB_Job_Ops::set_filled($job_id, false);
         }
         delete_post_meta($job_id, '_job_publish_at');
-        wp_safe_redirect(self::get_tab_url('jobs', array('mjb_notice' => 'success_job_republished')));
-        exit;
+        return array(
+            'code' => 'success_job_republished',
+            'redirect' => self::get_tab_url('jobs', array('mjb_notice' => 'success_job_republished')),
+            'tab' => 'jobs',
+        );
     }
 
     /**
@@ -142,9 +218,13 @@ class MJB_Dashboard
             do_action('mjb_before_delete_job', $job_id, $user_id);
             wp_trash_post($job_id);
             do_action('mjb_job_deleted', $job_id, $user_id);
-            wp_safe_redirect(self::get_tab_url('jobs'));
-            exit;
+            return array(
+                'code' => 'success_job_deleted',
+                'redirect' => self::get_tab_url('jobs', array('mjb_notice' => 'success_job_deleted')),
+                'tab' => 'jobs',
+            );
         }
+        return null;
     }
 
     /**
@@ -166,18 +246,20 @@ class MJB_Dashboard
 
         MJB_Application_Status::update_status($application_id, $status);
 
-        if (class_exists('MJB_Pretty_Urls')) {
-            wp_safe_redirect(MJB_Pretty_Urls::dashboard_applications_url($job_id, array(
+        $redirect = class_exists('MJB_Pretty_Urls')
+            ? MJB_Pretty_Urls::dashboard_applications_url($job_id, array(
                 'mjb_notice' => 'success_application_status',
-            )));
-        } else {
-            wp_safe_redirect(self::get_page_url(array(
+            ))
+            : self::get_page_url(array(
                 'action' => 'view_applications',
                 'job_id' => $job_id,
                 'mjb_notice' => 'success_application_status',
-            )));
-        }
-        exit;
+            ));
+        return array(
+            'code' => 'success_application_status',
+            'redirect' => $redirect,
+            'applications_job' => $job_id,
+        );
     }
 
     /**
@@ -204,18 +286,20 @@ class MJB_Dashboard
             }
         }
 
-        if (class_exists('MJB_Pretty_Urls')) {
-            wp_safe_redirect(MJB_Pretty_Urls::dashboard_applications_url($job_id, array(
+        $redirect = class_exists('MJB_Pretty_Urls')
+            ? MJB_Pretty_Urls::dashboard_applications_url($job_id, array(
                 'mjb_notice' => 'success_application_status',
-            )));
-        } else {
-            wp_safe_redirect(self::get_page_url(array(
+            ))
+            : self::get_page_url(array(
                 'action' => 'view_applications',
                 'job_id' => $job_id,
                 'mjb_notice' => 'success_application_status',
-            )));
-        }
-        exit;
+            ));
+        return array(
+            'code' => 'success_application_status',
+            'redirect' => $redirect,
+            'applications_job' => $job_id,
+        );
     }
 
     /**
@@ -380,9 +464,7 @@ class MJB_Dashboard
         self::render_tab_nav($active_tab);
 
         echo '<div class="mjb-portal-dashboard__panel-wrap">';
-        echo '<div class="mjb-portal-loader" id="mjb-recruiter-loader" aria-hidden="true" aria-live="polite">';
-        echo '<span class="mjb-spinner" role="status"><span class="screen-reader-text">' . esc_html__('Loading', 'modern-job-board') . '</span></span>';
-        echo '</div>';
+        echo '<div id="mjb-recruiter-live" class="screen-reader-text" aria-live="polite" aria-atomic="true"></div>';
         echo '<div class="mjb-portal-dashboard__panel" id="mjb-recruiter-panel" role="tabpanel" data-active-tab="' . esc_attr($active_tab) . '" aria-labelledby="mjb-rtab-' . esc_attr($active_tab) . '">';
     }
 
@@ -819,6 +901,20 @@ class MJB_Dashboard
         }
 
         self::render_portal_shell_open('applications');
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in the inner renderer.
+        echo $this->render_applications_inner($job_id);
+        self::render_portal_shell_close();
+    }
+
+    /**
+     * Applications list for one job, without the portal shell.
+     *
+     * @param int $job_id
+     * @return string
+     */
+    private function render_applications_inner($job_id)
+    {
+        ob_start();
         echo '<div class="mjb-portal-dashboard__section-head">';
         echo '<h2 class="mjb-section-title">' . esc_html(sprintf(__('Applications for "%s"', 'modern-job-board'), get_the_title($job_id))) . '</h2>';
         echo '<a class="btn btn-outline btn-sm" href="' . esc_url(self::get_tab_url('applications')) . '">' . esc_html__('&larr; Back to Applications', 'modern-job-board') . '</a>';
@@ -974,7 +1070,7 @@ class MJB_Dashboard
             echo '<div class="mjb-portal-empty"><p>' . esc_html__('No applications found for this job.', 'modern-job-board') . '</p></div>';
         }
 
-        self::render_portal_shell_close();
+        return (string) ob_get_clean();
     }
 
     /**
@@ -1304,5 +1400,75 @@ class MJB_Dashboard
         }
 
         echo '</nav>';
+    }
+
+    /**
+     * Skeleton HTML for an AJAX-loaded recruiter dashboard tab.
+     *
+     * @param string $tab Tab id.
+     * @return string
+     */
+    public static function get_tab_skeleton_html($tab)
+    {
+        $tab = sanitize_key((string) $tab);
+        if ($tab === 'overview') {
+            return self::get_overview_skeleton_html();
+        }
+        return self::get_list_tab_skeleton_html();
+    }
+
+    /**
+     * Overview tab: stats, chart, action cards.
+     *
+     * @return string
+     */
+    private static function get_overview_skeleton_html()
+    {
+        $html = '<div class="mjb-skeleton-dashboard" aria-hidden="true">';
+        $html .= '<div class="mjb-stats-grid">';
+        for ($i = 0; $i < 6; $i++) {
+            $html .= '<div class="mjb-stat-card mjb-skeleton-stat">';
+            $html .= '<div class="mjb-skeleton mjb-skeleton--stat-val"></div>';
+            $html .= '<div class="mjb-skeleton mjb-skeleton--stat-lbl"></div>';
+            $html .= '</div>';
+        }
+        $html .= '</div>';
+        $html .= '<div class="mjb-skeleton mjb-skeleton--heading"></div>';
+        $html .= '<div class="mjb-skeleton-chart"></div>';
+        $html .= '<div class="mjb-skeleton mjb-skeleton--heading"></div>';
+        $html .= '<div class="mjb-features-grid mjb-portal-dashboard__actions">';
+        for ($i = 0; $i < 4; $i++) {
+            $html .= '<div class="mjb-feature-card mjb-skeleton-action">';
+            $html .= '<div class="mjb-skeleton mjb-skeleton--icon"></div>';
+            $html .= '<div class="mjb-skeleton mjb-skeleton--title"></div>';
+            $html .= '<div class="mjb-skeleton mjb-skeleton--excerpt"></div>';
+            $html .= '</div>';
+        }
+        $html .= '</div></div>';
+        return $html;
+    }
+
+    /**
+     * List-style tabs (jobs, applications, etc.).
+     *
+     * @return string
+     */
+    private static function get_list_tab_skeleton_html()
+    {
+        $html = '<div class="mjb-skeleton-dashboard" aria-hidden="true">';
+        $html .= '<div class="mjb-skeleton-toolbar">';
+        $html .= '<div class="mjb-skeleton mjb-skeleton--heading"></div>';
+        $html .= '<div class="mjb-skeleton mjb-skeleton--btn"></div>';
+        $html .= '</div>';
+        for ($i = 0; $i < 6; $i++) {
+            $html .= '<div class="mjb-skeleton-row">';
+            $html .= '<div class="mjb-skeleton mjb-skeleton--title"></div>';
+            $html .= '<div class="mjb-skeleton mjb-skeleton--pill"></div>';
+            $html .= '<div class="mjb-skeleton mjb-skeleton--pill"></div>';
+            $html .= '<div class="mjb-skeleton mjb-skeleton--btn"></div>';
+            $html .= '</div>';
+        }
+        $html .= '</div>';
+        return $html;
     }
 }

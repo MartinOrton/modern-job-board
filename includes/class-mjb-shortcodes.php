@@ -51,6 +51,7 @@ class MJB_Shortcodes
     {
         add_shortcode('mjb_jobs', array($this, 'output_jobs'));
         add_shortcode('mjb_job_form', array($this, 'output_job_form'));
+        add_action('wp_ajax_mjb_save_job', array($this, 'ajax_save_job'));
     }
 
     /**
@@ -113,15 +114,6 @@ class MJB_Shortcodes
     public static function render_job_loop($jobs)
     {
         if ($jobs->have_posts()) {
-            $filter_params = class_exists('MJB_Search')
-                ? MJB_Search::get_request_filter_params()
-                : array();
-            // AJAX filter posts keywords in $_POST — prefer that when present.
-            if (!empty($_REQUEST['search_keywords'])) {
-                $filter_params['search_keywords'] = sanitize_text_field(wp_unslash($_REQUEST['search_keywords']));
-            }
-            $keywords = isset($filter_params['search_keywords']) ? (string) $filter_params['search_keywords'] : '';
-
             echo '<div class="mjb-job-list">';
             $card_index = 0;
             while ($jobs->have_posts()) {
@@ -132,7 +124,6 @@ class MJB_Shortcodes
                 $job_title = get_the_title();
                 $featured = get_post_meta(get_the_ID(), '_featured', true);
                 $featured_class = $featured ? ' mjb-featured' : '';
-                $excerpt = self::get_job_card_excerpt();
 
                 $is_new = class_exists('MJB_Job_Ops') && MJB_Job_Ops::is_new(get_the_ID());
                 $is_filled = class_exists('MJB_Job_Ops') && MJB_Job_Ops::is_filled(get_the_ID());
@@ -140,7 +131,7 @@ class MJB_Shortcodes
                     $featured_class .= ' mjb-filled';
                 }
 
-                echo '<article class="mjb-job-card mjb-job-item' . esc_attr($featured_class) . '">';
+                echo '<article class="mjb-job-card mjb-job-item' . esc_attr($featured_class) . '" data-job-id="' . esc_attr((string) get_the_ID()) . '">';
                 echo '<a class="mjb-job-card__stretched-link" href="' . esc_url($permalink) . '" aria-label="' . esc_attr(sprintf(__('View job: %s', 'modern-job-board'), $job_title)) . '"></a>';
                 echo '<div class="mjb-job-card__badges">';
                 if ($featured) {
@@ -156,11 +147,6 @@ class MJB_Shortcodes
                 echo '<h3 class="mjb-job-card__title">' . esc_html($job_title) . '</h3>';
                 self::render_job_card_company(get_the_ID());
 
-                if ($excerpt !== '') {
-                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- highlight_search_terms escapes text and wraps safe marks.
-                    echo '<p class="mjb-job-card__excerpt">' . self::highlight_search_terms($excerpt, $keywords) . '</p>';
-                }
-
                 echo '<div class="mjb-job-meta mjb-job-card__meta">';
 
                 $job_type = get_the_term_list(get_the_ID(), 'job_type', '', ', ');
@@ -172,14 +158,8 @@ class MJB_Shortcodes
                 $job_category = get_the_term_list(get_the_ID(), 'job_category', '', ', ');
                 self::render_meta_pill('tag', $job_category);
 
-                $expires = get_post_meta(get_the_ID(), '_job_expires', true);
-                if ($expires) {
-                    echo '<span class="mjb-meta-right mjb-meta-pill">';
-                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
-                    echo MJB_Icons::render('calendar');
-                    echo esc_html(sprintf(__('Exp: %s', 'modern-job-board'), date_i18n(get_option('date_format'), strtotime($expires))));
-                    echo '</span>';
-                }
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in get_job_date_pills_html().
+                echo self::get_job_date_pills_html(get_the_ID());
 
                 echo '</div>';
                 echo '</article>';
@@ -214,21 +194,42 @@ class MJB_Shortcodes
      */
     public static function render_job_card_company($post_id)
     {
+        $post_id = (int) $post_id;
         $company_name = get_post_meta($post_id, '_company_name', true);
         if ($company_name === '') {
             return;
         }
 
-        $company_url = MJB_Search::get_company_jobs_url_for_listing($post_id);
+        $company_id = (int) get_post_meta($post_id, '_company_id', true);
+        $company_url = class_exists('MJB_Search')
+            ? MJB_Search::get_company_jobs_url_for_listing($post_id)
+            : '';
 
+        $classes = 'mjb-job-card__company';
         if ($company_url !== '') {
-            echo '<a class="mjb-job-card__company mjb-job-card__company--link" href="' . esc_url($company_url) . '">';
-            echo esc_html($company_name);
-            echo '</a>';
-            return;
+            $classes .= ' mjb-job-card__company--link';
         }
 
-        echo '<p class="mjb-job-card__company">' . esc_html($company_name) . '</p>';
+        if ($company_url !== '') {
+            echo '<a class="' . esc_attr($classes) . '" data-job-id="' . esc_attr((string) $post_id) . '"';
+        } else {
+            echo '<span class="' . esc_attr($classes) . '" data-job-id="' . esc_attr((string) $post_id) . '"';
+        }
+        if ($company_id > 0) {
+            echo ' data-mjb-company-id="' . esc_attr((string) $company_id) . '"';
+        }
+        if ($company_url !== '') {
+            echo ' href="' . esc_url($company_url) . '" title="' . esc_attr__('Company details', 'modern-job-board') . '">';
+        } else {
+            echo '>';
+        }
+
+        echo '<span class="mjb-job-card__company-name">' . esc_html($company_name) . '</span>';
+        echo '<span class="mjb-job-card__company-info" aria-hidden="true">';
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+        echo MJB_Icons::render('info', 14);
+        echo '</span>';
+        echo $company_url !== '' ? '</a>' : '</span>';
     }
 
     /**
@@ -695,11 +696,86 @@ class MJB_Shortcodes
             <div class="mjb-content-hero__inner mjb-container">
                 <h1 class="mjb-content-hero__title"><?php echo esc_html($title); ?></h1>
                 <?php if ($intro !== '') : ?>
-                    <p class="mjb-content-hero__intro"><?php echo esc_html($intro); ?></p>
+                    <p class="mjb-content-hero__intro"><?php echo wp_kses($intro, array(
+                        'a' => array(
+                            'href' => true,
+                            'class' => true,
+                            'rel' => true,
+                        ),
+                    )); ?></p>
                 <?php endif; ?>
             </div>
         </section>
         <?php
+    }
+
+    /**
+     * Hero line: “Posted by {company}”, with company linked to its jobs list when possible.
+     *
+     * @param int $job_id Job listing ID.
+     * @return string Escaped HTML, or empty string.
+     */
+    public static function get_job_posted_by_html($job_id)
+    {
+        $job_id = intval($job_id);
+        $company_name = get_post_meta($job_id, '_company_name', true);
+        if ($company_name === '') {
+            $company_id = intval(get_post_meta($job_id, '_company_id', true));
+            if ($company_id) {
+                $company_name = get_the_title($company_id);
+            }
+        }
+        if ($company_name === '') {
+            return '';
+        }
+
+        $url = class_exists('MJB_Search') ? MJB_Search::get_company_jobs_url_for_listing($job_id) : '';
+        $name_html = $url !== ''
+            ? '<a class="mjb-content-hero__company" href="' . esc_url($url) . '">' . esc_html($company_name) . '</a>'
+            : esc_html($company_name);
+
+        return sprintf(
+            /* translators: %s: company name (may include an HTML link) */
+            __('Posted by %s', 'modern-job-board'),
+            $name_html
+        );
+    }
+
+    /**
+     * Posted / expiry meta pills for job cards and the single-job header.
+     *
+     * @param int $job_id Job listing ID.
+     * @return string HTML.
+     */
+    public static function get_job_date_pills_html($job_id)
+    {
+        $job_id = intval($job_id);
+        $html = '<span class="mjb-meta-pill">';
+        $html .= MJB_Icons::render('calendar-check-2');
+        $html .= '<strong>' . esc_html__('Posted:', 'modern-job-board') . '</strong> ';
+        $html .= esc_html(get_the_date('', $job_id));
+        $html .= '</span>';
+
+        $expires = get_post_meta($job_id, '_job_expires', true);
+        if ($expires) {
+            $expires_ts = strtotime((string) $expires);
+            if ($expires_ts) {
+                $format = get_option('date_format');
+                if (!is_string($format) || $format === '') {
+                    $format = 'F j, Y';
+                }
+                $expiry_label = function_exists('date_i18n')
+                    ? date_i18n($format, $expires_ts)
+                    : date($format, $expires_ts);
+                $html .= '<span class="mjb-meta-pill">';
+                $html .= MJB_Icons::render('calendar-x-2');
+                $html .= '<strong>' . esc_html__('Expiry:', 'modern-job-board') . '</strong> ';
+                $html .= esc_html($expiry_label);
+                $html .= '</span>';
+            }
+        }
+
+        return $html;
     }
 
     /**
@@ -832,17 +908,68 @@ class MJB_Shortcodes
     }
 
     /**
-     * Render the AJAX loading overlay for job listings.
+     * One job-card skeleton matching listing card geometry.
+     *
+     * @return string
+     */
+    public static function get_jobs_skeleton_card_html()
+    {
+        return '<article class="mjb-job-card mjb-job-item mjb-skeleton-card">'
+            . '<div class="mjb-job-card__badges"><span class="mjb-skeleton mjb-skeleton--badge"></span></div>'
+            . '<div class="mjb-skeleton mjb-skeleton--title"></div>'
+            . '<div class="mjb-skeleton mjb-skeleton--company"></div>'
+            . '<div class="mjb-job-meta mjb-job-card__meta">'
+            . '<span class="mjb-skeleton mjb-skeleton--pill"></span>'
+            . '<span class="mjb-skeleton mjb-skeleton--pill"></span>'
+            . '<span class="mjb-skeleton mjb-skeleton--pill"></span>'
+            . '<span class="mjb-skeleton mjb-skeleton--pill"></span>'
+            . '<span class="mjb-skeleton mjb-skeleton--pill"></span>'
+            . '</div></article>';
+    }
+
+    /**
+     * Skeleton job list used while AJAX filters run.
+     *
+     * @param int $count Card placeholders (clamped 1–8).
+     * @return string
+     */
+    public static function get_jobs_skeleton_html($count = 6)
+    {
+        $count = max(1, min(8, intval($count)));
+        $html = '<div class="mjb-job-list mjb-skeleton-list" aria-hidden="true">';
+        for ($i = 0; $i < $count; $i++) {
+            $html .= self::get_jobs_skeleton_card_html();
+        }
+        $html .= '</div>';
+        $html .= '<nav class="mjb-pagination mjb-skeleton-pagination" aria-hidden="true">';
+        $html .= '<span class="mjb-skeleton mjb-skeleton--page"></span>';
+        $html .= '<span class="mjb-skeleton mjb-skeleton--page"></span>';
+        $html .= '<span class="mjb-skeleton mjb-skeleton--page"></span>';
+        $html .= '<span class="mjb-skeleton mjb-skeleton--page"></span>';
+        $html .= '<span class="mjb-skeleton mjb-skeleton--page"></span>';
+        $html .= '</nav>';
+        return $html;
+    }
+
+    /**
+     * Accessible live region + card template for AJAX job loading.
      */
     public static function render_jobs_loader()
     {
-        echo '<div id="mjb-loader-overlay" class="mjb-loader-overlay" aria-hidden="true" role="status">';
-        echo '<svg class="mjb-spinner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">';
-        echo '<circle class="mjb-spinner__track" cx="24" cy="24" r="20" fill="none" stroke-width="3"></circle>';
-        echo '<circle class="mjb-spinner__arc" cx="24" cy="24" r="20" fill="none" stroke-width="3" stroke-linecap="round"></circle>';
-        echo '</svg>';
-        echo '<span class="screen-reader-text">' . esc_html__('Loading jobs', 'modern-job-board') . '</span>';
-        echo '</div>';
+        echo '<div id="mjb-jobs-live" class="screen-reader-text" aria-live="polite" aria-atomic="true"></div>';
+        echo '<template id="mjb-jobs-skeleton-card">';
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static skeleton markup from get_jobs_skeleton_card_html().
+        echo self::get_jobs_skeleton_card_html();
+        echo '</template>';
+        echo '<template id="mjb-jobs-skeleton-pagination">';
+        echo '<nav class="mjb-pagination mjb-skeleton-pagination" aria-hidden="true">';
+        echo '<span class="mjb-skeleton mjb-skeleton--page"></span>';
+        echo '<span class="mjb-skeleton mjb-skeleton--page"></span>';
+        echo '<span class="mjb-skeleton mjb-skeleton--page"></span>';
+        echo '<span class="mjb-skeleton mjb-skeleton--page"></span>';
+        echo '<span class="mjb-skeleton mjb-skeleton--page"></span>';
+        echo '</nav>';
+        echo '</template>';
     }
 
     /**
@@ -1336,14 +1463,14 @@ class MJB_Shortcodes
         );
 
         if (!is_user_logged_in()) {
-            MJB_Notices::redirect($redirect_url, 'error_login_required');
+            $this->finish_job_request($redirect_url, 'error_login_required');
         }
 
         $title = isset($_POST['job_title']) ? sanitize_text_field($_POST['job_title']) : '';
         $description = isset($_POST['job_description']) ? wp_kses_post($_POST['job_description']) : '';
 
         if (empty($title) || empty($description)) {
-            MJB_Notices::redirect($redirect_url, 'error_missing_fields');
+            $this->finish_job_request($redirect_url, 'error_missing_fields');
         }
 
         $company_selection = isset($_POST['company_selection']) ? sanitize_text_field($_POST['company_selection']) : '';
@@ -1353,7 +1480,7 @@ class MJB_Shortcodes
         if ($company_selection === 'new') {
             $company_name_text = isset($_POST['new_company_name']) ? sanitize_text_field($_POST['new_company_name']) : '';
             if (empty($company_name_text)) {
-                MJB_Notices::redirect($redirect_url, 'error_invalid_company');
+                $this->finish_job_request($redirect_url, 'error_invalid_company');
             }
 
             // Reuse only the current employer's company with the same name (never attach to someone else's).
@@ -1362,7 +1489,7 @@ class MJB_Shortcodes
                 'only_own'  => true,
             ));
             if (!$company_id) {
-                MJB_Notices::redirect($redirect_url, 'error_invalid_company');
+                $this->finish_job_request($redirect_url, 'error_invalid_company');
             }
             $company_name_text = MJB_Job_Importer::normalize_company_name($company_name_text);
         } else {
@@ -1370,7 +1497,7 @@ class MJB_Shortcodes
             // Verify ownership
             $company_post = get_post($company_id);
             if (!$company_post || $company_post->post_type !== 'company' || intval($company_post->post_author) !== get_current_user_id()) {
-                MJB_Notices::redirect($redirect_url, 'error_invalid_company');
+                $this->finish_job_request($redirect_url, 'error_invalid_company');
             }
             $company_name_text = $company_post->post_title;
         }
@@ -1381,7 +1508,7 @@ class MJB_Shortcodes
             // Re-verify ownership for security (double check)
             $job = get_post($existing_job_id);
             if (!$job || intval($job->post_author) !== get_current_user_id()) {
-                MJB_Notices::redirect($redirect_url, 'error_permission');
+                $this->finish_job_request($redirect_url, 'error_permission');
             }
         }
 
@@ -1480,7 +1607,7 @@ class MJB_Shortcodes
                 if ($credits > 0) {
                      if (!MJB_License::can_publish_job(0)) {
                          // Keep pending; do not consume credit when Free job cap blocks publish.
-                         MJB_Notices::redirect($redirect_url, 'error_job_cap');
+                         $this->finish_job_request($redirect_url, 'error_job_cap');
                      }
 
                      // Use Credit
@@ -1495,7 +1622,9 @@ class MJB_Shortcodes
 
                      update_post_meta($post_id, '_mjb_credit_used', true);
 
-                     MJB_Notices::redirect($redirect_url, 'success_job_credit');
+                     $this->finish_job_request($redirect_url, 'success_job_credit', array(
+                         'job_id' => (int) $post_id,
+                     ));
                 }
 
                 // If no credits, proceed to Pay-Per-Post
@@ -1509,16 +1638,60 @@ class MJB_Shortcodes
                          'mjb_job_id' => $post_id
                      ), $cart_url);
 
-                     wp_safe_redirect($redirect_url);
-                     exit;
+                     $this->finish_external_redirect($redirect_url);
                 }
             }
 
             // Hook for post-submission actions
             do_action('mjb_job_submitted', $post_id);
 
-            MJB_Notices::redirect($redirect_url, $notice_code);
+            $this->finish_job_request($redirect_url, $notice_code, array(
+                'job_id' => (int) $post_id,
+            ));
         }
+    }
+
+    /**
+     * Save the job form without leaving the page. Checkout still navigates.
+     */
+    public function ajax_save_job()
+    {
+        $job_id = isset($_POST['job_id']) ? (int) $_POST['job_id'] : 0;
+        $this->handle_job_submission($job_id);
+    }
+
+    /**
+     * @param string               $url
+     * @param string               $code
+     * @param array<string, mixed> $extra
+     */
+    private function finish_job_request($url, $code, $extra = array())
+    {
+        if (wp_doing_ajax()) {
+            $payload = array_merge(array(
+                'code' => $code,
+                'message' => class_exists('MJB_Notices') ? MJB_Notices::message($code) : '',
+            ), $extra);
+            if (strpos($code, 'error_') === 0) {
+                wp_send_json_error($payload);
+            }
+            wp_send_json_success($payload);
+        }
+        MJB_Notices::redirect($url, $code);
+    }
+
+    /**
+     * @param string $url
+     */
+    private function finish_external_redirect($url)
+    {
+        if (wp_doing_ajax()) {
+            wp_send_json_success(array(
+                'redirect' => $url,
+            ));
+        }
+        wp_safe_redirect($url);
+        exit;
     }
 
     /**

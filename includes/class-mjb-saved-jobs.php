@@ -20,6 +20,7 @@ class MJB_Saved_Jobs
     {
         add_action('admin_post_mjb_toggle_saved_job', array(__CLASS__, 'handle_toggle'));
         add_action('admin_post_nopriv_mjb_toggle_saved_job', array(__CLASS__, 'handle_toggle_guest'));
+        add_action('wp_ajax_mjb_toggle_saved_job', array(__CLASS__, 'ajax_toggle'));
     }
 
     /**
@@ -368,5 +369,47 @@ class MJB_Saved_Jobs
 
         $saved = self::toggle(get_current_user_id(), $job_id);
         MJB_Notices::redirect($redirect, $saved ? 'success_job_saved' : 'success_job_unsaved');
+    }
+
+    /**
+     * Save or unsave a job without leaving the page.
+     */
+    public static function ajax_toggle()
+    {
+        $job_id = isset($_POST['job_id']) ? (int) $_POST['job_id'] : 0;
+        $nonce = isset($_POST['_wpnonce']) ? sanitize_text_field(wp_unslash($_POST['_wpnonce'])) : '';
+        if ($job_id <= 0 || !wp_verify_nonce($nonce, 'mjb_toggle_saved_job_' . $job_id)) {
+            wp_send_json_error(array(
+                'code' => 'error_security',
+                'message' => MJB_Notices::message('error_security'),
+            ));
+        }
+        if (!is_user_logged_in()) {
+            wp_send_json_success(array(
+                'redirect' => self::get_login_url_for_save($job_id),
+            ));
+        }
+        $job = get_post($job_id);
+        if (!$job || $job->post_type !== 'job_listing' || $job->post_status !== 'publish') {
+            if (self::is_saved(get_current_user_id(), $job_id)) {
+                self::remove(get_current_user_id(), $job_id);
+                wp_send_json_success(array(
+                    'code' => 'success_job_unsaved',
+                    'message' => MJB_Notices::message('success_job_unsaved'),
+                    'saved' => false,
+                ));
+            }
+            wp_send_json_error(array(
+                'code' => 'error_invalid_job',
+                'message' => MJB_Notices::message('error_invalid_job'),
+            ));
+        }
+        $saved = self::toggle(get_current_user_id(), $job_id);
+        $code = $saved ? 'success_job_saved' : 'success_job_unsaved';
+        wp_send_json_success(array(
+            'code' => $code,
+            'message' => MJB_Notices::message($code),
+            'saved' => $saved,
+        ));
     }
 }

@@ -1,7 +1,7 @@
 # Modern Job Board — Freemium Feature Comparison
 
 **Product:** Modern Job Board (WordPress plugin)  
-**Version:** 0.9.0-beta.88  
+**Version:** 0.9.0-beta.93  
 **Model:** Freemium (proprietary) + Complete Site service  
 **Last updated:** August 19, 2026  
 **Purpose:** Handoff document for AI or human reviewers planning licensing, gating, marketing, or product decisions.
@@ -12,12 +12,12 @@
 
 Modern Job Board is a self-hosted WordPress job board product sold as **freemium plugin licenses** plus an optional **done-for-you site build**:
 
-- **Free ($0)** — core board features; **capped at 10 active job listings**; community support. Best for testing the waters.
+- **Free ($0)** — core board features; **capped at 100 active job listings**; community support. Best for testing the waters.
 - **Pro ($149/year)** — unlimited jobs, WooCommerce monetization, custom fields, import/export, email support. Best for monetizing.
 - **Business ($299/year)** — everything in Pro plus REST API, XML feeds, webhooks, priority support + 2 hrs custom dev/year. Best for integrations.
 - **Complete Site ($1,200–2,000 setup, includes 1 year Business; then $299/year)** — full WordPress site build (theme, branding, pages, hosting setup), MJB installed and configured, Business features included. Best for “I just want a working job board site.”
 
-**Implementation status:** PHP license/plan gating is **implemented** (`MJB_License`: Free 10-job cap; Pro/Business feature gates). Purchase/activation flow is **implemented** (`MJB_License_Commerce`: checkout URLs, offline key activation, WooCommerce license products, vendor key issuer). See `docs/purchase.md`.
+**Implementation status:** PHP license/plan gating is **implemented** (`MJB_License`: Free 100-job cap; Pro/Business feature gates). Purchase/activation flow is **implemented** (`MJB_License_Commerce`: checkout URLs, offline key activation, WooCommerce license products, vendor key issuer). See `docs/purchase.md`.
 
 **Purchase flow:** Gateway-agnostic checkout URLs in Settings → License & plan. With WooCommerce, **any WooCommerce-supported payment gateway** works (e.g. PayPal, Stripe, Square, Mollie, Razorpay, or regional options where the merchant can onboard). Empty URLs fall back to structured sales mailto. Woo products with **MJB plugin license** meta auto-email a signed key on order complete. Manual bank transfer via vendor key issuer. See `docs/purchase.md`.
 
@@ -28,7 +28,7 @@ Modern Job Board is a self-hosted WordPress job board product sold as **freemium
 | | **Free** | **Pro** | **Business** | **Complete Site** |
 |---|:---:|:---:|:---:|:---:|
 | **Price** | $0 | $149/year | $299/year | **$1,200–2,000 setup** (incl. 1 yr Business) then $299/year |
-| **Active job listings** | Capped at 10 | Unlimited | Unlimited | Unlimited |
+| **Active job listings** | Capped at 100 | Unlimited | Unlimited | Unlimited |
 | **Core board, applications, dashboards, analytics, SEO, security** | ✓ | ✓ | ✓ | ✓ |
 | **WooCommerce monetization** | — | ✓ | ✓ | ✓ (configured for you) |
 | **Custom fields + import/export** | — | ✓ | ✓ | ✓ (set up for you) |
@@ -57,7 +57,7 @@ Modern Job Board is a self-hosted WordPress job board product sold as **freemium
 | Google Maps embed on job pages (API key in settings) | ✓ | ✓ | ✓ |
 | Gutenberg blocks for all core shortcodes | ✓ | ✓ | ✓ |
 | All six shortcodes (see inventory below) | ✓ | ✓ | ✓ |
-| **Active published job limit** | **10** | **Unlimited** | **Unlimited** |
+| **Active published job limit** | **100** | **Unlimited** | **Unlimited** |
 
 ---
 
@@ -218,7 +218,7 @@ When building enforcement, these are the natural cut points aligned with marketi
 
 | Plan constant | Features to gate |
 |---|---|
-| `free` | Default; enforce **10 active job listings** |
+| `free` | Default; enforce **100 active job listings** |
 | `pro` | WooCommerce class, custom fields admin tab, tools import/export, unlimited jobs |
 | `business` | REST API v1/v2, XML feed, webhooks + queue |
 | `complete_site` | Business features + service fulfillment (build, install, configure) |

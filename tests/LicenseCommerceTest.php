@@ -9,6 +9,8 @@ class LicenseCommerceTest extends TestCase
         $GLOBALS['mjb_test_options'] = array();
         $GLOBALS['mjb_test_mails'] = array();
         $GLOBALS['mjb_test_post_meta'] = array();
+        $GLOBALS['mjb_test_user_caps'] = array();
+        $GLOBALS['mjb_test_current_user_id'] = 0;
     }
 
     public function test_purchase_url_uses_configured_https()
@@ -77,5 +79,73 @@ class LicenseCommerceTest extends TestCase
         $this->assertTrue(MJB_License_Commerce::is_safe_url('mailto:a@b.com'));
         $this->assertFalse(MJB_License_Commerce::is_safe_url('ftp://example.com'));
         $this->assertFalse(MJB_License_Commerce::is_safe_url(''));
+    }
+
+    public function test_generate_key_form_puts_expiry_hint_below_field()
+    {
+        $GLOBALS['mjb_test_current_user_id'] = 1;
+        $GLOBALS['mjb_test_user_caps'][1]['manage_options'] = true;
+
+        $html = MJB_License_Commerce::render_generate_key_form();
+        $this->assertNotSame('', $html);
+
+        $expires_pos = strpos($html, 'id="mjb_gen_expires"');
+        $hint_pos = strpos($html, 'Use 00000000 for no expiry.');
+        $email_pos = strpos($html, 'id="mjb_gen_email"');
+        $this->assertNotFalse($expires_pos);
+        $this->assertNotFalse($hint_pos);
+        $this->assertNotFalse($email_pos);
+        $this->assertGreaterThan($expires_pos, $hint_pos);
+        $this->assertGreaterThan($hint_pos, $email_pos);
+        $this->assertStringContainsString('<p class="description">', $html);
+        $this->assertStringNotContainsString('<span class="description">Use 00000000 for no expiry.', $html);
+        $this->assertStringContainsString('id="mjb-license-cal-modal"', $html);
+        $this->assertStringContainsString('id="mjb-license-cal-open"', $html);
+
+        $js = file_get_contents(dirname(__DIR__) . '/assets/js/mjb-admin-calendar.js');
+        $this->assertNotFalse($js);
+        $this->assertStringContainsString('mjb-license-cal-modal', $js);
+        $this->assertStringContainsString('data-cal-grid', $js);
+
+        $css = file_get_contents(dirname(__DIR__) . '/assets/css/mjb-admin-jobs.css');
+        $this->assertNotFalse($css);
+        $this->assertStringContainsString('.mjb-license-cal__grid', $css);
+    }
+
+    public function test_expiry_calendar_slides_on_month_nav()
+    {
+        $GLOBALS['mjb_test_current_user_id'] = 1;
+        $GLOBALS['mjb_test_user_caps'][1]['manage_options'] = true;
+
+        $html = MJB_License_Commerce::render_generate_key_form();
+        $this->assertStringContainsString('mjb-license-cal__viewport', $html);
+        $this->assertStringContainsString('data-cal-viewport', $html);
+        $this->assertStringContainsString('data-cal-track', $html);
+        $this->assertStringContainsString('data-cal-prev', $html);
+        $this->assertStringContainsString('data-cal-next', $html);
+        $this->assertStringContainsString('mjb-icon--chevron-left', $html);
+        $this->assertStringContainsString('mjb-icon--chevron-right', $html);
+        $this->assertStringNotContainsString('&lsaquo;', $html);
+        $this->assertStringNotContainsString('&rsaquo;', $html);
+
+        $js = file_get_contents(dirname(__DIR__) . '/assets/js/mjb-admin-calendar.js');
+        $this->assertNotFalse($js);
+        $this->assertStringContainsString('slideCal', $js);
+        $this->assertStringContainsString('prefers-reduced-motion', $js);
+        $this->assertStringContainsString('is-animating', $js);
+        $this->assertStringContainsString('translateX(-100%)', $js);
+
+        $css = file_get_contents(dirname(__DIR__) . '/assets/css/mjb-admin-jobs.css');
+        $this->assertNotFalse($css);
+        $this->assertStringContainsString('.mjb-license-cal__viewport', $css);
+        $this->assertStringContainsString('.mjb-license-cal__track', $css);
+        $this->assertMatchesRegularExpression(
+            '/\.mjb-license-cal__track\.is-animating\s*\{[^}]*transition:[^;}]*transform/s',
+            $css
+        );
+        $this->assertMatchesRegularExpression(
+            '/prefers-reduced-motion:\s*reduce[^}]*\.mjb-license-cal__track\.is-animating\s*\{[^}]*transition:\s*none/s',
+            $css
+        );
     }
 }

@@ -32,6 +32,7 @@ class MJB_License_Commerce
     public static function init()
     {
         add_action('admin_post_mjb_generate_license_key', array(__CLASS__, 'handle_generate_key'));
+        add_action('wp_ajax_mjb_generate_license_key', array(__CLASS__, 'handle_generate_key'));
 
         if (class_exists('WooCommerce')) {
             add_action('woocommerce_product_options_general_product_data', array(__CLASS__, 'product_fields'));
@@ -433,6 +434,12 @@ class MJB_License_Commerce
         $redirect = admin_url('admin.php?page=modern-job-board&tab=settings#mjb-license');
 
         if (is_wp_error($key)) {
+            if (wp_doing_ajax()) {
+                wp_send_json_error(array(
+                    'message' => $key->get_error_message(),
+                    'tab' => 'settings',
+                ));
+            }
             set_transient('mjb_license_gen_notice', array(
                 'type' => 'error',
                 'message' => $key->get_error_message(),
@@ -446,20 +453,30 @@ class MJB_License_Commerce
             $emailed = self::email_license_key($email, $key, $plan, 0);
         }
 
+        $message = $emailed
+            ? sprintf(
+                /* translators: 1: key, 2: email */
+                __('License key generated and emailed to %2$s: %1$s', 'modern-job-board'),
+                $key,
+                $email
+            )
+            : sprintf(
+                /* translators: %s: key */
+                __('License key generated: %s', 'modern-job-board'),
+                $key
+            );
+
+        if (wp_doing_ajax()) {
+            wp_send_json_success(array(
+                'message' => $message,
+                'tab' => 'settings',
+                'key' => $key,
+            ));
+        }
+
         set_transient('mjb_license_gen_notice', array(
             'type' => 'success',
-            'message' => $emailed
-                ? sprintf(
-                    /* translators: 1: key, 2: email */
-                    __('License key generated and emailed to %2$s: %1$s', 'modern-job-board'),
-                    $key,
-                    $email
-                )
-                : sprintf(
-                    /* translators: %s: key */
-                    __('License key generated: %s', 'modern-job-board'),
-                    $key
-                ),
+            'message' => $message,
             'key' => $key,
         ), 120);
 
@@ -502,30 +519,83 @@ class MJB_License_Commerce
             <p class="description">
                 <?php esc_html_e('For manual sales or support. Paste the key into the customer email, or send it automatically below. On a sales site with WooCommerce, assign “MJB plugin license” on the product instead.', 'modern-job-board'); ?>
             </p>
-            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="max-width:36rem">
-                <input type="hidden" name="action" value="mjb_generate_license_key">
-                <?php wp_nonce_field('mjb_generate_license_key'); ?>
-                <p>
-                    <label for="mjb_gen_plan"><strong><?php esc_html_e('Plan', 'modern-job-board'); ?></strong></label><br>
-                    <select name="mjb_gen_plan" id="mjb_gen_plan">
+            <div class="mjb-license-generate__fields" style="max-width:36rem">
+                <input type="hidden" form="mjb-generate-key-form" name="action" value="mjb_generate_license_key">
+                <input type="hidden" form="mjb-generate-key-form" name="_wpnonce" value="<?php echo esc_attr(wp_create_nonce('mjb_generate_license_key')); ?>">
+                <div class="mjb-settings-field">
+                    <label for="mjb_gen_plan"><strong><?php esc_html_e('Plan', 'modern-job-board'); ?></strong></label>
+                    <select form="mjb-generate-key-form" name="mjb_gen_plan" id="mjb_gen_plan">
                         <option value="<?php echo esc_attr(MJB_License::PLAN_PRO); ?>"><?php esc_html_e('Pro', 'modern-job-board'); ?></option>
                         <option value="<?php echo esc_attr(MJB_License::PLAN_BUSINESS); ?>"><?php esc_html_e('Business', 'modern-job-board'); ?></option>
                         <option value="<?php echo esc_attr(MJB_License::PLAN_COMPLETE); ?>"><?php esc_html_e('Complete Site', 'modern-job-board'); ?></option>
                     </select>
-                </p>
+                </div>
+                <div class="mjb-settings-field">
+                    <label for="mjb_gen_expires"><strong><?php esc_html_e('Expiry', 'modern-job-board'); ?></strong></label>
+                    <div class="mjb-license-expiry">
+                        <input form="mjb-generate-key-form" type="text" name="mjb_gen_expires" id="mjb_gen_expires" value="00000000" class="regular-text" maxlength="8" pattern="\d{8}" inputmode="numeric" autocomplete="off" aria-describedby="mjb-gen-expires-hint" data-mjb-cal-format="ymd" data-mjb-cal-empty="00000000">
+                        <button type="button" class="mjb-jobs-filter__btn" id="mjb-license-cal-open" data-mjb-cal-open data-mjb-cal-for="mjb_gen_expires" data-mjb-cal-modal="mjb-license-cal-modal" aria-haspopup="dialog" aria-controls="mjb-license-cal-modal">
+                            <?php
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                            echo MJB_Icons::render('calendar', 16);
+                            ?>
+                            <span><?php esc_html_e('Pick date', 'modern-job-board'); ?></span>
+                        </button>
+                    </div>
+                    <p class="description" id="mjb-gen-expires-hint"><?php esc_html_e('Use 00000000 for no expiry.', 'modern-job-board'); ?></p>
+                </div>
+                <div class="mjb-settings-field">
+                    <label for="mjb_gen_email"><strong><?php esc_html_e('Email key to (optional)', 'modern-job-board'); ?></strong></label>
+                    <input form="mjb-generate-key-form" type="email" name="mjb_gen_email" id="mjb_gen_email" class="regular-text" placeholder="customer@example.com">
+                </div>
                 <p>
-                    <label for="mjb_gen_expires"><strong><?php esc_html_e('Expiry (YYYYMMDD)', 'modern-job-board'); ?></strong></label><br>
-                    <input type="text" name="mjb_gen_expires" id="mjb_gen_expires" value="00000000" class="regular-text" maxlength="8" pattern="\d{8}">
-                    <span class="description"><?php esc_html_e('Use 00000000 for no expiry.', 'modern-job-board'); ?></span>
+                    <button form="mjb-generate-key-form" type="submit" class="button button-secondary"><?php esc_html_e('Generate key', 'modern-job-board'); ?></button>
                 </p>
-                <p>
-                    <label for="mjb_gen_email"><strong><?php esc_html_e('Email key to (optional)', 'modern-job-board'); ?></strong></label><br>
-                    <input type="email" name="mjb_gen_email" id="mjb_gen_email" class="regular-text" placeholder="customer@example.com">
-                </p>
-                <p>
-                    <button type="submit" class="button button-secondary"><?php esc_html_e('Generate key', 'modern-job-board'); ?></button>
-                </p>
-            </form>
+                <div class="mjb-modal" id="mjb-license-cal-modal" hidden data-mjb-modal>
+                    <div class="mjb-modal__backdrop" data-mjb-cal-dismiss tabindex="-1"></div>
+                    <div class="mjb-modal__dialog mjb-license-cal" role="dialog" aria-modal="true" aria-labelledby="mjb-license-cal-title">
+                        <header class="mjb-modal__header">
+                            <h3 id="mjb-license-cal-title" class="mjb-modal__title"><?php esc_html_e('Choose expiry date', 'modern-job-board'); ?></h3>
+                            <button type="button" class="mjb-modal__close" data-mjb-cal-dismiss aria-label="<?php esc_attr_e('Close', 'modern-job-board'); ?>">&times;</button>
+                        </header>
+                        <div class="mjb-modal__body">
+                            <div class="mjb-license-cal__nav">
+                                <button type="button" class="mjb-jobs-filter__btn" data-cal-prev aria-label="<?php esc_attr_e('Previous month', 'modern-job-board'); ?>">
+                                    <?php
+                                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                                    echo MJB_Icons::render('chevron-left', 16);
+                                    ?>
+                                </button>
+                                <div class="mjb-license-cal__label" data-cal-label></div>
+                                <button type="button" class="mjb-jobs-filter__btn" data-cal-next aria-label="<?php esc_attr_e('Next month', 'modern-job-board'); ?>">
+                                    <?php
+                                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                                    echo MJB_Icons::render('chevron-right', 16);
+                                    ?>
+                                </button>
+                            </div>
+                            <div class="mjb-license-cal__dows" aria-hidden="true">
+                                <span><?php echo esc_html(_x('Mo', 'weekday short', 'modern-job-board')); ?></span>
+                                <span><?php echo esc_html(_x('Tu', 'weekday short', 'modern-job-board')); ?></span>
+                                <span><?php echo esc_html(_x('We', 'weekday short', 'modern-job-board')); ?></span>
+                                <span><?php echo esc_html(_x('Th', 'weekday short', 'modern-job-board')); ?></span>
+                                <span><?php echo esc_html(_x('Fr', 'weekday short', 'modern-job-board')); ?></span>
+                                <span><?php echo esc_html(_x('Sa', 'weekday short', 'modern-job-board')); ?></span>
+                                <span><?php echo esc_html(_x('Su', 'weekday short', 'modern-job-board')); ?></span>
+                            </div>
+                            <div class="mjb-license-cal__viewport" data-cal-viewport>
+                                <div class="mjb-license-cal__track" data-cal-track>
+                                    <div class="mjb-license-cal__grid" data-cal-grid></div>
+                                </div>
+                            </div>
+                        </div>
+                        <footer class="mjb-modal__footer">
+                            <button type="button" class="mjb-btn mjb-btn-outline" data-cal-none><?php esc_html_e('No expiry', 'modern-job-board'); ?></button>
+                            <button type="button" class="mjb-btn mjb-btn-outline" data-mjb-cal-dismiss><?php esc_html_e('Cancel', 'modern-job-board'); ?></button>
+                        </footer>
+                    </div>
+                </div>
+            </div>
         </div>
         <?php
         return (string) ob_get_clean();

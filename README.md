@@ -2,7 +2,7 @@
 
 A feature-rich WordPress job board plugin with employer and candidate dashboards, applications, WooCommerce monetization, REST API, webhooks, and Gutenberg blocks.
 
-**Current version:** 0.9.0-beta.88 (pre-stable beta — not a production/stable release)
+**Current version:** 0.9.0-beta.93 (pre-stable beta — not a production/stable release)
 
 **Version source of truth:** `Version` + `MJB_VERSION` in [`modern-job-board.php`](modern-job-board.php). Keep `readme.txt` Stable tag and this line in sync with that constant.
 

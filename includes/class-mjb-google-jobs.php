@@ -20,6 +20,7 @@ class MJB_Google_Jobs
         add_action('admin_init', array(__CLASS__, 'register_settings'));
         add_action('add_meta_boxes', array(__CLASS__, 'meta_box'));
         add_filter('mjb_job_schema', array(__CLASS__, 'filter_schema'), 10, 2);
+        add_action('wp_ajax_mjb_admin_currency_suggest', array(__CLASS__, 'ajax_suggest'));
     }
 
     /**
@@ -113,7 +114,8 @@ class MJB_Google_Jobs
         if (!is_array($input)) {
             return $out;
         }
-        $out['base_salary_currency'] = strtoupper(sanitize_text_field($input['base_salary_currency'] ?? ''));
+        $cur = strtoupper(sanitize_text_field($input['base_salary_currency'] ?? ''));
+        $out['base_salary_currency'] = preg_match('/^[A-Z]{3}$/', $cur) ? $cur : '';
         $out['base_salary_value'] = sanitize_text_field($input['base_salary_value'] ?? '');
         $unit = strtoupper(sanitize_text_field($input['base_salary_unit'] ?? 'MONTH'));
         $out['base_salary_unit'] = in_array($unit, array('HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'), true) ? $unit : 'MONTH';
@@ -135,12 +137,14 @@ class MJB_Google_Jobs
         $terms = get_terms(array('taxonomy' => 'job_type', 'hide_empty' => false));
         $gtypes = self::google_employment_types();
 
+        echo '<div class="mjb-settings-stack">';
         echo '<p class="description">' . esc_html__('Map each job type to a Google for Jobs employmentType. Unmapped types fall back to built-in name matching, then OTHER.', 'modern-job-board') . '</p>';
         if (is_wp_error($terms) || empty($terms)) {
             echo '<p>' . esc_html__('No job types yet. Create job types first.', 'modern-job-board') . '</p>';
+            echo '</div>';
             return;
         }
-        echo '<table class="widefat striped" style="max-width:36rem"><thead><tr><th>' . esc_html__('Job type', 'modern-job-board') . '</th><th>' . esc_html__('Google type', 'modern-job-board') . '</th></tr></thead><tbody>';
+        echo '<table class="widefat mjb-settings-map"><thead><tr><th>' . esc_html__('Job type', 'modern-job-board') . '</th><th>' . esc_html__('Google type', 'modern-job-board') . '</th></tr></thead><tbody>';
         foreach ($terms as $term) {
             $current = isset($map[$term->slug]) ? $map[$term->slug] : '';
             echo '<tr><td>' . esc_html($term->name) . '</td><td>';
@@ -152,6 +156,126 @@ class MJB_Google_Jobs
             echo '</select></td></tr>';
         }
         echo '</tbody></table>';
+        echo '</div>';
+    }
+
+    /**
+     * ISO 4217 currencies shown in the Integrations salary dropdown.
+     *
+     * `flag` is an ISO 3166-1 alpha-2 (or `eu`) used for flagcdn.
+     *
+     * @return array<string, array{name:string,flag:string,country:string}>
+     */
+    public static function currencies()
+    {
+        static $list = null;
+        if ($list === null) {
+            $list = require MJB_PATH . 'includes/data/iso-4217-currencies.php';
+        }
+
+        return $list;
+    }
+
+    /**
+     * AJAX autocomplete for the Integrations currency field.
+     *
+     * @param string $q
+     * @param int    $limit
+     * @return array<int, array{value:string,label:string,hint:string,flag:string}>
+     */
+    public static function suggest_currencies($q, $limit = 12)
+    {
+        $q = strtolower(trim((string) $q));
+        $limit = max(1, min(25, (int) $limit));
+        $popular = array('USD' => 50, 'EUR' => 49, 'GBP' => 48, 'ZAR' => 47, 'AUD' => 46, 'CAD' => 45, 'INR' => 44, 'JPY' => 43);
+
+        $items = array();
+        foreach (self::currencies() as $code => $meta) {
+            $name = (string) $meta['name'];
+            $country = (string) $meta['country'];
+            $flag = (string) $meta['flag'];
+            $code_l = strtolower($code);
+            $rank = 0;
+            if ($q === '') {
+                $rank = 1 + (isset($popular[$code]) ? (int) $popular[$code] : 0);
+            } elseif ($code_l === $q) {
+                $rank = 5;
+            } elseif (strpos($code_l, $q) === 0) {
+                $rank = 4;
+            } elseif (strpos(strtolower($name), $q) !== false) {
+                $rank = 3;
+            } elseif (strpos(strtolower($country), $q) !== false) {
+                $rank = 2;
+            }
+            if ($rank <= 0) {
+                continue;
+            }
+            $hint = trim(preg_replace('/\s+/', ' ', preg_replace('/\b(USA|UAE|UK|America|Britain|England|Eurozone|European Union|Europe|Czech Republic)\b/i', '', $country)));
+            if ($hint === '') {
+                $hint = $country;
+            }
+            $items[] = array(
+                'value' => $code,
+                'label' => $code . ' — ' . $name,
+                'hint' => $hint,
+                'flag' => $flag,
+                'rank' => $rank,
+            );
+        }
+
+        usort($items, static function ($a, $b) {
+            if ($a['rank'] === $b['rank']) {
+                return strcmp($a['value'], $b['value']);
+            }
+            return $a['rank'] > $b['rank'] ? -1 : 1;
+        });
+
+        $out = array();
+        foreach (array_slice($items, 0, $limit) as $item) {
+            unset($item['rank']);
+            $out[] = $item;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return void
+     */
+    public static function ajax_suggest()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'forbidden'), 403);
+        }
+        check_ajax_referer('mjb_admin_tabs', 'security');
+        $q = isset($_REQUEST['q']) ? wp_unslash($_REQUEST['q']) : '';
+        $limit = isset($_REQUEST['limit']) ? (int) $_REQUEST['limit'] : 12;
+        wp_send_json_success(array(
+            'items' => self::suggest_currencies((string) $q, $limit),
+        ));
+    }
+
+    /**
+     * @param string $code
+     * @return array{code:string,label:string,flag:string}
+     */
+    public static function currency_choice($code)
+    {
+        $code = strtoupper((string) $code);
+        $list = self::currencies();
+        if ($code === '' || !isset($list[$code])) {
+            return array(
+                'code' => '',
+                'label' => '',
+                'flag' => '',
+            );
+        }
+
+        return array(
+            'code' => $code,
+            'label' => $code . ' — ' . $list[$code]['name'],
+            'flag' => (string) $list[$code]['flag'],
+        );
     }
 
     /**
@@ -160,38 +284,50 @@ class MJB_Google_Jobs
     public static function render_static_field()
     {
         $s = self::get_static();
+        $name = self::OPTION_STATIC;
         ?>
-        <p class="description"><?php esc_html_e('Optional values applied to every JobPosting when set (leave blank to omit).', 'modern-job-board'); ?></p>
-        <p>
-            <label><?php esc_html_e('Base salary currency (ISO)', 'modern-job-board'); ?><br>
-                <input type="text" class="small-text" name="<?php echo esc_attr(self::OPTION_STATIC); ?>[base_salary_currency]" value="<?php echo esc_attr($s['base_salary_currency']); ?>" placeholder="USD">
-            </label>
-        </p>
-        <p>
-            <label><?php esc_html_e('Base salary value', 'modern-job-board'); ?><br>
-                <input type="text" class="small-text" name="<?php echo esc_attr(self::OPTION_STATIC); ?>[base_salary_value]" value="<?php echo esc_attr($s['base_salary_value']); ?>" placeholder="50000">
-            </label>
-        </p>
-        <p>
-            <label><?php esc_html_e('Salary unit', 'modern-job-board'); ?><br>
-                <select name="<?php echo esc_attr(self::OPTION_STATIC); ?>[base_salary_unit]">
+        <div class="mjb-settings-stack">
+            <p class="description"><?php esc_html_e('Optional values applied to every JobPosting when set (leave blank to omit).', 'modern-job-board'); ?></p>
+            <div class="mjb-settings-field">
+                <label for="mjb_gjobs_currency_q"><?php esc_html_e('Base salary currency (ISO)', 'modern-job-board'); ?></label>
+                <?php
+                $choice = self::currency_choice((string) $s['base_salary_currency']);
+                $has_flag = $choice['flag'] !== '';
+                ?>
+                <div class="mjb-jobs-filter mjb-settings-select mjb-currency-ac<?php echo $choice['code'] !== '' ? ' is-filled' : ''; ?><?php echo $has_flag ? ' has-flag' : ''; ?>" id="mjb-gjobs-currency-ac">
+                    <img class="mjb-currency-flag mjb-currency-ac__flag" alt="" width="20" height="15"<?php echo $has_flag ? ' src="https://flagcdn.com/w40/' . esc_attr($choice['flag']) . '.png"' : ' hidden'; ?>>
+                    <input type="text" class="mjb-ac__input" id="mjb_gjobs_currency_q" value="<?php echo esc_attr($choice['label']); ?>" placeholder="<?php esc_attr_e('Search ISO code or country', 'modern-job-board'); ?>" aria-label="<?php esc_attr_e('Search ISO code or country', 'modern-job-board'); ?>" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="mjb-gjobs-currency-ac-list" aria-haspopup="listbox">
+                    <input type="hidden" class="mjb-ac__value" id="mjb_gjobs_currency" name="<?php echo esc_attr($name); ?>[base_salary_currency]" value="<?php echo esc_attr($choice['code']); ?>" data-flag="<?php echo esc_attr($choice['flag']); ?>">
+                    <button class="mjb-currency-ac__clear" type="button" aria-label="<?php esc_attr_e('Clear currency', 'modern-job-board'); ?>">
+                        <?php
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
+                        echo MJB_Icons::render('x', 14);
+                        ?>
+                    </button>
+                    <div id="mjb-gjobs-currency-ac-list" class="mjb-jobs-menu" data-mjb-ac-menu hidden role="listbox"></div>
+                </div>
+            </div>
+            <div class="mjb-settings-field">
+                <label for="mjb_gjobs_salary"><?php esc_html_e('Base salary value', 'modern-job-board'); ?></label>
+                <input type="text" class="small-text" id="mjb_gjobs_salary" name="<?php echo esc_attr($name); ?>[base_salary_value]" value="<?php echo esc_attr($s['base_salary_value']); ?>" placeholder="50000">
+            </div>
+            <div class="mjb-settings-field">
+                <label for="mjb_gjobs_unit"><?php esc_html_e('Salary unit', 'modern-job-board'); ?></label>
+                <select id="mjb_gjobs_unit" name="<?php echo esc_attr($name); ?>[base_salary_unit]">
                     <?php foreach (array('HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR') as $u) : ?>
                         <option value="<?php echo esc_attr($u); ?>" <?php selected($s['base_salary_unit'], $u); ?>><?php echo esc_html($u); ?></option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+            <div class="mjb-settings-field">
+                <label for="mjb_gjobs_sameas"><?php esc_html_e('Hiring organization website', 'modern-job-board'); ?></label>
+                <input type="url" id="mjb_gjobs_sameas" name="<?php echo esc_attr($name); ?>[hiring_organization_same_as]" value="<?php echo esc_attr($s['hiring_organization_same_as']); ?>" placeholder="https://">
+            </div>
+            <label class="mjb-settings-check">
+                <input type="checkbox" name="<?php echo esc_attr($name); ?>[job_location_type]" value="TELECOMMUTE" <?php checked($s['job_location_type'], 'TELECOMMUTE'); ?>>
+                <span><?php esc_html_e('Mark all jobs as TELECOMMUTE (remote) in schema', 'modern-job-board'); ?></span>
             </label>
-        </p>
-        <p>
-            <label><?php esc_html_e('Hiring organization sameAs URL', 'modern-job-board'); ?><br>
-                <input type="url" class="regular-text" name="<?php echo esc_attr(self::OPTION_STATIC); ?>[hiring_organization_same_as]" value="<?php echo esc_attr($s['hiring_organization_same_as']); ?>" placeholder="https://">
-            </label>
-        </p>
-        <p>
-            <label>
-                <input type="checkbox" name="<?php echo esc_attr(self::OPTION_STATIC); ?>[job_location_type]" value="TELECOMMUTE" <?php checked($s['job_location_type'], 'TELECOMMUTE'); ?>>
-                <?php esc_html_e('Mark all jobs as TELECOMMUTE (remote) in schema', 'modern-job-board'); ?>
-            </label>
-        </p>
+        </div>
         <?php
     }
 

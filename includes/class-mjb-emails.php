@@ -301,6 +301,11 @@ class MJB_Emails
             return;
         }
 
+        $candidate_user = get_user_by('email', $candidate_email);
+        if ($candidate_user && class_exists('MJB_Candidate_Account') && !MJB_Candidate_Account::allows_email('applications', $candidate_user->ID)) {
+            return;
+        }
+
         $candidate_name = get_post_meta($application_id, '_candidate_name', true);
         $status_label = MJB_Application_Status::get_label($new_status);
 

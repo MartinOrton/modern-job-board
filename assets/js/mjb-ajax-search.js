@@ -1,12 +1,9 @@
 jQuery(document).ready(function ($) {
     var $jobsBoard = $('#mjb-jobs-board');
     var $jobsList = $('#mjb-jobs-list');
-    var $loader = $('#mjb-loader-overlay');
     var $filterForms = $('[data-mjb-job-filter], #mjb-job-filter, .mjb-job-filter');
-
-    if ($loader.length && !$loader.parent().is('body')) {
-        $loader.appendTo('body');
-    }
+    var $jobsLive = $('#mjb-jobs-live');
+    var jobsRequest = null;
 
     function slugifyKeyword(keyword) {
         return $.trim(keyword)
@@ -97,21 +94,51 @@ jQuery(document).ready(function ($) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    function announceJobs(message) {
+        if ($jobsLive.length) {
+            $jobsLive.text(message || '');
+        }
+    }
+
+    function buildJobsSkeletonHtml() {
+        var existing = getJobsResults().find('.mjb-job-card').length;
+        var perPage = parseInt($jobsList.data('posts-per-page'), 10) || 10;
+        var count = existing > 0 ? existing : perPage;
+        count = Math.max(1, Math.min(8, count));
+
+        var cardTpl = document.getElementById('mjb-jobs-skeleton-card');
+        var pageTpl = document.getElementById('mjb-jobs-skeleton-pagination');
+        var list = document.createElement('div');
+        list.className = 'mjb-job-list mjb-skeleton-list';
+        list.setAttribute('aria-hidden', 'true');
+
+        if (cardTpl && cardTpl.content) {
+            for (var i = 0; i < count; i++) {
+                list.appendChild(cardTpl.content.cloneNode(true));
+            }
+        }
+
+        var wrap = document.createElement('div');
+        wrap.appendChild(list);
+        if (pageTpl && pageTpl.content) {
+            wrap.appendChild(pageTpl.content.cloneNode(true));
+        }
+        return wrap.innerHTML;
+    }
+
     function setLoadingState(isLoading) {
-        if (!$loader.length) {
-            return;
-        }
-
+        var $results = getJobsResults();
         if (isLoading) {
-            $('body').addClass('mjb-jobs-loading');
             $jobsBoard.addClass('mjb-is-loading');
-            $loader.addClass('is-active').attr('aria-hidden', 'false');
+            $results.addClass('is-swapping');
+            $results.html(buildJobsSkeletonHtml());
+            $results.removeClass('is-swapping');
+            announceJobs((window.mjb_ajax && mjb_ajax.i18n && mjb_ajax.i18n.loading) || 'Loading jobs');
             return;
         }
 
-        $loader.removeClass('is-active').attr('aria-hidden', 'true');
-        $('body').removeClass('mjb-jobs-loading');
         $jobsBoard.removeClass('mjb-is-loading');
+        announceJobs('');
     }
 
     function fetchJobs(page, pushHistory, $form) {
@@ -128,22 +155,35 @@ jQuery(document).ready(function ($) {
             posts_per_page: $jobsList.data('posts-per-page') || 10
         };
 
+        if (jobsRequest && jobsRequest.abort) {
+            jobsRequest.abort();
+        }
+
+        var $results = getJobsResults();
+        var previousHtml = $results.html();
         setLoadingState(true);
 
-        $.ajax({
+        jobsRequest = $.ajax({
             url: mjb_ajax.ajax_url,
             type: 'POST',
             data: data,
             success: function (response) {
-                getJobsResults().html(response);
-                setLoadingState(false);
-                scrollToPageTop();
+                $results.addClass('is-swapping');
+                window.setTimeout(function () {
+                    $results.html(response).removeClass('is-swapping');
+                    setLoadingState(false);
+                    scrollToPageTop();
+                }, 80);
 
                 if (pushHistory !== false && window.history && window.history.pushState) {
                     window.history.pushState(null, '', buildPrettyUrl(filters, page || 1));
                 }
             },
-            error: function () {
+            error: function (xhr, status) {
+                if (status === 'abort') {
+                    return;
+                }
+                $results.html(previousHtml);
                 setLoadingState(false);
             }
         });
@@ -249,6 +289,21 @@ jQuery(document).ready(function ($) {
         });
     }
 
+    function renderAcSkeleton($root) {
+        var $menu = $root.find('[data-mjb-ac-menu]');
+        var $input = $root.find('.mjb-ac__input');
+        $menu.empty();
+        for (var i = 0; i < 4; i++) {
+            $menu.append(
+                $('<div class="mjb-ac__item mjb-ac__item--skeleton" role="presentation"/>')
+                    .append($('<span class="mjb-skeleton mjb-skeleton--excerpt"/>'))
+            );
+        }
+        $menu.prop('hidden', false);
+        $input.attr('aria-expanded', 'true');
+        $root.addClass('is-open');
+    }
+
     function renderAcItems($root, items) {
         var $menu = $root.find('[data-mjb-ac-menu]');
         var $input = $root.find('.mjb-ac__input');
@@ -345,6 +400,7 @@ jQuery(document).ready(function ($) {
         }
 
         $root.addClass('is-loading');
+        renderAcSkeleton($root);
 
         var ajaxData = {
             action: 'mjb_filter_suggest',
@@ -395,6 +451,10 @@ jQuery(document).ready(function ($) {
 
         closeAllAcMenus();
         $input.trigger('change');
+        var node = $input.get(0);
+        if (node && typeof node.dispatchEvent === 'function') {
+            node.dispatchEvent(new Event('input', { bubbles: true }));
+        }
     }
 
     function clearAcIfEmpty($root) {

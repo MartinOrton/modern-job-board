@@ -133,7 +133,7 @@ class SearchTest extends TestCase
         ));
 
         $this->assertSame('Jobs at Acme Digital', $heading['title']);
-        $this->assertStringContainsString('Acme Digital', $heading['intro']);
+        $this->assertSame('', $heading['intro']);
     }
 
     public function test_get_listing_page_heading_uses_jobs_in_location_copy()
@@ -143,7 +143,7 @@ class SearchTest extends TestCase
         ));
 
         $this->assertSame('Jobs in London, England, United Kingdom', $heading['title']);
-        $this->assertStringContainsString('London, England, United Kingdom', $heading['intro']);
+        $this->assertSame('', $heading['intro']);
     }
 
     public function test_should_show_audience_cards_only_on_unfiltered_home()

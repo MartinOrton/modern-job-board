@@ -19,6 +19,33 @@ Never bump a secondary file without updating `modern-job-board.php` first.
 
 **Internal history:** Entries under “Internal pre-beta history” used temporary `1.x` labels during private development. They are **not** public releases and must not be treated as newer than `0.9.0-beta.*`.
 
+## [0.9.0-beta.93] - 2026-08-22
+
+### Changed
+- **Company jobs page:** removed the redundant “Browse open roles at {company}.” intro under the H1.
+- **Job result cards:** show **Posted:** and **Expiry:** pills (same icons as the job detail page). Expiry still only appears when a date is set.
+
+## [0.9.0-beta.92] - 2026-08-22
+
+### Changed
+- **Single job:** “Posted by {company}” company name links to that company’s job list.
+- **Single job:** posted date uses the `calendar-check-2` icon; an **Expiry:** pill (`calendar-x-2`) appears only when `_job_expires` is set.
+
+## [0.9.0-beta.91] - 2026-08-22
+
+### Changed
+- **Single job:** removed the company-name meta pill. Company is already shown under the H1 as “Posted by …”.
+
+## [0.9.0-beta.90] - 2026-08-22
+
+### Changed
+- **Skeleton loaders:** AJAX job filters, recruiter dashboard tabs, location autocomplete, and company hover previews use in-place grey shimmer placeholders that match the final layout. Full-page spinner overlays are gone. Shimmer is disabled under `prefers-reduced-motion`.
+
+## [0.9.0-beta.89] - 2026-08-21
+
+### Changed
+- **Admin menu icon:** left wp-admin item uses the white MJB mark (`assets/images/mjb-icon.svg`, 249×249 viewBox, `#fff` on transparent) instead of the Lucide briefcase Dashicon overlay.
+
 ## [0.9.0-beta.88] - 2026-08-19
 
 ### Changed

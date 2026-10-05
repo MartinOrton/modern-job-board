@@ -18,6 +18,64 @@ class MJB_Custom_Fields
     {
         add_action('admin_menu', array($this, 'register_admin_page'));
         add_action('admin_init', array($this, 'handle_save_logic'));
+        add_action('wp_ajax_mjb_admin_custom_field', array($this, 'ajax_save'));
+    }
+
+    /**
+     * Save or delete a custom field without leaving the admin screen.
+     */
+    public function ajax_save()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => __('You do not have permission to manage custom fields.', 'modern-job-board'),
+            ));
+        }
+
+        $this->handle_save_logic();
+
+        wp_send_json_error(array(
+            'message' => __('That action could not be completed.', 'modern-job-board'),
+        ));
+    }
+
+    /**
+     * @return bool
+     */
+    private function skip_ajax_init()
+    {
+        return wp_doing_ajax() && !doing_action('wp_ajax_mjb_admin_custom_field');
+    }
+
+    /**
+     * @param string $message
+     * @param bool   $is_error
+     * @param array  $args
+     */
+    private function finish_custom_field($message, $is_error, $args)
+    {
+        if (wp_doing_ajax()) {
+            $payload = array(
+                'message' => $message,
+                'tab' => 'custom-fields',
+            );
+            if ($is_error) {
+                wp_send_json_error($payload);
+            }
+            wp_send_json_success($payload);
+        }
+
+        wp_safe_redirect(add_query_arg(
+            array_merge(
+                array(
+                    'page' => 'modern-job-board',
+                    'tab' => 'custom-fields',
+                ),
+                $args
+            ),
+            admin_url('admin.php')
+        ));
+        exit;
     }
 
     /**
@@ -51,6 +109,33 @@ class MJB_Custom_Fields
      */
     public function handle_save_logic()
     {
+        if ($this->skip_ajax_init()) {
+            return;
+        }
+
+        if (isset($_POST['mjb_delete_custom_field'], $_POST['index'])) {
+            $index = intval($_POST['index']);
+            if (!current_user_can('manage_options') || !check_admin_referer('delete_field_' . $index)) {
+                $this->finish_custom_field(
+                    __('You do not have permission to manage custom fields.', 'modern-job-board'),
+                    true,
+                    array()
+                );
+            }
+
+            $fields = $this->get_fields();
+            if (isset($fields[$index])) {
+                unset($fields[$index]);
+                update_option($this->option_name, array_values($fields));
+            }
+
+            $this->finish_custom_field(
+                __('Custom field deleted.', 'modern-job-board'),
+                false,
+                array('message' => 'deleted')
+            );
+        }
+
         if (isset($_POST['mjb_save_custom_field']) && check_admin_referer('mjb_save_custom_field_nonce')) {
             if (!current_user_can('manage_options')) {
                 wp_die(esc_html__('You do not have permission to manage custom fields.', 'modern-job-board'), 403);
@@ -71,15 +156,11 @@ class MJB_Custom_Fields
             $fields[] = $new_field;
             update_option($this->option_name, $fields);
 
-            wp_safe_redirect(add_query_arg(
-                array(
-                    'page' => 'modern-job-board',
-                    'tab' => 'custom-fields',
-                    'message' => 'saved',
-                ),
-                admin_url('admin.php')
-            ));
-            exit;
+            $this->finish_custom_field(
+                __('Custom field saved.', 'modern-job-board'),
+                false,
+                array('message' => 'saved')
+            );
         }
 
         // Handle Delete

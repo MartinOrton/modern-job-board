@@ -700,6 +700,11 @@
             if (!validateForm(form)) {
                 event.preventDefault();
                 event.stopPropagation();
+                return;
+            }
+            if (form.classList.contains('mjb-job-form') && cfg().ajaxUrl) {
+                event.preventDefault();
+                saveJobForm(form);
             }
         });
 
@@ -721,10 +726,217 @@
         }
     }
 
+    function cfg() {
+        return window.mjbFormValidation || {};
+    }
+
+    function slideWindowToTop() {
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    }
+
+    function placeStatusNotice(message, isError) {
+        if (!message) {
+            return;
+        }
+        if (document.querySelector('.mjb-candidate-dashboard') && typeof window.mjbShowDashboardNotice === 'function') {
+            window.mjbShowDashboardNotice(message, isError ? 'error' : 'success');
+            return;
+        }
+        var host = document.querySelector('.mjb-portal-dashboard')
+            || document.querySelector('.mjb-candidate-dashboard')
+            || document.querySelector('.mjb-application-area')
+            || document.querySelector('.mjb-single-main')
+            || document.body;
+        host.querySelectorAll(':scope > .mjb-message').forEach(function (notice) {
+            notice.remove();
+        });
+        var notice = document.createElement('div');
+        notice.className = 'mjb-message ' + (isError ? 'error' : 'success');
+        notice.setAttribute('role', isError ? 'alert' : 'status');
+        notice.textContent = message;
+        var stage = host.id === 'mjb-candidate-dashboard' || host.classList.contains('mjb-candidate-dashboard')
+            ? document.getElementById('mjb-cd-stage')
+            : null;
+        if (stage && stage.parentNode === host) {
+            host.insertBefore(notice, stage);
+        } else {
+            host.insertBefore(notice, host.firstChild);
+        }
+        slideWindowToTop();
+    }
+
+    function saveJobForm(form) {
+        if (!form || form.getAttribute('data-busy') === '1') {
+            return;
+        }
+        var button = form.querySelector('[name="mjb_submit_job"]');
+        var original = button ? button.value : '';
+        form.setAttribute('data-busy', '1');
+        if (button) {
+            button.value = cfg().saving || 'Saving…';
+        }
+        var body = new FormData(form);
+        body.set('action', 'mjb_save_job');
+        body.set('mjb_submit_job', '1');
+        fetch(cfg().ajaxUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: body
+        }).then(function (response) {
+            return response.json();
+        }).then(function (payload) {
+            form.removeAttribute('data-busy');
+            if (button && original) {
+                button.value = original;
+            }
+            var data = payload && payload.data ? payload.data : {};
+            if (data.redirect) {
+                window.location.href = data.redirect;
+                return;
+            }
+            if (!payload || !payload.success) {
+                placeStatusNotice(data.message || cfg().saveFailed || 'Changes could not be saved. Try again.', true);
+                return;
+            }
+            if (data.job_id && !form.querySelector('[name="job_id"]')) {
+                var hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'job_id';
+                hidden.value = String(data.job_id);
+                form.appendChild(hidden);
+            }
+            if (button && data.job_id) {
+                button.value = cfg().updateJob || 'Update Job';
+            }
+            placeStatusNotice(data.message || cfg().updateJob || 'Update Job', false);
+        }).catch(function () {
+            form.removeAttribute('data-busy');
+            if (button && original) {
+                button.value = original;
+            }
+            placeStatusNotice(cfg().saveFailed || 'Changes could not be saved. Try again.', true);
+        });
+    }
+
+    function inlineAction(link) {
+        var kind = link.getAttribute('data-mjb-inline');
+        var url;
+        try {
+            url = new URL(link.href, window.location.origin);
+        } catch (error) {
+            return;
+        }
+        var body = new FormData();
+        body.set('_wpnonce', url.searchParams.get('_wpnonce') || '');
+        if (kind === 'apply') {
+            var applyMatch = url.pathname.match(/\/apply\/([a-f0-9]+)/i);
+            body.set('action', 'mjb_apply_to_job');
+            body.set('token', applyMatch ? applyMatch[1] : (url.searchParams.get('mjb_a') || ''));
+        } else if (kind === 'save') {
+            var saveMatch = url.pathname.match(/\/save\/(\d+)/);
+            body.set('action', 'mjb_toggle_saved_job');
+            body.set('job_id', saveMatch ? saveMatch[1] : (url.searchParams.get('job_id') || ''));
+        } else {
+            return;
+        }
+        if (link.getAttribute('data-busy') === '1') {
+            return;
+        }
+        link.setAttribute('data-busy', '1');
+        fetch(cfg().ajaxUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: body
+        }).then(function (response) {
+            return response.json();
+        }).then(function (payload) {
+            link.removeAttribute('data-busy');
+            var data = payload && payload.data ? payload.data : {};
+            if (data.redirect) {
+                window.location.href = data.redirect;
+                return;
+            }
+            if (!payload || !payload.success) {
+                placeStatusNotice(data.message || cfg().saveFailed || 'Changes could not be saved. Try again.', true);
+                return;
+            }
+            if (kind === 'apply' && data.applied) {
+                var applyLabel = link.querySelector('span');
+                if (applyLabel) {
+                    applyLabel.textContent = cfg().applied || 'Applied';
+                }
+                link.setAttribute('aria-disabled', 'true');
+                link.removeAttribute('href');
+            }
+            if (kind === 'save') {
+                var saveLabel = link.querySelector('span');
+                var saved = !!data.saved;
+                link.classList.toggle('is-active', saved);
+                if (saveLabel) {
+                    saveLabel.textContent = saved ? (cfg().savedJob || 'Saved') : (cfg().saveJob || 'Save');
+                }
+                var item = link.closest('.mjb-cd-item');
+                if (item && !saved) {
+                    var list = item.parentNode;
+                    item.remove();
+                    if (list && !list.querySelector('.mjb-cd-item')) {
+                        var count = document.querySelector('#mjb-cd-saved .mjb-cd-count');
+                        if (count) {
+                            count.textContent = '0';
+                        }
+                    }
+                }
+            }
+            placeStatusNotice(data.message || '', false);
+        }).catch(function () {
+            link.removeAttribute('data-busy');
+            placeStatusNotice(cfg().saveFailed || 'Changes could not be saved. Try again.', true);
+        });
+    }
+
+    document.addEventListener('click', function (event) {
+        var link = event.target && event.target.closest ? event.target.closest('[data-mjb-inline]') : null;
+        if (!link || !cfg().ajaxUrl || link.getAttribute('aria-disabled') === 'true') {
+            if (link && link.getAttribute('aria-disabled') === 'true') {
+                event.preventDefault();
+            }
+            return;
+        }
+        event.preventDefault();
+        inlineAction(link);
+    });
+
+    function slideToActionStatus() {
+        var params;
+        try {
+            params = new URL(window.location.href).searchParams;
+        } catch (error) {
+            return;
+        }
+        if (!params.get('mjb_notice')) {
+            return;
+        }
+        var box = document.querySelector('.mjb-message.success, .mjb-message.error, .mjb-message.warning, .mjb-message.info');
+        if (!box || box.hasAttribute('hidden')) {
+            return;
+        }
+        if (window.history && 'scrollRestoration' in window.history) {
+            window.history.scrollRestoration = 'manual';
+        }
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
+    }
+    if (document.readyState === 'complete') {
+        slideToActionStatus();
+    } else {
+        window.addEventListener('load', slideToActionStatus);
     }
 
     // Expose for dynamic forms / tests.

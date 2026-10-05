@@ -9,7 +9,7 @@
 
 ## P0 — Ship / commercial readiness
 
-- [x] **1. License / plan enforcement** — Free 10-job cap; gate Pro/Business features in PHP (not marketing-only).
+- [x] **1. License / plan enforcement** — Free 100-job cap; gate Pro/Business features in PHP (not marketing-only).
 - [x] **2. Purchase / license-key flow** — Gateway-agnostic checkout URLs, key activation, WC key fulfillment, vendor issue form; any WooCommerce-supported gateway (PayPal, Stripe, Square, Mollie, etc.); mailto until checkout live.
 - [x] **3. Stable release checklist** — `docs/release-checklist.md`; version **0.9.0-beta.9**; PHPUnit + PHPCS green. Operator: smoke mjb.local via checklist §4 when convenient.
 - [x] **4. Security re-pass** — REST, private uploads, download roots, admin caps reviewed; SSRF feed hardening + download headers + safe redirects. See `docs/security-repass.md`.

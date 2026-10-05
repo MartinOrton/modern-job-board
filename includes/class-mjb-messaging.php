@@ -89,7 +89,11 @@ class MJB_Messaging
         update_post_meta($id, '_mjb_read', '0');
 
         $recipient = get_userdata($to);
-        if ($recipient && $recipient->user_email) {
+        $send_copy = $recipient && $recipient->user_email;
+        if ($send_copy && class_exists('MJB_Candidate_Account') && !MJB_Candidate_Account::allows_email('messages', $to)) {
+            $send_copy = false;
+        }
+        if ($send_copy) {
             $subject = sprintf(__('[%s] New message', 'modern-job-board'), wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES));
             $message = sprintf(__("You have a new message on %s.\n\n%s", 'modern-job-board'), home_url('/'), wp_strip_all_tags($body));
             wp_mail($recipient->user_email, $subject, $message);

@@ -4,7 +4,7 @@ Tags: jobs, job board, careers, recruitment, woocommerce
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 0.9.0-beta.88
+Stable tag: 0.9.0-beta.93
 License: Proprietary
 License URI: https://martinorton.com/modern-job-board
 
@@ -73,6 +73,28 @@ Yes. Public job search is available at `/wp-json/mjb/v1/jobs`. Authenticated emp
 
 == Changelog ==
 
+= 0.9.0-beta.93 =
+* Company jobs page: drop redundant “Browse open roles at …” intro
+* Job result cards: Posted and Expiry pills match job detail dates
+* See CHANGELOG.md for full notes
+
+= 0.9.0-beta.92 =
+* Job detail: company name under the title links to that company's jobs
+* Posted/expiry pills with calendar-check-2 and calendar-x-2 icons
+* See CHANGELOG.md for full notes
+
+= 0.9.0-beta.91 =
+* Job detail page: drop duplicate company name pill (already under the title)
+* See CHANGELOG.md for full notes
+
+= 0.9.0-beta.90 =
+* Skeleton shimmer loaders on jobs list, recruiter tabs, and company preview
+* See CHANGELOG.md for full notes
+
+= 0.9.0-beta.89 =
+* wp-admin left menu uses the white MJB mark (transparent SVG)
+* See CHANGELOG.md for full notes
+
 = 0.9.0-beta.88 =
 * GitHub catch-up: first public snapshot after 0.9.0-beta.6
 * Version strings aligned; 233 PHPUnit tests
@@ -114,5 +136,5 @@ Yes. Public job search is available at `/wp-json/mjb/v1/jobs`. Authenticated emp
 
 == Upgrade Notice ==
 
-= 0.9.0-beta.88 =
+= 0.9.0-beta.93 =
 Pre-stable beta. Keep test installs updated; not a production 1.0 release.

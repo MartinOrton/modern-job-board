@@ -37,6 +37,16 @@ class MJB_Company_Preview
         wp_localize_script('mjb-company-preview', 'mjbCompanyPreview', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('mjb_company_preview'),
+            'icons' => array(
+                'website' => MJB_Icons::render('globe', 18),
+                'linkedin' => MJB_Icons::render('linkedin', 18),
+                'twitter' => MJB_Icons::render('twitter', 18),
+            ),
+            'i18n' => array(
+                'website' => __('Website', 'modern-job-board'),
+                'linkedin' => __('LinkedIn', 'modern-job-board'),
+                'twitter' => __('X', 'modern-job-board'),
+            ),
         ));
     }
 
@@ -54,9 +64,23 @@ class MJB_Company_Preview
                 $company_id = (int) get_post_meta($job_id, '_company_id', true);
             }
         }
-        $company = get_post($company_id);
+        $company = $company_id > 0 ? get_post($company_id) : null;
         if (!$company || $company->post_type !== 'company' || $company->post_status !== 'publish') {
-            wp_send_json_error(array('message' => 'not_found'), 404);
+            $job_id = isset($_REQUEST['job_id']) ? (int) $_REQUEST['job_id'] : 0;
+            $name = $job_id > 0 ? (string) get_post_meta($job_id, '_company_name', true) : '';
+            if ($name === '') {
+                wp_send_json_error(array('message' => 'not_found'), 404);
+            }
+            wp_send_json_success(array(
+                'id' => 0,
+                'name' => $name,
+                'motto' => '',
+                'website' => '',
+                'twitter' => '',
+                'linkedin' => '',
+                'logo' => '',
+                'url' => '',
+            ));
         }
 
         $motto = get_post_meta($company_id, '_company_tagline', true);
@@ -71,6 +95,9 @@ class MJB_Company_Preview
         $twitter = get_post_meta($company_id, '_company_twitter', true);
         $linkedin = get_post_meta($company_id, '_company_linkedin', true);
         $logo = get_the_post_thumbnail_url($company_id, 'thumbnail');
+        if (!$logo) {
+            $logo = (string) get_post_meta($company_id, '_company_logo_url', true);
+        }
 
         wp_send_json_success(array(
             'id' => $company_id,

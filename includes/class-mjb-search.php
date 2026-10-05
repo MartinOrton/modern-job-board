@@ -400,11 +400,7 @@ class MJB_Search
                     __('Jobs at %s', 'modern-job-board'),
                     $company_name
                 ),
-                'intro' => sprintf(
-                    /* translators: %s: company name */
-                    __('Browse open roles at %s.', 'modern-job-board'),
-                    $company_name
-                ),
+                'intro' => '',
             );
         }
 
@@ -417,11 +413,7 @@ class MJB_Search
                     __('Jobs in %s', 'modern-job-board'),
                     $location_label
                 ),
-                'intro' => sprintf(
-                    /* translators: %s: location label */
-                    __('Browse open roles in %s.', 'modern-job-board'),
-                    $location_label
-                ),
+                'intro' => '',
             );
         }
 

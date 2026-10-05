@@ -31,6 +31,7 @@ class MJB_Applications
         add_action('init', array($this, 'handle_form_submission'));
         add_action('admin_post_mjb_apply_to_job', array($this, 'handle_logged_in_apply'));
         add_action('admin_post_nopriv_mjb_apply_to_job', array($this, 'handle_guest_apply_redirect'));
+        add_action('wp_ajax_mjb_apply_to_job', array($this, 'ajax_apply'));
     }
 
     /**
@@ -390,6 +391,52 @@ class MJB_Applications
         }
 
         MJB_Notices::redirect($redirect, 'success_application');
+    }
+
+    /**
+     * Apply from the job page without reloading it.
+     */
+    public function ajax_apply()
+    {
+        $token = isset($_POST['token']) ? strtolower(sanitize_text_field(wp_unslash($_POST['token']))) : '';
+        $nonce = isset($_POST['_wpnonce']) ? sanitize_text_field(wp_unslash($_POST['_wpnonce'])) : '';
+        if ($token === '' || !wp_verify_nonce($nonce, 'mjb_apply_to_job')) {
+            wp_send_json_error(array(
+                'code' => 'error_security',
+                'message' => MJB_Notices::message('error_security'),
+            ));
+        }
+        $job_id = self::parse_apply_token($token);
+        if ($job_id <= 0) {
+            wp_send_json_error(array(
+                'code' => 'error_invalid_job',
+                'message' => MJB_Notices::message('error_invalid_job'),
+            ));
+        }
+        if (!is_user_logged_in()) {
+            wp_send_json_success(array(
+                'redirect' => self::get_apply_login_url($job_id),
+            ));
+        }
+        if (!self::current_user_can_apply()) {
+            wp_send_json_error(array(
+                'code' => 'error_login_not_candidate',
+                'message' => MJB_Notices::message('error_login_not_candidate'),
+            ));
+        }
+        $result = self::create_application_from_profile($job_id, get_current_user_id());
+        if (is_wp_error($result)) {
+            wp_send_json_error(array(
+                'code' => $result->get_error_code(),
+                'message' => MJB_Notices::message($result->get_error_code()),
+            ));
+        }
+        delete_transient(self::APPLY_TOKEN_TRANSIENT_PREFIX . $token);
+        wp_send_json_success(array(
+            'code' => 'success_application',
+            'message' => MJB_Notices::message('success_application'),
+            'applied' => true,
+        ));
     }
 
     /**

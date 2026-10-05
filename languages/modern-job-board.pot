@@ -679,7 +679,7 @@ msgstr ""
 msgid "Enabled"
 msgstr ""
 
-msgid "Enter a license key to unlock Pro or Business features. Leave blank for Free (10 active jobs)."
+msgid "Enter a license key to unlock Pro or Business features. Leave blank for Free (%d active jobs)."
 msgstr ""
 
 msgid "Enter the email address or username you used to register. We will send a reset link and remind you of your username."

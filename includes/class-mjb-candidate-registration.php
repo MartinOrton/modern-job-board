@@ -153,16 +153,9 @@ class MJB_Candidate_Registration
 
         $first_name = isset($_POST['mjb_first_name']) ? sanitize_text_field(wp_unslash($_POST['mjb_first_name'])) : '';
         $last_name = isset($_POST['mjb_last_name']) ? sanitize_text_field(wp_unslash($_POST['mjb_last_name'])) : '';
-        $phone = isset($_POST['mjb_phone']) ? sanitize_text_field(wp_unslash($_POST['mjb_phone'])) : '';
-        // Prefer E.164-style full number; strip spaces/dashes, keep leading +.
-        $phone = preg_replace('/[^\d+]/', '', $phone);
-        if (is_string($phone) && $phone !== '' && $phone[0] !== '+') {
-            $phone = '+' . ltrim($phone, '+');
-        }
-        $phone_country = isset($_POST['mjb_phone_country']) ? strtoupper(sanitize_key(wp_unslash($_POST['mjb_phone_country']))) : '';
-        if (strlen($phone_country) !== 2) {
-            $phone_country = '';
-        }
+        $phone_input = self::sanitize_phone_submission();
+        $phone = $phone_input['phone'];
+        $phone_country = $phone_input['country'];
         $city = isset($_POST['mjb_city']) ? sanitize_text_field(wp_unslash($_POST['mjb_city'])) : '';
         $email = isset($_POST['mjb_email']) ? sanitize_email(wp_unslash($_POST['mjb_email'])) : '';
         $password = isset($_POST['mjb_password']) ? (string) wp_unslash($_POST['mjb_password']) : '';
@@ -369,6 +362,33 @@ class MJB_Candidate_Registration
     }
 
     /**
+     * Normalize the posted international phone into E.164 plus ISO2 country.
+     *
+     * @return array{phone:string,country:string}
+     */
+    public static function sanitize_phone_submission()
+    {
+        $phone = isset($_POST['mjb_phone']) ? sanitize_text_field(wp_unslash($_POST['mjb_phone'])) : '';
+        $phone = preg_replace('/[^\d+]/', '', (string) $phone);
+        if (!is_string($phone)) {
+            $phone = '';
+        }
+        if ($phone !== '' && $phone[0] !== '+') {
+            $phone = '+' . ltrim($phone, '+');
+        }
+
+        $phone_country = isset($_POST['mjb_phone_country']) ? strtoupper(sanitize_key(wp_unslash($_POST['mjb_phone_country']))) : '';
+        if (strlen($phone_country) !== 2) {
+            $phone_country = '';
+        }
+
+        return array(
+            'phone' => $phone,
+            'country' => $phone_country,
+        );
+    }
+
+    /**
      * International phone field (country dial + national number).
      * Submits E.164-style value in $name and ISO2 country in $country_name.
      *
@@ -440,7 +460,7 @@ class MJB_Candidate_Registration
                 role="listbox"
                 aria-label="<?php esc_attr_e('Country calling code', 'modern-job-board'); ?>"
             ></div>
-            <input type="hidden" name="<?php echo esc_attr($name); ?>" id="<?php echo esc_attr($id); ?>" value="" data-mjb-phone-e164>
+            <input type="hidden" name="<?php echo esc_attr($name); ?>" id="<?php echo esc_attr($id); ?>" value="<?php echo esc_attr((string) $args['value']); ?>" data-mjb-phone-e164>
             <input type="hidden" name="<?php echo esc_attr($country_name); ?>" value="<?php echo esc_attr($auto_country ? '' : $country); ?>" data-mjb-phone-iso>
         </div>
         <?php

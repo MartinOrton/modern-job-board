@@ -7,14 +7,7 @@ get_header();
 
 while (have_posts()) {
     the_post();
-    $company_name = get_post_meta(get_the_ID(), '_company_name', true);
-    $hero_intro = $company_name
-        ? sprintf(
-            /* translators: %s: company name */
-            __('Posted by %s', 'modern-job-board'),
-            $company_name
-        )
-        : '';
+    $hero_intro = MJB_Shortcodes::get_job_posted_by_html(get_the_ID());
     MJB_Shortcodes::render_content_hero(get_the_title(), $hero_intro);
 }
 rewind_posts();
@@ -83,27 +76,8 @@ rewind_posts();
                             MJB_Shortcodes::render_meta_pill('clock', get_the_term_list(get_the_ID(), 'job_type', '', ', '));
                             MJB_Shortcodes::render_meta_pill('map-pin', MJB_Location::render_job_location_term_list(get_the_ID()));
                             MJB_Shortcodes::render_meta_pill('tag', get_the_term_list(get_the_ID(), 'job_category', '', ', '));
-
-                            $company_name = get_post_meta(get_the_ID(), '_company_name', true);
-                            $company_id = get_post_meta(get_the_ID(), '_company_id', true);
-
-                            $company_url = MJB_Search::get_company_jobs_url_for_listing(get_the_ID());
-                            if ($company_id && get_post($company_id)) {
-                                MJB_Shortcodes::render_meta_pill_link('briefcase', $company_url, esc_html(get_the_title($company_id)));
-                            } elseif ($company_name && $company_url) {
-                                MJB_Shortcodes::render_meta_pill_link('briefcase', $company_url, esc_html($company_name));
-                            } elseif ($company_name) {
-                                MJB_Shortcodes::render_meta_pill('briefcase', esc_html($company_name));
-                            }
+                            echo MJB_Shortcodes::get_job_date_pills_html(get_the_ID()); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in helper.
                             ?>
-                            <span class="mjb-meta-pill">
-                                <?php
-                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
-                                echo MJB_Icons::render('calendar');
-                                ?>
-                                <strong><?php esc_html_e('Posted:', 'modern-job-board'); ?></strong>
-                                <?php echo esc_html(get_the_date()); ?>
-                            </span>
                         </div>
                     </header>
 
@@ -132,14 +106,16 @@ rewind_posts();
                                     ?><span><?php echo $is_whatsapp ? esc_html__('Apply on WhatsApp', 'modern-job-board') : esc_html__('Apply', 'modern-job-board'); ?></span></a>
                             <?php else : ?>
                                 <a href="<?php echo esc_url($apply_url); ?>"
-                                   class="btn btn-primary mjb-job-action mjb-job-action--apply"><?php
+                                   class="btn btn-primary mjb-job-action mjb-job-action--apply"
+                                   <?php if (is_user_logged_in()) : ?>data-mjb-inline="apply"<?php endif; ?>><?php
                                     // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
                                     echo MJB_Icons::render('file-pen', 16);
                                     ?><span><?php esc_html_e('Apply', 'modern-job-board'); ?></span></a>
                             <?php endif; ?>
 
                             <a href="<?php echo esc_url($save_url); ?>"
-                               class="btn btn-outline mjb-job-action mjb-job-action--save<?php echo $is_saved ? ' is-active' : ''; ?>"><?php
+                               class="btn btn-outline mjb-job-action mjb-job-action--save<?php echo $is_saved ? ' is-active' : ''; ?>"
+                               <?php if (is_user_logged_in()) : ?>data-mjb-inline="save"<?php endif; ?>><?php
                                 // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in MJB_Icons::render().
                                 echo MJB_Icons::render('bookmark', 16);
                                 ?><span><?php echo $is_saved ? esc_html__('Saved', 'modern-job-board') : esc_html__('Save', 'modern-job-board'); ?></span></a>

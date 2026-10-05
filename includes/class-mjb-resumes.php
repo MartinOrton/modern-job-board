@@ -584,12 +584,24 @@ class MJB_Resumes
         $mime = wp_check_filetype($filename);
         $content_type = !empty($mime['type']) ? $mime['type'] : 'application/octet-stream';
 
-        do_action('mjb_resume_downloaded', $type, $id, get_current_user_id());
+        $requested_inline = isset($_GET['mjb_disposition'])
+            && sanitize_key(wp_unslash($_GET['mjb_disposition'])) === 'inline';
+        $disposition = ($requested_inline && $content_type === 'application/pdf') ? 'inline' : 'attachment';
+
+        if ($disposition === 'inline') {
+            do_action('mjb_resume_viewed', $type, $id, get_current_user_id());
+        } else {
+            do_action('mjb_resume_downloaded', $type, $id, get_current_user_id());
+        }
 
         nocache_headers();
         header('Content-Type: ' . $content_type);
+        if ($disposition === 'inline') {
+            header('X-Frame-Options: SAMEORIGIN');
+            header("Content-Security-Policy: frame-ancestors 'self'");
+        }
         // Prevent header injection via poisoned basenames; ASCII fallback + RFC 5987.
-        header('Content-Disposition: attachment; filename="' . str_replace(array('"', '\\'), '', $filename) . '"; filename*=UTF-8\'\'' . rawurlencode($filename));
+        header('Content-Disposition: ' . $disposition . '; filename="' . str_replace(array('"', '\\'), '', $filename) . '"; filename*=UTF-8\'\'' . rawurlencode($filename));
         header('Content-Length: ' . (string) filesize($file_path));
         header('X-Content-Type-Options: nosniff');
 

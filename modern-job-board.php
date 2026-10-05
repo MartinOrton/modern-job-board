@@ -3,7 +3,7 @@
  * Plugin Name: Modern Job Board
  * Plugin URI: https://martinorton.com/modern-job-board
  * Description: A freemium job board plugin for WordPress (pre-stable beta — not 1.0).
- * Version: 0.9.0-beta.88
+ * Version: 0.9.0-beta.149
  * Author: Martin Orton
  * Author URI: https://www.martinorton.com
  * License: Proprietary
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('MJB_VERSION', '0.9.0-beta.88');
+define('MJB_VERSION', '0.9.0-beta.149');
 define('MJB_PATH', plugin_dir_path(__FILE__));
 define('MJB_URL', plugin_dir_url(__FILE__));
 
@@ -25,7 +25,9 @@ require_once MJB_PATH . 'includes/class-mjb-license-commerce.php';
 require_once MJB_PATH . 'includes/class-mjb-license-remote.php';
 require_once MJB_PATH . 'includes/class-mjb-private-uploads.php';
 require_once MJB_PATH . 'includes/class-mjb-resumes.php';
+require_once MJB_PATH . 'includes/class-mjb-document-label.php';
 require_once MJB_PATH . 'includes/class-mjb-account-status.php';
+require_once MJB_PATH . 'includes/class-mjb-admin-bar.php';
 require_once MJB_PATH . 'includes/class-mjb-saved-jobs.php';
 require_once MJB_PATH . 'includes/class-mjb-activator.php';
 require_once MJB_PATH . 'includes/class-mjb-notices.php';
@@ -90,6 +92,11 @@ require_once MJB_PATH . 'includes/class-mjb-icons.php';
 require_once MJB_PATH . 'includes/class-mjb-location.php';
 require_once MJB_PATH . 'includes/class-mjb-shortcodes.php';
 require_once MJB_PATH . 'includes/class-mjb-admin-tabs.php';
+require_once MJB_PATH . 'includes/class-mjb-admin-dashboard.php';
+require_once MJB_PATH . 'includes/class-mjb-admin-jobs.php';
+require_once MJB_PATH . 'includes/class-mjb-admin-companies.php';
+require_once MJB_PATH . 'includes/class-mjb-admin-applications.php';
+require_once MJB_PATH . 'includes/class-mjb-admin-resumes.php';
 require_once MJB_PATH . 'includes/class-mjb-admin.php';
 require_once MJB_PATH . 'includes/class-mjb-template-loader.php';
 require_once MJB_PATH . 'includes/class-mjb-applications.php';
@@ -163,6 +170,7 @@ class Modern_Job_Board
         MJB_Google_Jobs::init();
         MJB_Job_Ops::init();
         MJB_Resume_Privacy::init();
+        MJB_Document_Label::init();
         MJB_Jobs_Map::init();
         MJB_Promotions::init();
         MJB_Ingestion::init();
@@ -193,6 +201,7 @@ class Modern_Job_Board
 
         MJB_Private_Uploads::init();
         MJB_Account_Status::init();
+        MJB_Admin_Bar::init();
         MJB_Saved_Jobs::init();
 
         $resumes = new MJB_Resumes();
@@ -254,6 +263,7 @@ class Modern_Job_Board
         $mjb_login->init();
 
         // Initialize Candidate Dashboard
+        require_once MJB_PATH . 'includes/class-mjb-candidate-account.php';
         require_once MJB_PATH . 'includes/class-mjb-candidate-dashboard.php';
         $candidate_dashboard = new MJB_Candidate_Dashboard();
         $candidate_dashboard->init();
@@ -374,6 +384,30 @@ class Modern_Job_Board
     }
 
     /**
+     * Country-code phone field (registration and candidate dashboard).
+     *
+     * @return bool
+     */
+    private function should_enqueue_phone_field()
+    {
+        return $this->should_enqueue_registration_wizard() || $this->page_has_shortcode('mjb_candidate_dashboard');
+    }
+
+    /**
+     * @param string $tag
+     * @return bool
+     */
+    private function page_has_shortcode($tag)
+    {
+        global $post;
+        if (!$post instanceof WP_Post) {
+            return false;
+        }
+
+        return has_shortcode($post->post_content, $tag);
+    }
+
+    /**
      * @return bool
      */
     private function page_has_registration_shortcode()
@@ -438,11 +472,21 @@ class Modern_Job_Board
                     $tab_urls[$tab_id] = MJB_Dashboard::get_tab_url($tab_id);
                 }
             }
+            $skeletons = array();
+            if (class_exists('MJB_Dashboard')) {
+                foreach (array_keys(MJB_Dashboard::get_tabs()) as $tab_id) {
+                    $skeletons[$tab_id] = MJB_Dashboard::get_tab_skeleton_html($tab_id);
+                }
+            }
             wp_localize_script('mjb-recruiter-dashboard', 'mjb_recruiter_dashboard', array(
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('mjb_recruiter_dashboard'),
                 'default_tab' => 'overview',
                 'tabs' => $tab_urls,
+                'skeletons' => $skeletons,
+                'i18n' => array(
+                    'loading' => __('Loading dashboard', 'modern-job-board'),
+                ),
             ));
         }
 
@@ -458,6 +502,7 @@ class Modern_Job_Board
             'jobs_api_search_base' => trailingslashit(MJB_Job_Routes::build_url(array(), array('rest' => true))),
             'i18n' => array(
                 'noResults' => __('No matches', 'modern-job-board'),
+                'loading' => __('Loading jobs', 'modern-job-board'),
             ),
         ));
 
@@ -469,6 +514,13 @@ class Modern_Job_Board
             true
         );
         wp_localize_script('mjb-form-validation', 'mjbFormValidation', array(
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'saving' => __('Saving…', 'modern-job-board'),
+            'saveFailed' => __('Changes could not be saved. Try again.', 'modern-job-board'),
+            'updateJob' => __('Update Job', 'modern-job-board'),
+            'applied' => __('Applied', 'modern-job-board'),
+            'savedJob' => __('Saved', 'modern-job-board'),
+            'saveJob' => __('Save', 'modern-job-board'),
             'required' => __('This field is required.', 'modern-job-board'),
             'email' => __('Please enter a valid email address.', 'modern-job-board'),
             'url' => __('Please enter a valid URL.', 'modern-job-board'),
@@ -483,10 +535,7 @@ class Modern_Job_Board
             'requiredLegendShort' => __('Required fields', 'modern-job-board'),
         ));
 
-        if ($this->should_enqueue_registration_wizard()) {
-            // City autocomplete reuses Filter Jobs AC (jQuery + mjb_ajax → geocity API).
-            // mjb-ajax-search is already enqueued above when assets load.
-
+        if ($this->should_enqueue_phone_field()) {
             // Full metadata build — accurate AsYouType for every country.
             wp_enqueue_script(
                 'libphonenumber',
@@ -503,6 +552,11 @@ class Modern_Job_Board
                 MJB_VERSION,
                 true
             );
+        }
+
+        if ($this->should_enqueue_registration_wizard()) {
+            // City autocomplete reuses Filter Jobs AC (jQuery + mjb_ajax → geocity API).
+            // mjb-ajax-search is already enqueued above when assets load.
 
             wp_enqueue_script(
                 'mjb-registration-wizard',
@@ -525,6 +579,81 @@ class Modern_Job_Board
                     'submitting' => __('Creating your account…', 'modern-job-board'),
                     'failed' => __('Registration failed. Please try again.', 'modern-job-board'),
                     'network' => __('Network error. Please try again.', 'modern-job-board'),
+                ),
+            ));
+        }
+
+        if ($post instanceof WP_Post && has_shortcode($post->post_content, 'mjb_candidate_dashboard')) {
+            wp_enqueue_style(
+                'mjb-candidate-dashboard',
+                MJB_URL . 'assets/css/mjb-candidate-dashboard.css',
+                array('mjb-style'),
+                MJB_VERSION
+            );
+            wp_enqueue_script(
+                'mjb-candidate-dashboard',
+                MJB_URL . 'assets/js/mjb-candidate-dashboard.js',
+                array(),
+                MJB_VERSION,
+                true
+            );
+            wp_localize_script('mjb-candidate-dashboard', 'mjbCandidateDashboard', array(
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('mjb_candidate_layer'),
+                'skeletons' => array(
+                    'home' => MJB_Candidate_Dashboard::skeleton_html('home'),
+                    'account' => MJB_Candidate_Dashboard::skeleton_html('account'),
+                ),
+                'spinner' => MJB_Candidate_Dashboard::spinner_html(),
+                'i18n' => array(
+                    'stepToComplete' => __('1 step to a complete profile', 'modern-job-board'),
+                    /* translators: %d: number of incomplete profile items */
+                    'stepsToComplete' => __('%d steps to a complete profile', 'modern-job-board'),
+                    'stepLeft' => __('1 step', 'modern-job-board'),
+                    /* translators: %d: number of incomplete profile items */
+                    'stepsLeft' => __('%d steps', 'modern-job-board'),
+                    'left' => __('left', 'modern-job-board'),
+                    'finish' => __('Finish now', 'modern-job-board'),
+                    'complete' => __('Complete — recruiters see your full profile', 'modern-job-board'),
+                    /* translators: 1: completed count, 2: total count */
+                    'of' => __('%1$d of %2$d', 'modern-job-board'),
+                    /* translators: 1: completed count, 2: total count */
+                    'ofLabel' => __('%1$d of %2$d profile items complete', 'modern-job-board'),
+                    'done' => __('done', 'modern-job-board'),
+                    'needed' => __('still needed', 'modern-job-board'),
+                    'unsaved' => __('You have unsaved changes', 'modern-job-board'),
+                    'saved' => __('All changes saved', 'modern-job-board'),
+                    'saving' => __('Saving…', 'modern-job-board'),
+                    'saveChanges' => __('Save changes', 'modern-job-board'),
+                    'saveFailed' => __('Changes could not be saved. Try again.', 'modern-job-board'),
+                    'discarded' => __('Changes discarded', 'modern-job-board'),
+                    'visible' => __('Visible', 'modern-job-board'),
+                    'hidden' => __('Hidden', 'modern-job-board'),
+                    'visibleSub' => __('Recruiters can find you in the talent pool', 'modern-job-board'),
+                    'hiddenSub' => __('You are not listed in the talent pool', 'modern-job-board'),
+                    'change' => __('Change', 'modern-job-board'),
+                    'add' => __('Add', 'modern-job-board'),
+                    'weak' => __('Weak', 'modern-job-board'),
+                    'fair' => __('Fair', 'modern-job-board'),
+                    'good' => __('Good', 'modern-job-board'),
+                    'strong' => __('Strong', 'modern-job-board'),
+                    'showPassword' => __('Show password', 'modern-job-board'),
+                    'hidePassword' => __('Hide password', 'modern-job-board'),
+                    'alertOff' => __('You won’t get job alerts by email. You can still browse matches on the site.', 'modern-job-board'),
+                    'alertDaily' => __('New jobs that match your saved searches, each day.', 'modern-job-board'),
+                    'alertWeekly' => __('New jobs that match your saved searches, once a week.', 'modern-job-board'),
+                    'loading' => __('Loading…', 'modern-job-board'),
+                    'uploading' => __('Uploading…', 'modern-job-board'),
+                    'photoReady' => __('Ready to save', 'modern-job-board'),
+                    'photoInvalid' => __('Please choose a JPG, PNG, or WebP image.', 'modern-job-board'),
+                    'photoLarge' => __('That photo is larger than 2 MB.', 'modern-job-board'),
+                    'passwordRequired' => __('Enter your current password.', 'modern-job-board'),
+                    'passwordShort' => __('Use 12 or more characters for your new password.', 'modern-job-board'),
+                    'passwordUpdating' => __('Updating…', 'modern-job-board'),
+                    'passwordUpdate' => __('Update password', 'modern-job-board'),
+                    'passwordUpdated' => __('Password updated. You are still signed in on this device.', 'modern-job-board'),
+                    'passwordFailed' => __('The password could not be updated. Try again.', 'modern-job-board'),
+                    'dismiss' => __('Dismiss', 'modern-job-board'),
                 ),
             ));
         }
